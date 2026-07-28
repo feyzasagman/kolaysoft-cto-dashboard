@@ -78,6 +78,46 @@ Uygulama çalışma durumu:
 
 http://localhost:8080/api/v1/health
 
+### Authentication (Day 7)
+
+JWT tabanlı login endpointi:
+
+`POST /api/v1/auth/login`
+
+Gerekli ek ortam değişkenleri:
+
+- `JWT_SECRET` (üretimde zorunlu)
+- `JWT_EXPIRATION_MS` (varsayılan: `86400000` = 24 saat)
+
+Geliştirme ortamında (`dev` profili) otomatik seed admin kullanıcısı oluşturulur:
+
+- E-posta: `admin@kolaysoft.com.tr`
+- Şifre: `Admin123!`
+
+Örnek login isteği:
+
+```powershell
+curl -X POST http://localhost:8080/api/v1/auth/login `
+  -H "Content-Type: application/json" `
+  -d "{\"email\":\"admin@kolaysoft.com.tr\",\"password\":\"Admin123!\"}"
+```
+
+Başarılı cevap `data.token` alanında JWT döner. Korunan endpointlere istek atarken:
+
+```text
+Authorization: Bearer <token>
+```
+
+Swagger UI üzerinden Authorize butonu ile Bearer token eklenebilir.
+
+Hata kodları:
+
+- `404` — e-posta bulunamadı
+- `401` — şifre hatalı
+- `403` — kullanıcı pasif
+
+Ayrıntılar: `docs/analysis/Day7_Authentication_and_JWT.md` / `docs/analysis/Day7_Authentication_and_JWT.pdf`
+
 ### Veri Modeli (Day 6)
 
 JPA entity'ler:

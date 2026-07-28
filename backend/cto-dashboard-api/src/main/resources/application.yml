@@ -1,9 +1,6 @@
 spring:
   application:
     name: cto-dashboard-api
-  # JWT tabanlı authentication eklenene kadar varsayılan bellek içi kullanıcıyı devre dışı bırakır.
-  autoconfigure:
-    exclude: org.springframework.boot.autoconfigure.security.servlet.UserDetailsServiceAutoConfiguration
   profiles:
     active: ${SPRING_PROFILES_ACTIVE:dev}
   datasource:
@@ -24,6 +21,12 @@ spring:
 
 server:
   port: ${SERVER_PORT:8080}
+
+app:
+  jwt:
+    # Üretimde JWT_SECRET ortam değişkeni zorunludur; geliştirmede güvenli varsayılan kullanılır.
+    secret: ${JWT_SECRET:KolaysoftCtoDashboardDevSecretKeyForJwtSigningMustBeLongEnough}
+    expiration-ms: ${JWT_EXPIRATION_MS:86400000}
 
 springdoc:
   api-docs:
