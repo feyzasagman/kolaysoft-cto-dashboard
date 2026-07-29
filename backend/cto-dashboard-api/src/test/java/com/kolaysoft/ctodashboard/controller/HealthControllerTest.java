@@ -1,8 +1,11 @@
 package com.kolaysoft.ctodashboard.controller;
 
 import com.kolaysoft.ctodashboard.config.CorsConfig;
+import com.kolaysoft.ctodashboard.config.PasswordEncoderConfig;
 import com.kolaysoft.ctodashboard.config.SecurityConfig;
 import com.kolaysoft.ctodashboard.security.CustomUserDetailsService;
+import com.kolaysoft.ctodashboard.security.JwtAccessDeniedHandler;
+import com.kolaysoft.ctodashboard.security.JwtAuthenticationEntryPoint;
 import com.kolaysoft.ctodashboard.security.JwtAuthenticationFilter;
 import com.kolaysoft.ctodashboard.security.JwtService;
 import org.junit.jupiter.api.Test;
@@ -16,11 +19,14 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@WebMvcTest(HealthController.class)
+@WebMvcTest(controllers = HealthController.class)
 @Import({
         SecurityConfig.class,
         CorsConfig.class,
-        JwtAuthenticationFilter.class
+        PasswordEncoderConfig.class,
+        JwtAuthenticationFilter.class,
+        JwtAuthenticationEntryPoint.class,
+        JwtAccessDeniedHandler.class
 })
 class HealthControllerTest {
 
@@ -34,7 +40,7 @@ class HealthControllerTest {
     private CustomUserDetailsService customUserDetailsService;
 
     @Test
-    void shouldReturnApiHealthStatus() throws Exception {
+    void shouldReturnApiHealthStatusWithoutToken() throws Exception {
         mockMvc.perform(get("/api/v1/health"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))

@@ -16,6 +16,7 @@ import java.io.IOException;
 
 /**
  * Authorization header içindeki JWT token'ı doğrular.
+ * Geçersiz token sunucuda 500 üretmez; kimlik kurulmadan filter zinciri devam eder.
  */
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
@@ -43,22 +44,25 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             return;
         }
 
-        String token = authorizationHeader.substring(BEARER_PREFIX.length());
-        if (!jwtService.validateToken(token)) {
-            filterChain.doFilter(request, response);
-            return;
-        }
-
-        String username = jwtService.extractUsername(token);
-        if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-            UserDetails userDetails = userDetailsService.loadUserByUsername(username);
-            UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
-                    userDetails,
-                    null,
-                    userDetails.getAuthorities()
-            );
-            authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-            SecurityContextHolder.getContext().setAuthentication(authentication);
+        String token = authorizationHeader.substring(BEARER_PREFIX.length()).trim();
+        try {
+            String username = jwtService.extractUsername(token);
+            if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+                UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+                if (jwtService.isTokenValid(token, userDetails)) {
+                    UsernamePasswordAuthenticationToken authentication =
+                            new UsernamePasswordAuthenticationToken(
+                                    userDetails,
+                                    null,
+                                    userDetails.getAuthorities()
+                            );
+                    authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                    SecurityContextHolder.getContext().setAuthentication(authentication);
+                }
+            }
+        } catch (Exception ignored) {
+            // Token veya kullanıcı yükleme hatalarında SecurityContext kurulmaz.
+            // Token değeri loglanmaz.
         }
 
         filterChain.doFilter(request, response);

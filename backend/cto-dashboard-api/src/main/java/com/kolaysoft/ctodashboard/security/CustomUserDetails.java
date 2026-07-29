@@ -15,6 +15,8 @@ public class CustomUserDetails implements UserDetails {
 
     private final Long id;
     private final String email;
+    private final String fullName;
+    private final String role;
     private final String passwordHash;
     private final boolean active;
     private final Collection<? extends GrantedAuthority> authorities;
@@ -22,15 +24,23 @@ public class CustomUserDetails implements UserDetails {
     public CustomUserDetails(User user) {
         this.id = user.getId();
         this.email = user.getEmail();
+        this.fullName = user.getFullName();
+        this.role = user.getRole().getName().name();
         this.passwordHash = user.getPasswordHash();
         this.active = Boolean.TRUE.equals(user.getActive());
-        this.authorities = List.of(
-                new SimpleGrantedAuthority("ROLE_" + user.getRole().getName().name())
-        );
+        this.authorities = List.of(new SimpleGrantedAuthority("ROLE_" + this.role));
     }
 
     public Long getId() {
         return id;
+    }
+
+    public String getFullName() {
+        return fullName;
+    }
+
+    public String getRole() {
+        return role;
     }
 
     @Override

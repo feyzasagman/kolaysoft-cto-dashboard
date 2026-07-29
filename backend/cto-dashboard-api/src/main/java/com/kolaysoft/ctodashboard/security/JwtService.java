@@ -5,12 +5,15 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
 import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Map;
+import java.util.function.Function;
 
 /**
  * JWT üretme ve doğrulama işlemlerini yönetir.
@@ -22,41 +25,59 @@ public class JwtService {
     private final long expirationMs;
 
     public JwtService(
-            @Value("${app.jwt.secret}") String secret,
-            @Value("${app.jwt.expiration-ms}") long expirationMs
+            @Value("${security.jwt.secret}") String secret,
+            @Value("${security.jwt.expiration-ms}") long expirationMs
     ) {
         this.secretKey = buildSecretKey(secret);
         this.expirationMs = expirationMs;
     }
 
-    public String generateToken(String username, Map<String, Object> extraClaims) {
+    public String generateToken(UserDetails userDetails) {
+        Map<String, Object> claims = new HashMap<>();
+        if (userDetails instanceof CustomUserDetails customUserDetails) {
+            claims.put("userId", customUserDetails.getId());
+            claims.put("role", customUserDetails.getRole());
+        }
+
         Date now = new Date();
         Date expiration = new Date(now.getTime() + expirationMs);
 
         return Jwts.builder()
-                .claims(extraClaims)
-                .subject(username)
+                .claims(claims)
+                .subject(userDetails.getUsername())
                 .issuedAt(now)
                 .expiration(expiration)
                 .signWith(secretKey)
                 .compact();
     }
 
-    public boolean validateToken(String token) {
+    public String extractUsername(String token) {
+        return extractClaim(token, Claims::getSubject);
+    }
+
+    public Date extractExpiration(String token) {
+        return extractClaim(token, Claims::getExpiration);
+    }
+
+    public boolean isTokenValid(String token, UserDetails userDetails) {
         try {
-            Claims claims = parseClaims(token);
-            return claims.getExpiration().after(new Date());
+            String username = extractUsername(token);
+            return username.equalsIgnoreCase(userDetails.getUsername()) && !isTokenExpired(token);
         } catch (Exception exception) {
             return false;
         }
     }
 
-    public String extractUsername(String token) {
-        return parseClaims(token).getSubject();
+    public boolean isTokenExpired(String token) {
+        return extractExpiration(token).before(new Date());
     }
 
-    public Date extractExpiration(String token) {
-        return parseClaims(token).getExpiration();
+    public long getExpirationSeconds() {
+        return expirationMs / 1000L;
+    }
+
+    private <T> T extractClaim(String token, Function<Claims, T> claimsResolver) {
+        return claimsResolver.apply(parseClaims(token));
     }
 
     private Claims parseClaims(String token) {

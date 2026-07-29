@@ -84,12 +84,18 @@ JWT tabanlı login endpointi:
 
 `POST /api/v1/auth/login`
 
-Gerekli ek ortam değişkenleri:
+JWT ortam değişkenleri (gerçek secret değerini repository'ye eklemeyin):
 
-- `JWT_SECRET` (üretimde zorunlu)
-- `JWT_EXPIRATION_MS` (varsayılan: `86400000` = 24 saat)
+```powershell
+$env:JWT_SECRET="en-az-32-karakter-uzunlugunda-guvenli-bir-secret"
+$env:JWT_EXPIRATION_MS="3600000"
+```
 
-Geliştirme ortamında (`dev` profili) otomatik seed admin kullanıcısı oluşturulur:
+- `JWT_SECRET` — üretimde zorunlu; `dev` profilinde yalnızca local fallback vardır
+- `JWT_EXPIRATION_MS` — varsayılan: `3600000` (1 saat)
+
+Geliştirme ortamında (`dev` profili) otomatik seed admin kullanıcısı oluşturulur.
+Bu hesap yalnızca local geliştirme içindir; üretimde kullanılmamalıdır.
 
 - E-posta: `admin@kolaysoft.com.tr`
 - Şifre: `Admin123!`
@@ -102,21 +108,27 @@ curl -X POST http://localhost:8080/api/v1/auth/login `
   -d "{\"email\":\"admin@kolaysoft.com.tr\",\"password\":\"Admin123!\"}"
 ```
 
-Başarılı cevap `data.token` alanında JWT döner. Korunan endpointlere istek atarken:
+Başarılı cevap `data.accessToken` alanında JWT döner (`tokenType: Bearer`).
+Korunan endpointlere istek atarken:
 
 ```text
-Authorization: Bearer <token>
+Authorization: Bearer <accessToken>
 ```
 
-Swagger UI üzerinden Authorize butonu ile Bearer token eklenebilir.
+#### Swagger Authorize kullanımı
+
+1. Login endpointinden `accessToken` alın.
+2. Swagger UI üzerindeki **Authorize** butonuna tıklayın.
+3. Yalnızca token değerini girin (`Bearer` yazmayın).
+4. Korumalı endpointleri test edin.
 
 Hata kodları:
 
-- `404` — e-posta bulunamadı
-- `401` — şifre hatalı
-- `403` — kullanıcı pasif
+- `401` — e-posta bulunamadı veya şifre hatalı (aynı genel mesaj)
+- `403` — kullanıcı hesabı aktif değil
+- `400` — doğrulama hatası
 
-Ayrıntılar: `docs/analysis/Day7_Authentication_and_JWT.md` / `docs/analysis/Day7_Authentication_and_JWT.pdf`
+Ayrıntılar: `docs/analysis/Day7_Authentication_and_JWT.md`
 
 ### Veri Modeli (Day 6)
 

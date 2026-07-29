@@ -22,11 +22,11 @@ spring:
 server:
   port: ${SERVER_PORT:8080}
 
-app:
+security:
   jwt:
-    # Üretimde JWT_SECRET ortam değişkeni zorunludur; geliştirmede güvenli varsayılan kullanılır.
-    secret: ${JWT_SECRET:KolaysoftCtoDashboardDevSecretKeyForJwtSigningMustBeLongEnough}
-    expiration-ms: ${JWT_EXPIRATION_MS:86400000}
+    # Gerçek secret kaynak koda yazılmaz; JWT_SECRET ortam değişkeninden okunur.
+    secret: ${JWT_SECRET}
+    expiration-ms: ${JWT_EXPIRATION_MS:3600000}
 
 springdoc:
   api-docs:

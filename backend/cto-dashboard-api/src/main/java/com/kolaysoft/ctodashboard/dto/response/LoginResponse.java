@@ -4,9 +4,12 @@ package com.kolaysoft.ctodashboard.dto.response;
  * Başarılı login cevabı DTO'su.
  */
 public record LoginResponse(
-        String token,
+        String accessToken,
+        String tokenType,
+        long expiresIn,
         Long userId,
-        String role,
-        String fullName
+        String fullName,
+        String email,
+        String role
 ) {
 }

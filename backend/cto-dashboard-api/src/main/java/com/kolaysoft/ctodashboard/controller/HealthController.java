@@ -2,6 +2,7 @@ package com.kolaysoft.ctodashboard.controller;
 
 import com.kolaysoft.ctodashboard.dto.response.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirements;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
@@ -24,6 +25,7 @@ public class HealthController {
     }
 
     @GetMapping
+    @SecurityRequirements
     @Operation(summary = "API çalışma durumunu getirir")
     public ResponseEntity<ApiResponse<Map<String, String>>> getHealth() {
         Map<String, String> healthData = new LinkedHashMap<>();

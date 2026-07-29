@@ -20,10 +20,11 @@ public class CustomUserDetailsService implements UserDetailsService {
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        return userRepository.findByEmailWithRole(username)
+        String email = username == null ? "" : username.trim().toLowerCase();
+        return userRepository.findByEmailWithRole(email)
                 .map(CustomUserDetails::new)
                 .orElseThrow(() ->
-                        new UsernameNotFoundException("Kullanıcı bulunamadı: " + username)
+                        new UsernameNotFoundException("Kullanıcı bulunamadı.")
                 );
     }
 }

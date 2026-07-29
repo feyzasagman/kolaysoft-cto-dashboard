@@ -12,6 +12,12 @@ spring:
       hibernate:
         format_sql: true
 
+security:
+  jwt:
+    # Yalnızca local geliştirme; üretimde JWT_SECRET zorunlu verilmelidir.
+    secret: ${JWT_SECRET:KolaysoftCtoDashboardDevSecretKeyForJwtSigningMustBeLongEnough}
+    expiration-ms: ${JWT_EXPIRATION_MS:3600000}
+
 springdoc:
   api-docs:
     enabled: true
