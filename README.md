@@ -168,6 +168,47 @@ Ayrıntılar: `docs/analysis/Day7_Authentication_and_JWT.md`
 
 Ayrıntılar: `docs/analysis/Day8_User_Project_Management.md`
 
+### Weekly Report Module (Day 9)
+
+#### Yetkilendirme
+
+| Rol | Reports / Work Items / Risks |
+|---|---|
+| `ADMIN` | Tam yönetim |
+| `CTO` | Salt okuma |
+| `PROJECT_MANAGER` | Yalnız kendi projeleri |
+
+#### Report endpointleri
+
+- `GET /api/v1/reports`
+- `GET /api/v1/reports/{id}`
+- `GET /api/v1/reports/project/{projectId}`
+- `POST /api/v1/reports`
+- `PUT /api/v1/reports/{id}`
+- `DELETE /api/v1/reports/{id}`
+
+#### Work Item endpointleri
+
+- `GET /api/v1/work-items`
+- `POST /api/v1/work-items`
+- `PUT /api/v1/work-items/{id}`
+- `DELETE /api/v1/work-items/{id}`
+
+#### Risk endpointleri
+
+- `GET /api/v1/risks`
+- `POST /api/v1/risks`
+- `PUT /api/v1/risks/{id}`
+- `DELETE /api/v1/risks/{id}`
+
+İş kuralları:
+
+- Aynı proje + hafta numarası için tek rapor (`409 Conflict`)
+- `weekNumber` 1–53, progress 0–100
+- WorkItem ve Risk bir Weekly Report’a bağlıdır
+
+Ayrıntılar: `docs/analysis/Day9_Weekly_Report_Module.md`
+
 ### Veri Modeli (Day 6)
 
 JPA entity'ler:
