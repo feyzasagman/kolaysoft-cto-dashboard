@@ -209,6 +209,37 @@ Ayrıntılar: `docs/analysis/Day8_User_Project_Management.md`
 
 Ayrıntılar: `docs/analysis/Day9_Weekly_Report_Module.md`
 
+### CTO Dashboard Backend (Day 10)
+
+#### Yetki matrisi
+
+| Endpoint | ADMIN | CTO | PROJECT_MANAGER |
+|---|---|---|---|
+| `/dashboard/summary` | Evet | Evet | Hayir |
+| `/dashboard/health-distribution` | Evet | Evet | Hayir |
+| `/dashboard/critical-risks` | Evet | Evet | Hayir |
+| `/dashboard/latest-reports` | Evet | Evet | Hayir |
+| `/dashboard/projects` | Evet | Evet | Hayir |
+| `/dashboard/projects/{id}` | Evet | Evet | Yalniz kendi projesi |
+
+#### Endpointler
+
+- `GET /api/v1/dashboard/summary`
+- `GET /api/v1/dashboard/health-distribution`
+- `GET /api/v1/dashboard/critical-risks?level=&status=&projectId=&limit=10`
+- `GET /api/v1/dashboard/latest-reports?projectId=&managerId=&health=&status=&year=&weekNumber=&limit=10`
+- `GET /api/v1/dashboard/projects?search=&managerId=&projectStatus=&health=&page=0&size=20&sort=name,asc`
+- `GET /api/v1/dashboard/projects/{projectId}`
+
+#### Swagger üzerinden test
+
+1. Login ile JWT alın.
+2. Swagger **Authorize** ile token girin.
+3. **Dashboard** tag altındaki endpointleri çalıştırın.
+4. PROJECT_MANAGER token’ı ile summary çağırarak `403` doğrulayın.
+
+Ayrıntılar: `docs/analysis/Day10_CTO_Dashboard_Backend.md`
+
 ### Veri Modeli (Day 6)
 
 JPA entity'ler:

@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -17,6 +18,8 @@ public interface WorkItemRepository extends JpaRepository<WorkItem, Long> {
     List<WorkItem> findByWeeklyReportId(Long weeklyReportId);
 
     List<WorkItem> findByWeeklyReportIdAndStatus(Long weeklyReportId, WorkItemStatus status);
+
+    long countByStatus(WorkItemStatus status);
 
     @Query("""
             SELECT wi FROM WorkItem wi
@@ -55,4 +58,13 @@ public interface WorkItemRepository extends JpaRepository<WorkItem, Long> {
             ORDER BY wi.id ASC
             """)
     List<WorkItem> findByManagerIdWithReport(@Param("managerId") Long managerId);
+
+    @Query("""
+            SELECT wi FROM WorkItem wi
+            JOIN FETCH wi.weeklyReport wr
+            WHERE wr.id IN :reportIds
+            """)
+    List<WorkItem> findByReportIds(@Param("reportIds") Collection<Long> reportIds);
+
+    long countByWeeklyReportIdAndStatus(Long weeklyReportId, WorkItemStatus status);
 }
