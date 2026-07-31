@@ -23,13 +23,17 @@ CREATE TABLE IF NOT EXISTS users (
 
 CREATE TABLE IF NOT EXISTS projects (
     project_id  BIGSERIAL PRIMARY KEY,
+    code        VARCHAR(50)  NOT NULL UNIQUE,
     name        VARCHAR(200) NOT NULL,
     customer    VARCHAR(200),
     description TEXT,
     status      VARCHAR(30)  NOT NULL,
+    manager_id  BIGINT,
     start_date  DATE,
     end_date    DATE,
-    created_at  TIMESTAMP    NOT NULL
+    created_at  TIMESTAMP    NOT NULL,
+    CONSTRAINT fk_projects_manager
+        FOREIGN KEY (manager_id) REFERENCES users (user_id)
 );
 
 CREATE TABLE IF NOT EXISTS project_assignments (

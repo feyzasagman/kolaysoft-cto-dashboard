@@ -130,6 +130,44 @@ Hata kodları:
 
 Ayrıntılar: `docs/analysis/Day7_Authentication_and_JWT.md`
 
+### User & Project Management (Day 8)
+
+#### Yetkilendirme
+
+| Rol | Users | Projects |
+|---|---|---|
+| `ADMIN` | Tam CRUD | Tam CRUD |
+| `CTO` | Salt okuma | Salt okuma |
+| `PROJECT_MANAGER` | Erişim yok | Erişim yok |
+
+#### User endpointleri
+
+- `GET /api/v1/users`
+- `GET /api/v1/users/{id}`
+- `POST /api/v1/users`
+- `PUT /api/v1/users/{id}`
+- `PATCH /api/v1/users/{id}/status`
+- `DELETE /api/v1/users/{id}`
+
+#### Project endpointleri
+
+- `GET /api/v1/projects`
+- `GET /api/v1/projects/{id}`
+- `POST /api/v1/projects`
+- `PUT /api/v1/projects/{id}`
+- `PATCH /api/v1/projects/{id}/manager`
+- `PATCH /api/v1/projects/{id}/status`
+- `DELETE /api/v1/projects/{id}`
+
+İş kuralları:
+
+- E-posta ve proje kodu benzersizdir.
+- Şifre BCrypt ile hashlenir; API cevaplarında dönmez.
+- Proje yöneticisi `PROJECT_MANAGER` rolünde ve aktif olmalıdır.
+- Proje durumları: `PLANNED`, `ACTIVE`, `ON_HOLD`, `COMPLETED`, `CANCELLED`
+
+Ayrıntılar: `docs/analysis/Day8_User_Project_Management.md`
+
 ### Veri Modeli (Day 6)
 
 JPA entity'ler:
