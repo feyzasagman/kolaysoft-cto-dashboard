@@ -5,14 +5,20 @@ import com.kolaysoft.ctodashboard.dto.request.UpdateProjectManagerRequest;
 import com.kolaysoft.ctodashboard.dto.request.UpdateProjectRequest;
 import com.kolaysoft.ctodashboard.dto.request.UpdateProjectStatusRequest;
 import com.kolaysoft.ctodashboard.dto.response.ApiResponse;
+import com.kolaysoft.ctodashboard.dto.response.PageResponse;
 import com.kolaysoft.ctodashboard.dto.response.ProjectResponse;
+import com.kolaysoft.ctodashboard.enums.ProjectStatus;
 import com.kolaysoft.ctodashboard.service.ProjectService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -21,15 +27,15 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-
-import java.util.List;
 
 /**
  * Proje yönetim endpointleri.
  */
 @RestController
 @RequestMapping("/api/v1/projects")
+@Validated
 @Tag(name = "Projects", description = "Proje yönetim işlemleri")
 public class ProjectController {
 
@@ -41,10 +47,26 @@ public class ProjectController {
 
     @GetMapping
     @PreAuthorize("hasAnyRole('ADMIN', 'CTO')")
-    @Operation(summary = "Tüm projeleri listeler")
-    public ResponseEntity<ApiResponse<List<ProjectResponse>>> getAllProjects() {
+    @Operation(summary = "Projeleri sayfalı listeler")
+    public ResponseEntity<ApiResponse<PageResponse<ProjectResponse>>> getProjects(
+            @Parameter(description = "Kod / ad araması")
+            @RequestParam(required = false) String search,
+            @RequestParam(required = false) ProjectStatus status,
+            @RequestParam(required = false) Long managerId,
+            @RequestParam(defaultValue = "0")
+            @Min(value = 0, message = "page 0 veya daha büyük olmalıdır.")
+            int page,
+            @RequestParam(defaultValue = "20")
+            @Min(value = 1, message = "size en az 1 olmalıdır.")
+            @Max(value = 100, message = "size en fazla 100 olabilir.")
+            int size,
+            @RequestParam(defaultValue = "name,asc") String sort
+    ) {
         return ResponseEntity.ok(
-                ApiResponse.success("Projeler listelendi.", projectService.getAllProjects())
+                ApiResponse.success(
+                        "Projeler listelendi.",
+                        projectService.getProjects(search, status, managerId, page, size, sort)
+                )
         );
     }
 

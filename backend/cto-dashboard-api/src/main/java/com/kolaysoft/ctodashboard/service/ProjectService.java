@@ -4,16 +4,23 @@ import com.kolaysoft.ctodashboard.dto.request.CreateProjectRequest;
 import com.kolaysoft.ctodashboard.dto.request.UpdateProjectManagerRequest;
 import com.kolaysoft.ctodashboard.dto.request.UpdateProjectRequest;
 import com.kolaysoft.ctodashboard.dto.request.UpdateProjectStatusRequest;
+import com.kolaysoft.ctodashboard.dto.response.PageResponse;
 import com.kolaysoft.ctodashboard.dto.response.ProjectResponse;
-
-import java.util.List;
+import com.kolaysoft.ctodashboard.enums.ProjectStatus;
 
 /**
  * Proje yönetim iş kuralları.
  */
 public interface ProjectService {
 
-    List<ProjectResponse> getAllProjects();
+    PageResponse<ProjectResponse> getProjects(
+            String search,
+            ProjectStatus status,
+            Long managerId,
+            int page,
+            int size,
+            String sort
+    );
 
     ProjectResponse getProjectById(Long id);
 

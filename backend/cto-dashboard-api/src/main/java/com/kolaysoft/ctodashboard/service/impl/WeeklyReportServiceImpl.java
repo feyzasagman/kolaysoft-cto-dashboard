@@ -2,6 +2,7 @@ package com.kolaysoft.ctodashboard.service.impl;
 
 import com.kolaysoft.ctodashboard.dto.request.CreateWeeklyReportRequest;
 import com.kolaysoft.ctodashboard.dto.request.UpdateWeeklyReportRequest;
+import com.kolaysoft.ctodashboard.dto.response.PageResponse;
 import com.kolaysoft.ctodashboard.dto.response.WeeklyReportResponse;
 import com.kolaysoft.ctodashboard.entity.Project;
 import com.kolaysoft.ctodashboard.entity.WeeklyReport;
@@ -13,16 +14,30 @@ import com.kolaysoft.ctodashboard.security.CustomUserDetails;
 import com.kolaysoft.ctodashboard.security.SecurityUtils;
 import com.kolaysoft.ctodashboard.service.ProjectAccessService;
 import com.kolaysoft.ctodashboard.service.WeeklyReportService;
+import com.kolaysoft.ctodashboard.specification.WeeklyReportSpecifications;
+import com.kolaysoft.ctodashboard.util.PageableUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
  * Haftalık rapor CRUD iş kuralları.
  */
 @Service
 public class WeeklyReportServiceImpl implements WeeklyReportService {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(WeeklyReportServiceImpl.class);
+    private static final Set<String> ALLOWED_SORT = Set.of("id", "year", "weekNumber", "reportDate");
 
     private final WeeklyReportRepository weeklyReportRepository;
     private final ProjectAccessService projectAccessService;
@@ -37,13 +52,27 @@ public class WeeklyReportServiceImpl implements WeeklyReportService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<WeeklyReportResponse> getAllReports() {
+    public PageResponse<WeeklyReportResponse> getReports(
+            String search,
+            Long projectId,
+            Integer year,
+            Integer weekNumber,
+            int page,
+            int size,
+            String sort
+    ) {
         CustomUserDetails currentUser = SecurityUtils.requireCurrentUser();
-        List<WeeklyReport> reports = projectAccessService.canReadAllReports(currentUser)
-                ? weeklyReportRepository.findAllWithProject()
-                : weeklyReportRepository.findByManagerIdWithProject(currentUser.getId());
+        Long managerScope = projectAccessService.canReadAllReports(currentUser) ? null : currentUser.getId();
 
-        return reports.stream().map(WeeklyReportMapper::toResponse).toList();
+        Pageable pageable = PageableUtils.toPageable(page, size, sort, ALLOWED_SORT, "year");
+        Page<WeeklyReport> reportPage = weeklyReportRepository.findAll(
+                WeeklyReportSpecifications.withFilters(search, projectId, managerScope, year, weekNumber),
+                pageable
+        );
+
+        List<WeeklyReportResponse> content = mapWithProject(reportPage.getContent());
+        LOGGER.info("reports.list page={} size={} total={}", page, size, reportPage.getTotalElements());
+        return PageResponse.of(content, page, size, reportPage.getTotalElements());
     }
 
     @Override
@@ -56,11 +85,14 @@ public class WeeklyReportServiceImpl implements WeeklyReportService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<WeeklyReportResponse> getReportsByProjectId(Long projectId) {
+    public PageResponse<WeeklyReportResponse> getReportsByProjectId(
+            Long projectId,
+            int page,
+            int size,
+            String sort
+    ) {
         projectAccessService.requireReadableProject(projectId);
-        return weeklyReportRepository.findByProjectIdWithProject(projectId).stream()
-                .map(WeeklyReportMapper::toResponse)
-                .toList();
+        return getReports(null, projectId, null, null, page, size, sort);
     }
 
     @Override
@@ -103,6 +135,16 @@ public class WeeklyReportServiceImpl implements WeeklyReportService {
         WeeklyReport report = findReportOrThrow(id);
         projectAccessService.requireWritableProject(report.getProject().getId());
         weeklyReportRepository.delete(report);
+    }
+
+    private List<WeeklyReportResponse> mapWithProject(List<WeeklyReport> reports) {
+        if (reports.isEmpty()) {
+            return List.of();
+        }
+        List<Long> ids = reports.stream().map(WeeklyReport::getId).toList();
+        Map<Long, WeeklyReport> withProject = weeklyReportRepository.findByIdInWithProject(ids).stream()
+                .collect(Collectors.toMap(WeeklyReport::getId, Function.identity(), (a, b) -> a, LinkedHashMap::new));
+        return ids.stream().map(withProject::get).map(WeeklyReportMapper::toResponse).toList();
     }
 
     private void ensureUniqueWeek(Long projectId, Integer weekNumber, Long currentReportId) {

@@ -3,6 +3,7 @@ package com.kolaysoft.ctodashboard.controller;
 import com.kolaysoft.ctodashboard.config.CorsConfig;
 import com.kolaysoft.ctodashboard.config.PasswordEncoderConfig;
 import com.kolaysoft.ctodashboard.config.SecurityConfig;
+import com.kolaysoft.ctodashboard.dto.response.PageResponse;
 import com.kolaysoft.ctodashboard.dto.response.WeeklyReportResponse;
 import com.kolaysoft.ctodashboard.exception.ConflictException;
 import com.kolaysoft.ctodashboard.exception.GlobalExceptionHandler;
@@ -22,8 +23,13 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.LocalDate;
+import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -137,6 +143,38 @@ class WeeklyReportControllerTest {
                                 """))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.message").value("Doğrulama hatası."));
+    }
+
+    @Test
+    @WithMockUser(roles = "ADMIN")
+    void shouldListReportsPaginated() throws Exception {
+        when(weeklyReportService.getReports(isNull(), isNull(), isNull(), isNull(), anyInt(), anyInt(), anyString()))
+                .thenReturn(PageResponse.of(
+                        List.of(new WeeklyReportResponse(
+                                1L, 10L, "PRJ-001", "CTO Dashboard", 2026, 31,
+                                LocalDate.of(2026, 7, 31), 40, 35, "ACTIVE", "ON_TRACK",
+                                "Tamamlanan", "Planlanan", "Not"
+                        )),
+                        0,
+                        20,
+                        1
+                ));
+
+        mockMvc.perform(get("/api/v1/reports"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.content[0].weekNumber").value(31))
+                .andExpect(jsonPath("$.data.totalElements").value(1));
+    }
+
+    @Test
+    @WithMockUser(roles = "CTO")
+    void shouldListReportsByProjectPaginated() throws Exception {
+        when(weeklyReportService.getReportsByProjectId(eq(10L), anyInt(), anyInt(), anyString()))
+                .thenReturn(PageResponse.of(List.of(), 0, 10, 0));
+
+        mockMvc.perform(get("/api/v1/reports/project/10").param("size", "10"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.size").value(10));
     }
 
     @Test

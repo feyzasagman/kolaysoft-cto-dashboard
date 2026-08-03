@@ -13,7 +13,8 @@ import java.util.Optional;
 /**
  * WeeklyReport entity kalıcılık işlemleri.
  */
-public interface WeeklyReportRepository extends JpaRepository<WeeklyReport, Long> {
+public interface WeeklyReportRepository extends JpaRepository<WeeklyReport, Long>,
+        org.springframework.data.jpa.repository.JpaSpecificationExecutor<WeeklyReport> {
 
     List<WeeklyReport> findByProjectIdOrderByYearDescWeekNumberDesc(Long projectId);
 
@@ -98,11 +99,20 @@ public interface WeeklyReportRepository extends JpaRepository<WeeklyReport, Long
     List<WeeklyReport> findLatestReportsByProjectIds(@Param("projectIds") Collection<Long> projectIds);
 
     @Query("""
+            SELECT wr FROM WeeklyReport wr
+            JOIN FETCH wr.project p
+            LEFT JOIN FETCH p.manager
+            WHERE wr.id IN :ids
+            """)
+    List<WeeklyReport> findByIdInWithProject(@Param("ids") Collection<Long> ids);
+
+    @Query("""
             SELECT DISTINCT wr FROM WeeklyReport wr
             JOIN FETCH wr.project p
             LEFT JOIN FETCH p.manager
             WHERE (:projectId IS NULL OR p.id = :projectId)
               AND (:managerId IS NULL OR p.manager.id = :managerId)
+              AND (:projectStatus IS NULL OR p.status = :projectStatus)
               AND (:year IS NULL OR wr.year = :year)
               AND (:weekNumber IS NULL OR wr.weekNumber = :weekNumber)
             ORDER BY wr.year DESC, wr.weekNumber DESC, wr.id DESC
@@ -110,6 +120,7 @@ public interface WeeklyReportRepository extends JpaRepository<WeeklyReport, Long
     List<WeeklyReport> findFilteredReports(
             @Param("projectId") Long projectId,
             @Param("managerId") Long managerId,
+            @Param("projectStatus") com.kolaysoft.ctodashboard.enums.ProjectStatus projectStatus,
             @Param("year") Integer year,
             @Param("weekNumber") Integer weekNumber,
             Pageable pageable

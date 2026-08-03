@@ -18,7 +18,6 @@ import com.kolaysoft.ctodashboard.enums.ReportHealth;
 import com.kolaysoft.ctodashboard.enums.RiskLevel;
 import com.kolaysoft.ctodashboard.enums.RiskStatus;
 import com.kolaysoft.ctodashboard.enums.WorkItemStatus;
-import com.kolaysoft.ctodashboard.exception.BusinessRuleException;
 import com.kolaysoft.ctodashboard.repository.ProjectRepository;
 import com.kolaysoft.ctodashboard.repository.RiskIssueRepository;
 import com.kolaysoft.ctodashboard.repository.WeeklyReportRepository;
@@ -26,11 +25,13 @@ import com.kolaysoft.ctodashboard.repository.WorkItemRepository;
 import com.kolaysoft.ctodashboard.service.DashboardService;
 import com.kolaysoft.ctodashboard.service.ProjectAccessService;
 import com.kolaysoft.ctodashboard.util.IsoWeekUtils;
+import com.kolaysoft.ctodashboard.util.PageableUtils;
 import com.kolaysoft.ctodashboard.util.ReportHealthCalculator;
 import jakarta.persistence.criteria.Predicate;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
@@ -41,7 +42,6 @@ import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -54,9 +54,11 @@ import java.util.stream.Collectors;
 @Service
 public class DashboardServiceImpl implements DashboardService {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(DashboardServiceImpl.class);
     private static final Set<RiskStatus> OPEN_RISK_STATUSES = EnumSet.of(RiskStatus.OPEN, RiskStatus.IN_PROGRESS);
     private static final Set<RiskStatus> CLOSED_RISK_STATUSES = EnumSet.of(RiskStatus.RESOLVED, RiskStatus.ACCEPTED);
     private static final List<RiskLevel> DEFAULT_CRITICAL_LEVELS = List.of(RiskLevel.HIGH, RiskLevel.CRITICAL);
+    private static final Set<String> PROJECT_SORT_FIELDS = Set.of("name", "code", "status", "createdAt", "id");
     private static final String REPORT_STATUS_SUBMITTED = "SUBMITTED";
     private static final String RISK_TYPE = "RISK";
 
@@ -189,19 +191,22 @@ public class DashboardServiceImpl implements DashboardService {
             Integer weekNumber,
             int limit
     ) {
+        // Health is derived in-memory; when filtering by health we over-fetch once.
+        // projectStatus is pushed to SQL to avoid post-filter waste.
+        int fetchSize = health == null ? limit : Math.max(limit * 2, limit);
         List<WeeklyReport> reports = weeklyReportRepository.findFilteredReports(
                 projectId,
                 managerId,
+                status,
                 year,
                 weekNumber,
-                PageRequest.of(0, Math.max(limit * 3, limit), Sort.by(Sort.Direction.DESC, "year", "weekNumber", "id"))
+                PageRequest.of(0, fetchSize, Sort.by(Sort.Direction.DESC, "year", "weekNumber", "id"))
         );
 
         Map<Long, List<RiskIssue>> risksByReport = loadRisksByReportIds(reports);
         Map<Long, List<WorkItem>> workItemsByReport = loadWorkItemsByReportIds(reports);
 
-        return reports.stream()
-                .filter(report -> status == null || report.getProject().getStatus() == status)
+        List<LatestReportResponse> result = reports.stream()
                 .map(report -> toLatestReportResponse(
                         report,
                         risksByReport.getOrDefault(report.getId(), List.of()),
@@ -212,6 +217,9 @@ public class DashboardServiceImpl implements DashboardService {
                         && response.overallHealth().equals(health.name())))
                 .limit(limit)
                 .toList();
+
+        LOGGER.debug("dashboard.latestReports fetched={} returned={}", reports.size(), result.size());
+        return result;
     }
 
     @Override
@@ -236,7 +244,7 @@ public class DashboardServiceImpl implements DashboardService {
                 || hasCurrentWeekReport != null;
 
         Specification<Project> specification = buildProjectSpecification(search, managerId, projectStatus);
-        Sort springSort = parseSort(sort);
+        Sort springSort = PageableUtils.parseSort(sort, PROJECT_SORT_FIELDS, "name");
 
         if (!needsInMemoryFilter) {
             Page<Project> projectPage = projectRepository.findAll(
@@ -244,6 +252,7 @@ public class DashboardServiceImpl implements DashboardService {
                     PageRequest.of(page, size, springSort)
             );
             List<ProjectDashboardResponse> content = enrichProjects(projectPage.getContent());
+            LOGGER.debug("dashboard.projects page={} size={} total={}", page, size, projectPage.getTotalElements());
             return PageResponse.of(content, page, size, projectPage.getTotalElements());
         }
 
@@ -254,6 +263,7 @@ public class DashboardServiceImpl implements DashboardService {
 
         int from = Math.min(page * size, enriched.size());
         int to = Math.min(from + size, enriched.size());
+        LOGGER.debug("dashboard.projects.inMemoryFilter candidates={} matched={}", allProjects.size(), enriched.size());
         return PageResponse.of(enriched.subList(from, to), page, size, enriched.size());
     }
 
@@ -465,8 +475,8 @@ public class DashboardServiceImpl implements DashboardService {
     ) {
         return (root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
-            if (search != null && !search.isBlank()) {
-                String pattern = "%" + search.trim().toLowerCase(Locale.ROOT) + "%";
+            String pattern = PageableUtils.normalizeSearch(search);
+            if (pattern != null) {
                 predicates.add(cb.or(
                         cb.like(cb.lower(root.get("code")), pattern),
                         cb.like(cb.lower(root.get("name")), pattern)
@@ -480,22 +490,6 @@ public class DashboardServiceImpl implements DashboardService {
             }
             return cb.and(predicates.toArray(Predicate[]::new));
         };
-    }
-
-    private Sort parseSort(String sort) {
-        if (sort == null || sort.isBlank()) {
-            return Sort.by(Sort.Direction.ASC, "name");
-        }
-        String[] parts = sort.split(",");
-        String property = parts[0].trim();
-        Set<String> allowed = Set.of("name", "code", "status", "createdAt", "id");
-        if (!allowed.contains(property)) {
-            throw new BusinessRuleException("Geçersiz sıralama alanı: " + property);
-        }
-        Sort.Direction direction = parts.length > 1 && "desc".equalsIgnoreCase(parts[1].trim())
-                ? Sort.Direction.DESC
-                : Sort.Direction.ASC;
-        return Sort.by(direction, property);
     }
 
     private Map<Long, WeeklyReport> indexLatestReports(List<WeeklyReport> reports) {

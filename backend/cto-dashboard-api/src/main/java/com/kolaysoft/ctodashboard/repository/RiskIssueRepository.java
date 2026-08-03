@@ -15,7 +15,8 @@ import java.util.Optional;
 /**
  * RiskIssue entity kalıcılık işlemleri.
  */
-public interface RiskIssueRepository extends JpaRepository<RiskIssue, Long> {
+public interface RiskIssueRepository extends JpaRepository<RiskIssue, Long>,
+        org.springframework.data.jpa.repository.JpaSpecificationExecutor<RiskIssue> {
 
     List<RiskIssue> findByWeeklyReportId(Long weeklyReportId);
 
@@ -26,6 +27,15 @@ public interface RiskIssueRepository extends JpaRepository<RiskIssue, Long> {
     long countByStatusIn(Collection<RiskStatus> statuses);
 
     long countByRiskLevelAndStatusNotIn(RiskLevel riskLevel, Collection<RiskStatus> statuses);
+
+    @Query("""
+            SELECT ri FROM RiskIssue ri
+            JOIN FETCH ri.weeklyReport wr
+            JOIN FETCH wr.project p
+            LEFT JOIN FETCH p.manager
+            WHERE ri.id IN :ids
+            """)
+    List<RiskIssue> findByIdInWithReport(@Param("ids") Collection<Long> ids);
 
     @Query("""
             SELECT ri FROM RiskIssue ri

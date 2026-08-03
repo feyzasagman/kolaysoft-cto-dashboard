@@ -13,13 +13,23 @@ import java.util.Optional;
 /**
  * WorkItem entity kalıcılık işlemleri.
  */
-public interface WorkItemRepository extends JpaRepository<WorkItem, Long> {
+public interface WorkItemRepository extends JpaRepository<WorkItem, Long>,
+        org.springframework.data.jpa.repository.JpaSpecificationExecutor<WorkItem> {
 
     List<WorkItem> findByWeeklyReportId(Long weeklyReportId);
 
     List<WorkItem> findByWeeklyReportIdAndStatus(Long weeklyReportId, WorkItemStatus status);
 
     long countByStatus(WorkItemStatus status);
+
+    @Query("""
+            SELECT wi FROM WorkItem wi
+            JOIN FETCH wi.weeklyReport wr
+            JOIN FETCH wr.project p
+            LEFT JOIN FETCH p.manager
+            WHERE wi.id IN :ids
+            """)
+    List<WorkItem> findByIdInWithReport(@Param("ids") Collection<Long> ids);
 
     @Query("""
             SELECT wi FROM WorkItem wi

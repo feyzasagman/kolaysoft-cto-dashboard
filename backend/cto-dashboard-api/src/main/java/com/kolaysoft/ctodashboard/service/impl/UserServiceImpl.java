@@ -3,6 +3,7 @@ package com.kolaysoft.ctodashboard.service.impl;
 import com.kolaysoft.ctodashboard.dto.request.CreateUserRequest;
 import com.kolaysoft.ctodashboard.dto.request.UpdateUserRequest;
 import com.kolaysoft.ctodashboard.dto.request.UpdateUserStatusRequest;
+import com.kolaysoft.ctodashboard.dto.response.PageResponse;
 import com.kolaysoft.ctodashboard.dto.response.UserResponse;
 import com.kolaysoft.ctodashboard.entity.Role;
 import com.kolaysoft.ctodashboard.entity.User;
@@ -13,18 +14,32 @@ import com.kolaysoft.ctodashboard.mapper.UserMapper;
 import com.kolaysoft.ctodashboard.repository.RoleRepository;
 import com.kolaysoft.ctodashboard.repository.UserRepository;
 import com.kolaysoft.ctodashboard.service.UserService;
+import com.kolaysoft.ctodashboard.specification.UserSpecifications;
 import com.kolaysoft.ctodashboard.util.FullNameParser;
+import com.kolaysoft.ctodashboard.util.PageableUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
  * Kullanıcı CRUD iş kuralları.
  */
 @Service
 public class UserServiceImpl implements UserService {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(UserServiceImpl.class);
+    private static final Set<String> ALLOWED_SORT = Set.of("id", "email", "createdAt", "firstName", "lastName");
 
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
@@ -42,10 +57,33 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<UserResponse> getAllUsers() {
-        return userRepository.findAllWithRole().stream()
+    public PageResponse<UserResponse> getUsers(
+            String search,
+            RoleType role,
+            Boolean active,
+            int page,
+            int size,
+            String sort
+    ) {
+        Pageable pageable = PageableUtils.toPageable(page, size, sort, ALLOWED_SORT, "id");
+        Page<User> userPage = userRepository.findAll(
+                UserSpecifications.withFilters(search, role, active),
+                pageable
+        );
+
+        List<Long> ids = userPage.getContent().stream().map(User::getId).toList();
+        Map<Long, User> usersWithRole = ids.isEmpty()
+                ? Map.of()
+                : userRepository.findByIdInWithRole(ids).stream()
+                .collect(Collectors.toMap(User::getId, Function.identity(), (a, b) -> a, LinkedHashMap::new));
+
+        List<UserResponse> content = ids.stream()
+                .map(usersWithRole::get)
                 .map(UserMapper::toResponse)
                 .toList();
+
+        LOGGER.info("users.list page={} size={} total={}", page, size, userPage.getTotalElements());
+        return PageResponse.of(content, page, size, userPage.getTotalElements());
     }
 
     @Override

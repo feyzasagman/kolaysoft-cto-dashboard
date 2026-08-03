@@ -3,6 +3,7 @@ package com.kolaysoft.ctodashboard.controller;
 import com.kolaysoft.ctodashboard.config.CorsConfig;
 import com.kolaysoft.ctodashboard.config.PasswordEncoderConfig;
 import com.kolaysoft.ctodashboard.config.SecurityConfig;
+import com.kolaysoft.ctodashboard.dto.response.PageResponse;
 import com.kolaysoft.ctodashboard.dto.response.UserResponse;
 import com.kolaysoft.ctodashboard.exception.GlobalExceptionHandler;
 import com.kolaysoft.ctodashboard.security.CustomUserDetailsService;
@@ -24,6 +25,9 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -89,21 +93,43 @@ class UserControllerTest {
     @Test
     @WithMockUser(roles = "ADMIN")
     void shouldListUsersAsAdmin() throws Exception {
-        when(userService.getAllUsers()).thenReturn(List.of(
-                new UserResponse(
-                        1L,
-                        "System Admin",
-                        "admin@kolaysoft.com.tr",
-                        "ADMIN",
-                        true,
-                        LocalDateTime.of(2026, 7, 31, 10, 0)
-                )
-        ));
+        when(userService.getUsers(isNull(), isNull(), isNull(), anyInt(), anyInt(), anyString()))
+                .thenReturn(PageResponse.of(
+                        List.of(new UserResponse(
+                                1L,
+                                "System Admin",
+                                "admin@kolaysoft.com.tr",
+                                "ADMIN",
+                                true,
+                                LocalDateTime.of(2026, 7, 31, 10, 0)
+                        )),
+                        0,
+                        20,
+                        1
+                ));
 
         mockMvc.perform(get("/api/v1/users"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.data[0].email").value("admin@kolaysoft.com.tr"));
+                .andExpect(jsonPath("$.data.page").value(0))
+                .andExpect(jsonPath("$.data.size").value(20))
+                .andExpect(jsonPath("$.data.content[0].email").value("admin@kolaysoft.com.tr"));
+    }
+
+    @Test
+    @WithMockUser(roles = "ADMIN")
+    void shouldPassSearchAndPaginationParams() throws Exception {
+        when(userService.getUsers(any(), any(), any(), anyInt(), anyInt(), anyString()))
+                .thenReturn(PageResponse.of(List.of(), 1, 5, 0));
+
+        mockMvc.perform(get("/api/v1/users")
+                        .param("search", "admin")
+                        .param("page", "1")
+                        .param("size", "5")
+                        .param("sort", "email,asc"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.page").value(1))
+                .andExpect(jsonPath("$.data.size").value(5));
     }
 
     @Test
@@ -140,13 +166,16 @@ class UserControllerTest {
                                 """))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.message").value("Doğrulama hatası."));
+                .andExpect(jsonPath("$.message").value("Doğrulama hatası."))
+                .andExpect(jsonPath("$.data.code").value("VALIDATION_ERROR"))
+                .andExpect(jsonPath("$.data.path").value("/api/v1/users"));
     }
 
     @Test
     @WithMockUser(roles = "CTO")
     void shouldAllowCtoToReadUsers() throws Exception {
-        when(userService.getAllUsers()).thenReturn(List.of());
+        when(userService.getUsers(isNull(), isNull(), isNull(), anyInt(), anyInt(), anyString()))
+                .thenReturn(PageResponse.of(List.of(), 0, 20, 0));
 
         mockMvc.perform(get("/api/v1/users"))
                 .andExpect(status().isOk())

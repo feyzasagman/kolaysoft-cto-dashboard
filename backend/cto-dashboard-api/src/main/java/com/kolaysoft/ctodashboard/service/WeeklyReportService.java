@@ -2,20 +2,32 @@ package com.kolaysoft.ctodashboard.service;
 
 import com.kolaysoft.ctodashboard.dto.request.CreateWeeklyReportRequest;
 import com.kolaysoft.ctodashboard.dto.request.UpdateWeeklyReportRequest;
+import com.kolaysoft.ctodashboard.dto.response.PageResponse;
 import com.kolaysoft.ctodashboard.dto.response.WeeklyReportResponse;
-
-import java.util.List;
 
 /**
  * Haftalık rapor iş kuralları.
  */
 public interface WeeklyReportService {
 
-    List<WeeklyReportResponse> getAllReports();
+    PageResponse<WeeklyReportResponse> getReports(
+            String search,
+            Long projectId,
+            Integer year,
+            Integer weekNumber,
+            int page,
+            int size,
+            String sort
+    );
 
     WeeklyReportResponse getReportById(Long id);
 
-    List<WeeklyReportResponse> getReportsByProjectId(Long projectId);
+    PageResponse<WeeklyReportResponse> getReportsByProjectId(
+            Long projectId,
+            int page,
+            int size,
+            String sort
+    );
 
     WeeklyReportResponse createReport(CreateWeeklyReportRequest request);
 

@@ -16,6 +16,8 @@ springdoc:
     enabled: ${SPRINGDOC_ENABLED:false}
 
 logging:
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level [%X{requestId}] %logger{36} - %msg%n"
   level:
     root: INFO
     com.kolaysoft.ctodashboard: INFO

@@ -4,6 +4,7 @@ import com.kolaysoft.ctodashboard.dto.request.CreateProjectRequest;
 import com.kolaysoft.ctodashboard.dto.request.UpdateProjectManagerRequest;
 import com.kolaysoft.ctodashboard.dto.request.UpdateProjectRequest;
 import com.kolaysoft.ctodashboard.dto.request.UpdateProjectStatusRequest;
+import com.kolaysoft.ctodashboard.dto.response.PageResponse;
 import com.kolaysoft.ctodashboard.dto.response.ProjectResponse;
 import com.kolaysoft.ctodashboard.entity.Project;
 import com.kolaysoft.ctodashboard.entity.User;
@@ -16,16 +17,30 @@ import com.kolaysoft.ctodashboard.mapper.ProjectMapper;
 import com.kolaysoft.ctodashboard.repository.ProjectRepository;
 import com.kolaysoft.ctodashboard.repository.UserRepository;
 import com.kolaysoft.ctodashboard.service.ProjectService;
+import com.kolaysoft.ctodashboard.specification.ProjectSpecifications;
+import com.kolaysoft.ctodashboard.util.PageableUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
  * Proje CRUD iş kuralları.
  */
 @Service
 public class ProjectServiceImpl implements ProjectService {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(ProjectServiceImpl.class);
+    private static final Set<String> ALLOWED_SORT = Set.of("id", "name", "code", "status", "createdAt");
 
     private final ProjectRepository projectRepository;
     private final UserRepository userRepository;
@@ -37,10 +52,33 @@ public class ProjectServiceImpl implements ProjectService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<ProjectResponse> getAllProjects() {
-        return projectRepository.findAllWithManager().stream()
+    public PageResponse<ProjectResponse> getProjects(
+            String search,
+            ProjectStatus status,
+            Long managerId,
+            int page,
+            int size,
+            String sort
+    ) {
+        Pageable pageable = PageableUtils.toPageable(page, size, sort, ALLOWED_SORT, "name");
+        Page<Project> projectPage = projectRepository.findAll(
+                ProjectSpecifications.withFilters(search, status, managerId),
+                pageable
+        );
+
+        List<Long> ids = projectPage.getContent().stream().map(Project::getId).toList();
+        Map<Long, Project> withManager = ids.isEmpty()
+                ? Map.of()
+                : projectRepository.findByIdInWithManager(ids).stream()
+                .collect(Collectors.toMap(Project::getId, Function.identity(), (a, b) -> a, LinkedHashMap::new));
+
+        List<ProjectResponse> content = ids.stream()
+                .map(withManager::get)
                 .map(ProjectMapper::toResponse)
                 .toList();
+
+        LOGGER.info("projects.list page={} size={} total={}", page, size, projectPage.getTotalElements());
+        return PageResponse.of(content, page, size, projectPage.getTotalElements());
     }
 
     @Override

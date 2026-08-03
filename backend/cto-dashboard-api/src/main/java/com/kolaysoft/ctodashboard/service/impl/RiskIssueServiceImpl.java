@@ -2,6 +2,7 @@ package com.kolaysoft.ctodashboard.service.impl;
 
 import com.kolaysoft.ctodashboard.dto.request.CreateRiskIssueRequest;
 import com.kolaysoft.ctodashboard.dto.request.UpdateRiskIssueRequest;
+import com.kolaysoft.ctodashboard.dto.response.PageResponse;
 import com.kolaysoft.ctodashboard.dto.response.RiskIssueResponse;
 import com.kolaysoft.ctodashboard.entity.RiskIssue;
 import com.kolaysoft.ctodashboard.entity.WeeklyReport;
@@ -15,16 +16,30 @@ import com.kolaysoft.ctodashboard.security.CustomUserDetails;
 import com.kolaysoft.ctodashboard.security.SecurityUtils;
 import com.kolaysoft.ctodashboard.service.ProjectAccessService;
 import com.kolaysoft.ctodashboard.service.RiskIssueService;
+import com.kolaysoft.ctodashboard.specification.RiskIssueSpecifications;
+import com.kolaysoft.ctodashboard.util.PageableUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
  * Risk CRUD iş kuralları.
  */
 @Service
 public class RiskIssueServiceImpl implements RiskIssueService {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(RiskIssueServiceImpl.class);
+    private static final Set<String> ALLOWED_SORT = Set.of("id", "riskLevel", "status", "title");
 
     private final RiskIssueRepository riskIssueRepository;
     private final WeeklyReportRepository weeklyReportRepository;
@@ -42,13 +57,37 @@ public class RiskIssueServiceImpl implements RiskIssueService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<RiskIssueResponse> getAllRisks() {
+    public PageResponse<RiskIssueResponse> getRisks(
+            String search,
+            Long reportId,
+            RiskLevel riskLevel,
+            RiskStatus status,
+            int page,
+            int size,
+            String sort
+    ) {
         CustomUserDetails currentUser = SecurityUtils.requireCurrentUser();
-        List<RiskIssue> risks = projectAccessService.canReadAllReports(currentUser)
-                ? riskIssueRepository.findAllWithReport()
-                : riskIssueRepository.findByManagerIdWithReport(currentUser.getId());
+        Long managerScope = projectAccessService.canReadAllReports(currentUser) ? null : currentUser.getId();
 
-        return risks.stream().map(RiskIssueMapper::toResponse).toList();
+        Pageable pageable = PageableUtils.toPageable(page, size, sort, ALLOWED_SORT, "id");
+        Page<RiskIssue> riskPage = riskIssueRepository.findAll(
+                RiskIssueSpecifications.withFilters(search, reportId, managerScope, riskLevel, status),
+                pageable
+        );
+
+        List<Long> ids = riskPage.getContent().stream().map(RiskIssue::getId).toList();
+        Map<Long, RiskIssue> withReport = ids.isEmpty()
+                ? Map.of()
+                : riskIssueRepository.findByIdInWithReport(ids).stream()
+                .collect(Collectors.toMap(RiskIssue::getId, Function.identity(), (a, b) -> a, LinkedHashMap::new));
+
+        List<RiskIssueResponse> content = ids.stream()
+                .map(withReport::get)
+                .map(RiskIssueMapper::toResponse)
+                .toList();
+
+        LOGGER.info("risks.list page={} size={} total={}", page, size, riskPage.getTotalElements());
+        return PageResponse.of(content, page, size, riskPage.getTotalElements());
     }
 
     @Override

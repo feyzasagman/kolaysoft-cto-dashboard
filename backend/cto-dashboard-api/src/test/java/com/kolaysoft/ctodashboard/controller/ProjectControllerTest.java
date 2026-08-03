@@ -3,6 +3,7 @@ package com.kolaysoft.ctodashboard.controller;
 import com.kolaysoft.ctodashboard.config.CorsConfig;
 import com.kolaysoft.ctodashboard.config.PasswordEncoderConfig;
 import com.kolaysoft.ctodashboard.config.SecurityConfig;
+import com.kolaysoft.ctodashboard.dto.response.PageResponse;
 import com.kolaysoft.ctodashboard.dto.response.ProjectResponse;
 import com.kolaysoft.ctodashboard.exception.GlobalExceptionHandler;
 import com.kolaysoft.ctodashboard.security.CustomUserDetailsService;
@@ -25,6 +26,9 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -98,26 +102,31 @@ class ProjectControllerTest {
     @Test
     @WithMockUser(roles = "ADMIN")
     void shouldListProjectsAsAdmin() throws Exception {
-        when(projectService.getAllProjects()).thenReturn(List.of(
-                new ProjectResponse(
-                        1L,
-                        "PRJ-001",
-                        "CTO Dashboard",
-                        "Haftalık takip",
-                        2L,
-                        "Ali Veli",
-                        "ali.veli@kolaysoft.com.tr",
-                        "ACTIVE",
-                        LocalDate.of(2026, 8, 1),
-                        LocalDate.of(2026, 12, 31),
-                        LocalDateTime.of(2026, 7, 31, 10, 0)
-                )
-        ));
+        when(projectService.getProjects(isNull(), isNull(), isNull(), anyInt(), anyInt(), anyString()))
+                .thenReturn(PageResponse.of(
+                        List.of(new ProjectResponse(
+                                1L,
+                                "PRJ-001",
+                                "CTO Dashboard",
+                                "Haftalık takip",
+                                2L,
+                                "Ali Veli",
+                                "ali.veli@kolaysoft.com.tr",
+                                "ACTIVE",
+                                LocalDate.of(2026, 8, 1),
+                                LocalDate.of(2026, 12, 31),
+                                LocalDateTime.of(2026, 7, 31, 10, 0)
+                        )),
+                        0,
+                        20,
+                        1
+                ));
 
         mockMvc.perform(get("/api/v1/projects"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.data[0].code").value("PRJ-001"));
+                .andExpect(jsonPath("$.data.content[0].code").value("PRJ-001"))
+                .andExpect(jsonPath("$.data.totalElements").value(1));
     }
 
     @Test
@@ -139,7 +148,8 @@ class ProjectControllerTest {
     @Test
     @WithMockUser(roles = "CTO")
     void shouldAllowCtoToReadProjects() throws Exception {
-        when(projectService.getAllProjects()).thenReturn(List.of());
+        when(projectService.getProjects(isNull(), isNull(), isNull(), anyInt(), anyInt(), anyString()))
+                .thenReturn(PageResponse.of(List.of(), 0, 20, 0));
 
         mockMvc.perform(get("/api/v1/projects"))
                 .andExpect(status().isOk())
