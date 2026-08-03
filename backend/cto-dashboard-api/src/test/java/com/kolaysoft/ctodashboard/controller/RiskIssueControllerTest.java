@@ -5,6 +5,7 @@ import com.kolaysoft.ctodashboard.config.PasswordEncoderConfig;
 import com.kolaysoft.ctodashboard.config.SecurityConfig;
 import com.kolaysoft.ctodashboard.dto.response.PageResponse;
 import com.kolaysoft.ctodashboard.dto.response.RiskIssueResponse;
+import com.kolaysoft.ctodashboard.enums.RiskLevel;
 import com.kolaysoft.ctodashboard.exception.GlobalExceptionHandler;
 import com.kolaysoft.ctodashboard.security.CustomUserDetailsService;
 import com.kolaysoft.ctodashboard.security.JwtAccessDeniedHandler;
@@ -26,6 +27,7 @@ import java.util.List;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -95,7 +97,7 @@ class RiskIssueControllerTest {
     @Test
     @WithMockUser(roles = "ADMIN")
     void shouldListRisksPaginated() throws Exception {
-        when(riskIssueService.getRisks(isNull(), isNull(), isNull(), isNull(), anyInt(), anyInt(), anyString()))
+        when(riskIssueService.getRisks(isNull(), isNull(), eq(RiskLevel.HIGH), isNull(), anyInt(), anyInt(), anyString()))
                 .thenReturn(PageResponse.of(
                         List.of(new RiskIssueResponse(
                                 1L, 5L, "Kaynak riski", "Ekip kapasitesi yetersiz",

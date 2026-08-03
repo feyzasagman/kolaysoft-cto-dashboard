@@ -240,6 +240,30 @@ Ayrıntılar: `docs/analysis/Day9_Weekly_Report_Module.md`
 
 Ayrıntılar: `docs/analysis/Day10_CTO_Dashboard_Backend.md`
 
+### API Optimizasyonu (Day 11)
+
+Liste endpointleri `ApiResponse<PageResponse<T>>` döner.
+
+Ortak query parametreleri:
+
+- `page` (default `0`)
+- `size` (default `20`, max `100`)
+- `sort` (`alan,asc|desc`, allow-list)
+- `search` (opsiyonel metin araması)
+
+Ek filtre örnekleri:
+
+- Users: `role`, `active`
+- Projects: `status`, `managerId`
+- Reports: `projectId`, `year`, `weekNumber`
+- Work Items: `reportId`, `status`
+- Risks: `reportId`, `riskLevel`, `status`
+
+Hata yanıtı `data` alanında `ErrorDetail` (`code`, `path`, `timestamp`, `fields`) taşır.
+Her istek `X-Request-Id` alır; loglarda MDC `requestId` ile izlenir.
+
+Ayrıntılar: `docs/analysis/Day11_API_Optimization.md`
+
 ### Veri Modeli (Day 6)
 
 JPA entity'ler:
