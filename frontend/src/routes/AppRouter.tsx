@@ -6,6 +6,7 @@ import { SettingsPage } from '@/pages/common/SettingsPage'
 import { UnauthorizedPage } from '@/pages/common/UnauthorizedPage'
 import { DashboardPage } from '@/pages/dashboard/DashboardPage'
 import { LoginPage } from '@/pages/login/LoginPage'
+import { ProjectDetailPage } from '@/pages/projects/ProjectDetailPage'
 import { ProjectsPage } from '@/pages/projects/ProjectsPage'
 import { ReportsPage } from '@/pages/reports/ReportsPage'
 import { UsersPage } from '@/pages/users/UsersPage'
@@ -31,6 +32,7 @@ export function AppRouter() {
           <Route element={<ProtectedRoute roles={['ADMIN', 'CTO']} />}>
             <Route path="/dashboard" element={<DashboardPage />} />
             <Route path="/projects" element={<ProjectsPage />} />
+            <Route path="/projects/:projectId" element={<ProjectDetailPage />} />
             <Route path="/users" element={<UsersPage />} />
           </Route>
           <Route path="/reports" element={<ReportsPage />} />

@@ -6,9 +6,11 @@ import type {
   LoginResponse,
   PageQuery,
   PageResponse,
+  ProjectDashboardDetail,
   ProjectDashboardRow,
   ProjectStatus,
   ReportHealth,
+  RiskLevel,
   RoleType,
   UserRow,
   WeeklyReport,
@@ -29,10 +31,16 @@ export const dashboardApi = {
     managerId?: number
     projectStatus?: ProjectStatus
     health?: ReportHealth
+    riskLevel?: RiskLevel
+    hasCurrentWeekReport?: boolean
   }) {
     return apiClient.get<ApiResponse<PageResponse<ProjectDashboardRow>>>('/dashboard/projects', {
       params,
     })
+  },
+
+  getProjectDetail(projectId: number) {
+    return apiClient.get<ApiResponse<ProjectDashboardDetail>>(`/dashboard/projects/${projectId}`)
   },
 }
 

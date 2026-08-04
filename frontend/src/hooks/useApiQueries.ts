@@ -5,6 +5,7 @@ import type {
   PageQuery,
   ProjectStatus,
   ReportHealth,
+  RiskLevel,
   RoleType,
 } from '@/types/api'
 
@@ -33,6 +34,8 @@ export function useDashboardSummary() {
 export function useDashboardProjects(params: PageQuery & {
   projectStatus?: ProjectStatus | ''
   health?: ReportHealth | ''
+  riskLevel?: RiskLevel | ''
+  hasCurrentWeekReport?: boolean
 }) {
   return useQuery({
     queryKey: ['dashboard', 'projects', params],
@@ -41,7 +44,19 @@ export function useDashboardProjects(params: PageQuery & {
         ...params,
         projectStatus: params.projectStatus || undefined,
         health: params.health || undefined,
+        riskLevel: params.riskLevel || undefined,
       })
+      return data.data
+    },
+  })
+}
+
+export function useProjectDetail(projectId: number | null) {
+  return useQuery({
+    queryKey: ['dashboard', 'project', projectId],
+    enabled: projectId != null,
+    queryFn: async () => {
+      const { data } = await dashboardApi.getProjectDetail(projectId as number)
       return data.data
     },
   })

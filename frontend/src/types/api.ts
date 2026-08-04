@@ -4,6 +4,12 @@ export type ProjectStatus = 'PLANNED' | 'ACTIVE' | 'ON_HOLD' | 'COMPLETED' | 'CA
 
 export type ReportHealth = 'GREEN' | 'YELLOW' | 'RED'
 
+export type RiskLevel = 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL'
+
+export type ActivityLevel = 0 | 1 | 2 | 3 | 4
+
+export type DashboardViewMode = 'cards' | 'list'
+
 export interface ApiResponse<T> {
   success: boolean
   message: string
@@ -84,6 +90,55 @@ export interface ProjectDashboardRow {
   hasCurrentWeekReport: boolean
 }
 
+export interface LatestReportSummary {
+  reportId: number
+  projectId: number
+  projectCode: string
+  projectName: string
+  managerId: number | null
+  managerName: string | null
+  year: number
+  weekNumber: number
+  overallHealth: string | null
+  progressTarget: number | null
+  progressActual: number | null
+  reportStatus: string
+  submittedAt: string | null
+  createdAt: string | null
+  openRiskCount: number
+  openBlockerCount: number
+}
+
+export interface ReportHistoryItem {
+  year: number
+  weekNumber: number
+  health: string | null
+  progressTarget: number | null
+  progressActual: number | null
+  submittedAt: string | null
+}
+
+export interface ProjectDashboardDetail {
+  projectId: number
+  code: string
+  name: string
+  description: string | null
+  projectStatus: string
+  startDate: string | null
+  targetEndDate: string | null
+  managerId: number | null
+  managerName: string | null
+  managerEmail: string | null
+  latestReport: LatestReportSummary | null
+  latestHealth: string | null
+  progressTarget: number | null
+  progressActual: number | null
+  openRisks: number
+  openBlockers: number
+  reportHistoryCount: number
+  lastFiveReports: ReportHistoryItem[]
+}
+
 export interface WeeklyReport {
   id: number
   projectId: number
@@ -115,4 +170,38 @@ export interface PageQuery {
   size?: number
   sort?: string
   search?: string
+}
+
+/** Frontend aktivite gün modeli (özel backend endpointi yok). */
+export interface ProjectActivityDay {
+  date: string
+  weekNumber: number
+  reportCount: number
+  workItemCount: number
+  riskCount: number
+  activityCount: number
+  level: ActivityLevel
+}
+
+/** Ana dashboard şeridi için haftalık özet hücre. */
+export interface ProjectActivityWeek {
+  year: number
+  weekNumber: number
+  startDate: string
+  hasReport: boolean
+  reportCount: number
+  workItemCount: number
+  riskCount: number
+  activityCount: number
+  level: ActivityLevel
+}
+
+export interface ProjectFiltersState {
+  search: string
+  managerId: string
+  projectStatus: ProjectStatus | ''
+  health: ReportHealth | ''
+  riskLevel: RiskLevel | ''
+  hasCurrentWeekReport: '' | 'true' | 'false'
+  missingReport: boolean
 }

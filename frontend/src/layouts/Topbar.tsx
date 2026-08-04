@@ -1,13 +1,19 @@
 import MenuIcon from '@mui/icons-material/Menu'
+import NotificationsNoneOutlinedIcon from '@mui/icons-material/NotificationsNoneOutlined'
+import SearchIcon from '@mui/icons-material/Search'
 import {
   AppBar,
   Avatar,
   Box,
   Chip,
   IconButton,
+  InputAdornment,
+  TextField,
   Toolbar,
   Typography,
 } from '@mui/material'
+import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
 import { sidebarWidth } from '@/layouts/Sidebar'
 
@@ -18,20 +24,24 @@ interface TopbarProps {
 
 export function Topbar({ title, onMenuClick }: TopbarProps) {
   const { user } = useAuth()
+  const navigate = useNavigate()
+  const [query, setQuery] = useState('')
+
+  const submitSearch = () => {
+    const q = query.trim()
+    if (!q) return
+    navigate(`/dashboard?search=${encodeURIComponent(q)}`)
+  }
 
   return (
     <AppBar
       position="sticky"
-      color="inherit"
-      elevation={0}
       sx={{
         width: { md: `calc(100% - ${sidebarWidth}px)` },
         ml: { md: `${sidebarWidth}px` },
-        bgcolor: 'rgba(255,255,255,0.92)',
-        backdropFilter: 'blur(8px)',
       }}
     >
-      <Toolbar sx={{ gap: 2 }}>
+      <Toolbar sx={{ gap: 1.5, minHeight: 64 }}>
         <IconButton
           edge="start"
           onClick={onMenuClick}
@@ -40,21 +50,46 @@ export function Topbar({ title, onMenuClick }: TopbarProps) {
         >
           <MenuIcon />
         </IconButton>
-        <Typography variant="h6" sx={{ flexGrow: 1, fontWeight: 650 }}>
+
+        <Typography variant="h6" sx={{ fontWeight: 650, mr: 1, display: { xs: 'none', sm: 'block' } }}>
           {title}
         </Typography>
+
+        <TextField
+          value={query}
+          onChange={(event) => setQuery(event.target.value)}
+          onKeyDown={(event) => {
+            if (event.key === 'Enter') submitSearch()
+          }}
+          placeholder="Proje veya rapor ara…"
+          aria-label="Global arama"
+          sx={{
+            flex: 1,
+            maxWidth: 420,
+            '& .MuiOutlinedInput-root': {
+              height: 36,
+              fontSize: 14,
+            },
+          }}
+          InputProps={{
+            startAdornment: (
+              <InputAdornment position="start">
+                <SearchIcon fontSize="small" htmlColor="#656D76" />
+              </InputAdornment>
+            ),
+          }}
+        />
+
+        <Box sx={{ flexGrow: 1 }} />
+
+        <IconButton aria-label="Bildirimler (yakında)" disabled>
+          <NotificationsNoneOutlinedIcon />
+        </IconButton>
+
         {user && (
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-            <Chip size="small" label={user.role} color="primary" variant="outlined" />
-            <Box sx={{ textAlign: 'right', display: { xs: 'none', sm: 'block' } }}>
-              <Typography variant="body2" fontWeight={600}>
-                {user.fullName}
-              </Typography>
-              <Typography variant="caption" color="text.secondary">
-                {user.email}
-              </Typography>
-            </Box>
-            <Avatar sx={{ bgcolor: 'primary.main', width: 36, height: 36 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Chip size="small" label={user.role} variant="outlined" />
+            <Avatar sx={{ bgcolor: 'primary.main', width: 32, height: 32, fontSize: 14 }}>
               {user.fullName.charAt(0).toUpperCase()}
             </Avatar>
           </Box>
