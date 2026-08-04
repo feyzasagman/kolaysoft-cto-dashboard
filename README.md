@@ -6,11 +6,46 @@ Kolaysoft Yaz Stajı 2026 kapsamında geliştirilen proje.
 
 ## Technologies
 
-- React
+- React 18 + Vite + TypeScript
 - Spring Boot
 - PostgreSQL
 - REST API
 - Swagger
+- Material UI
+- TanStack Query
+- Axios
+
+## Frontend
+
+### Gereksinimler
+
+- Node.js 20+
+- npm
+
+### Çalıştırma
+
+```powershell
+cd frontend
+copy .env.example .env
+npm install
+npm run dev
+```
+
+Uygulama: http://localhost:5173
+
+Varsayılan API adresi: `http://localhost:8080/api/v1` (`VITE_API_BASE_URL`)
+
+### Day 12 kapsamı
+
+- Login (`POST /api/v1/auth/login`) + JWT localStorage
+- Dashboard layout (Sidebar / Topbar)
+- Protected routes + rol koruması
+- Dashboard summary kartları
+- Projects / Reports / Users listeleri (DataGrid)
+- Axios interceptors + global error handling
+- Refresh token placeholder
+
+Ayrıntılar: `docs/analysis/Day12_React_Frontend_Setup.md`
 
 ## Backend
 
