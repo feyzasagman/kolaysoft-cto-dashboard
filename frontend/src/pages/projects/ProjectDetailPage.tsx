@@ -1,12 +1,15 @@
 import { Box, Button, Divider, Paper, Stack, Typography } from '@mui/material'
+import { useEffect } from 'react'
 import { Link as RouterLink, useParams } from 'react-router-dom'
 import { ErrorState } from '@/components/common/EmptyState'
 import { HealthBadge, StatusBadge } from '@/components/common/StatusBadges'
 import { LoadingState } from '@/components/common/LoadingState'
 import { ProjectActivityCalendar } from '@/components/dashboard/ProjectActivityCalendar'
 import { ProjectProgress } from '@/components/dashboard/ProjectProgress'
+import { useAuth } from '@/contexts/AuthContext'
 import { useProjectDetail } from '@/hooks/useApiQueries'
 import { formatShortDate } from '@/utils/labels'
+import { rememberProjectId } from '@/utils/projectCache'
 import {
   ACTIVITY_EMPTY_MESSAGE,
   buildDerivedActivityFromHistory,
@@ -15,7 +18,13 @@ import {
 export function ProjectDetailPage() {
   const { projectId } = useParams()
   const id = Number(projectId)
+  const { hasAnyRole } = useAuth()
+  const canCreateReport = hasAnyRole('ADMIN', 'PROJECT_MANAGER')
   const { data, isLoading, isError, refetch } = useProjectDetail(Number.isFinite(id) ? id : null)
+
+  useEffect(() => {
+    if (data?.projectId) rememberProjectId(data.projectId)
+  }, [data?.projectId])
 
   if (isLoading) {
     return <LoadingState label="Proje detayı yükleniyor..." fullHeight />
@@ -44,9 +53,21 @@ export function ProjectDetailPage() {
 
   return (
     <Box>
-      <Button component={RouterLink} to="/dashboard" sx={{ mb: 2 }} aria-label="Dashboarda dön">
-        ← Dashboard
-      </Button>
+      <Stack direction="row" spacing={1} mb={2} useFlexGap flexWrap="wrap">
+        <Button component={RouterLink} to="/projects" aria-label="Proje listesine dön">
+          ← Projeler
+        </Button>
+        {canCreateReport && (
+          <Button
+            component={RouterLink}
+            to={`/reports/new?projectId=${data.projectId}`}
+            variant="contained"
+            aria-label="Haftalık rapor oluştur"
+          >
+            Haftalık Rapor Oluştur
+          </Button>
+        )}
+      </Stack>
 
       <Paper sx={{ p: 2.5, mb: 2 }}>
         <Stack

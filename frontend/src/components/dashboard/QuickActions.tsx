@@ -1,4 +1,4 @@
-import { Button, Paper, Stack, Typography } from '@mui/material'
+import { Button, Stack, Typography, Box } from '@mui/material'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
 import type { RoleType } from '@/types/api'
@@ -16,8 +16,9 @@ const ACTIONS: QuickAction[] = [
   { label: 'Projeleri Görüntüle', to: '/projects', roles: ['CTO'] },
   { label: 'Haftalık Raporlar', to: '/reports', roles: ['CTO'] },
   { label: 'Riskleri İncele', to: '/dashboard', roles: ['CTO'] },
-  { label: 'Projelerim', to: '/reports', roles: ['PROJECT_MANAGER'] },
+  { label: 'Projelerim', to: '/projects', roles: ['PROJECT_MANAGER'] },
   { label: 'Raporlarım', to: '/reports', roles: ['PROJECT_MANAGER'] },
+  { label: 'Yeni Rapor', to: '/reports/new', roles: ['PROJECT_MANAGER'] },
 ]
 
 export function QuickActions() {
@@ -27,16 +28,26 @@ export function QuickActions() {
   const visible = ACTIONS.filter((action) => hasAnyRole(...action.roles))
   if (visible.length === 0) return null
 
-  // Deduplicate by label+to for roles that share destinations
   const unique = visible.filter(
     (action, index, arr) =>
       arr.findIndex((item) => item.label === action.label && item.to === action.to) === index,
   )
 
   return (
-    <Paper sx={{ p: 2 }}>
-      <Typography variant="subtitle2" mb={1.25}>
+    <Box
+      sx={{
+        border: '1px solid',
+        borderColor: 'divider',
+        borderRadius: 1.5,
+        bgcolor: 'background.paper',
+        p: 2,
+      }}
+    >
+      <Typography variant="h5" mb={0.5}>
         Hızlı işlemler
+      </Typography>
+      <Typography variant="caption" color="text.secondary" display="block" mb={1.25}>
+        Rolünüze göre erişilebilir kısayollar
       </Typography>
       <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">
         {unique.map((action) => (
@@ -51,6 +62,6 @@ export function QuickActions() {
           </Button>
         ))}
       </Stack>
-    </Paper>
+    </Box>
   )
 }

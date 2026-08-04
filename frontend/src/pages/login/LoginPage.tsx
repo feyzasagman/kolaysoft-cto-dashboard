@@ -56,7 +56,7 @@ export function LoginPage() {
       toast.success('Giriş başarılı.')
       const redirectTo =
         (location.state as { from?: string } | null)?.from
-        || (response.role === 'PROJECT_MANAGER' ? '/reports' : '/dashboard')
+        || (response.role === 'PROJECT_MANAGER' ? '/projects' : '/dashboard')
       navigate(redirectTo, { replace: true })
     } catch (error) {
       const message = getErrorMessage(error, 'Giriş başarısız.')

@@ -6,6 +6,10 @@ export type ReportHealth = 'GREEN' | 'YELLOW' | 'RED'
 
 export type RiskLevel = 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL'
 
+export type WorkItemStatus = 'TODO' | 'IN_PROGRESS' | 'DONE' | 'BLOCKED'
+
+export type RiskStatus = 'OPEN' | 'IN_PROGRESS' | 'RESOLVED' | 'ACCEPTED'
+
 export type ActivityLevel = 0 | 1 | 2 | 3 | 4
 
 export type DashboardViewMode = 'cards' | 'list'
@@ -69,6 +73,27 @@ export interface DashboardSummary {
   criticalRisks: number
   openBlockers: number
   projectsWithoutCurrentWeekReport: number
+}
+
+export interface HealthDistribution {
+  green: number
+  yellow: number
+  red: number
+  noReport: number
+}
+
+export interface CriticalRisk {
+  riskId: number
+  projectId: number
+  projectCode: string
+  projectName: string
+  weeklyReportId: number
+  title: string
+  type: string
+  impactLevel: string
+  status: string
+  mitigationPlan: string | null
+  createdAt: string | null
 }
 
 export interface ProjectDashboardRow {
@@ -139,6 +164,21 @@ export interface ProjectDashboardDetail {
   lastFiveReports: ReportHistoryItem[]
 }
 
+/** Backend ProjectResponse — customer alanı DTO’da yok. */
+export interface ProjectResponse {
+  id: number
+  code: string
+  name: string
+  description: string | null
+  managerId: number | null
+  managerFullName: string | null
+  managerEmail: string | null
+  status: string
+  startDate: string | null
+  targetEndDate: string | null
+  createdAt: string
+}
+
 export interface WeeklyReport {
   id: number
   projectId: number
@@ -154,6 +194,84 @@ export interface WeeklyReport {
   completedWork: string | null
   plannedWork: string | null
   overallNote: string | null
+}
+
+export interface WeeklyReportRequest {
+  projectId: number
+  weekNumber: number
+  reportDate: string
+  plannedProgress?: number | null
+  actualProgress?: number | null
+  projectStatus?: string | null
+  scheduleStatus?: string | null
+  completedWork?: string | null
+  plannedWork?: string | null
+  overallNote?: string | null
+}
+
+export type WeeklyReportUpdateRequest = Omit<WeeklyReportRequest, 'projectId'>
+
+export interface WorkItem {
+  id: number
+  reportId: number
+  title: string
+  description: string | null
+  assignee: string | null
+  status: WorkItemStatus | string
+  plannedDate: string | null
+  completedDate: string | null
+  note: string | null
+}
+
+export interface WorkItemRequest {
+  reportId: number
+  title: string
+  description?: string | null
+  assignee?: string | null
+  status: WorkItemStatus
+  plannedDate?: string | null
+  completedDate?: string | null
+  note?: string | null
+}
+
+export type WorkItemUpdateRequest = Omit<WorkItemRequest, 'reportId'>
+
+export interface RiskIssue {
+  id: number
+  reportId: number
+  title: string
+  description: string | null
+  riskLevel: RiskLevel | string
+  impact: string | null
+  actionPlan: string | null
+  status: RiskStatus | string
+}
+
+export interface RiskIssueRequest {
+  reportId: number
+  title: string
+  description?: string | null
+  riskLevel: RiskLevel
+  impact?: string | null
+  actionPlan?: string | null
+  status: RiskStatus
+}
+
+export type RiskIssueUpdateRequest = Omit<RiskIssueRequest, 'reportId'>
+
+/** PM proje listesi satırı — dashboard detail + raporlardan türetilir. */
+export interface AssignedProjectRow {
+  projectId: number
+  code: string
+  name: string
+  /** Backend ProjectResponse/DashboardDetail’de customer yok. */
+  customer: string | null
+  projectStatus: string
+  startDate: string | null
+  targetEndDate: string | null
+  latestReportYear: number | null
+  latestReportWeek: number | null
+  hasCurrentWeekReport: boolean
 }
 
 export interface UserRow {

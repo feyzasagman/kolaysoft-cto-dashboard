@@ -1,165 +1,82 @@
-import {
-  Alert,
-  Box,
-  FormControl,
-  InputLabel,
-  MenuItem,
-  Select,
-  Stack,
-  TextField,
-  Typography,
-} from '@mui/material'
-import { DataGrid, type GridColDef, type GridPaginationModel, type GridSortModel } from '@mui/x-data-grid'
-import { useEffect, useMemo, useState } from 'react'
-import { LoadingState } from '@/components/common/LoadingState'
-import { useDashboardProjects } from '@/hooks/useApiQueries'
-import type { ProjectStatus, ReportHealth } from '@/types/api'
-import { getErrorMessage } from '@/utils/errorUtils'
+import { Box, Skeleton, Stack, Typography } from '@mui/material'
+import { Navigate, useNavigate } from 'react-router-dom'
+import { EmptyState, ErrorState } from '@/components/common/EmptyState'
+import { ProjectList } from '@/components/projects/ProjectList'
+import { useAuth } from '@/contexts/AuthContext'
+import { useAssignedProjects } from '@/hooks/useApiQueries'
+import { getHttpStatus } from '@/utils/errorUtils'
+import { AdminProjectsView } from '@/pages/projects/AdminProjectsView'
 
-const columns: GridColDef[] = [
-  { field: 'code', headerName: 'Code', width: 120 },
-  { field: 'name', headerName: 'Name', flex: 1, minWidth: 180 },
-  { field: 'managerName', headerName: 'Manager', width: 160 },
-  { field: 'projectStatus', headerName: 'Status', width: 130 },
-  { field: 'latestHealth', headerName: 'Health', width: 110 },
-  { field: 'progressActual', headerName: 'Progress %', width: 120 },
-  { field: 'openRiskCount', headerName: 'Open Risks', width: 120 },
-  { field: 'criticalRiskCount', headerName: 'Critical', width: 110 },
-  { field: 'hasCurrentWeekReport', headerName: 'Current Week', width: 130, type: 'boolean' },
-]
+function ProjectsSkeleton() {
+  return (
+    <Stack spacing={1.5}>
+      <Skeleton width={220} height={32} />
+      <Skeleton width="60%" height={20} />
+      <Box sx={{ display: 'grid', gap: 1.5, gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' } }}>
+        <Skeleton variant="rounded" height={180} />
+        <Skeleton variant="rounded" height={180} />
+      </Box>
+    </Stack>
+  )
+}
 
 export function ProjectsPage() {
-  const [search, setSearch] = useState('')
-  const [debouncedSearch, setDebouncedSearch] = useState('')
-  const [projectStatus, setProjectStatus] = useState<ProjectStatus | ''>('')
-  const [health, setHealth] = useState<ReportHealth | ''>('')
-  const [paginationModel, setPaginationModel] = useState<GridPaginationModel>({
-    page: 0,
-    pageSize: 10,
-  })
-  const [sortModel, setSortModel] = useState<GridSortModel>([{ field: 'name', sort: 'asc' }])
+  const { hasAnyRole } = useAuth()
+  const isManagerOnly = hasAnyRole('PROJECT_MANAGER') && !hasAnyRole('ADMIN', 'CTO')
+  const isAdminOrCto = hasAnyRole('ADMIN', 'CTO')
 
-  useEffect(() => {
-    const timer = window.setTimeout(() => {
-      setDebouncedSearch(search.trim())
-      setPaginationModel((prev) => ({ ...prev, page: 0 }))
-    }, 350)
-    return () => window.clearTimeout(timer)
-  }, [search])
+  if (isAdminOrCto) {
+    return <AdminProjectsView />
+  }
 
-  const sort = useMemo(() => {
-    const first = sortModel[0]
-    if (!first?.field) {
-      return 'name,asc'
+  if (!isManagerOnly) {
+    return <Navigate to="/unauthorized" replace />
+  }
+
+  return <ManagerProjectsView canCreateReport />
+}
+
+function ManagerProjectsView({ canCreateReport }: { canCreateReport: boolean }) {
+  const navigate = useNavigate()
+  const query = useAssignedProjects(true)
+
+  if (query.isLoading && !query.data) {
+    return <ProjectsSkeleton />
+  }
+
+  if (query.isError) {
+    const status = getHttpStatus(query.error)
+    if (status === 403) {
+      return <Navigate to="/unauthorized" replace />
     }
-    const fieldMap: Record<string, string> = {
-      code: 'code',
-      name: 'name',
-      projectStatus: 'status',
-      projectId: 'id',
-    }
-    const field = fieldMap[first.field] ?? 'name'
-    return `${field},${first.sort ?? 'asc'}`
-  }, [sortModel])
+    return (
+      <ErrorState
+        title="Projeler alınamadı."
+        onRetry={() => void query.refetch()}
+      />
+    )
+  }
 
-  const { data, isLoading, isFetching, isError, error } = useDashboardProjects({
-    page: paginationModel.page,
-    size: paginationModel.pageSize,
-    sort,
-    search: debouncedSearch || undefined,
-    projectStatus,
-    health,
-  })
-
-  const rows = useMemo(
-    () => (data?.content ?? []).map((row) => ({ id: row.projectId, ...row })),
-    [data],
-  )
+  const projects = query.data ?? []
 
   return (
     <Box>
-      <Typography variant="h5" mb={0.5}>
-        Projects
+      <Typography variant="h1" sx={{ fontSize: { xs: '1.5rem', md: '1.75rem' } }} mb={0.5}>
+        Projelerim
       </Typography>
       <Typography color="text.secondary" mb={2.5}>
-        Dashboard proje listesi — arama, filtre, sıralama ve sayfalama.
+        Size atanmış projeler. Haftalık rapor oluşturabilir ve detaya gidebilirsiniz.
       </Typography>
 
-      <Stack
-        direction={{ xs: 'column', md: 'row' }}
-        spacing={1.5}
-        mb={2}
-        useFlexGap
-        flexWrap="wrap"
-      >
-        <TextField
-          size="small"
-          label="Search"
-          placeholder="Kod veya ad"
-          value={search}
-          onChange={(event) => setSearch(event.target.value)}
-          sx={{ minWidth: 220 }}
+      {projects.length === 0 ? (
+        <EmptyState
+          title="Henüz görünür proje yok"
+          description="Backend’de Project Manager için ayrı bir proje listesi endpointi bulunmuyor. Daha önce oluşturduğunuz raporlar veya bilinen proje bağlantıları üzerinden projeler burada listelenir. İlk rapor için /reports/new?projectId=… kullanın."
+          actionLabel="Rapor listesi"
+          onAction={() => navigate('/reports')}
         />
-        <FormControl size="small" sx={{ minWidth: 160 }}>
-          <InputLabel>Status</InputLabel>
-          <Select
-            label="Status"
-            value={projectStatus}
-            onChange={(event) => {
-              setProjectStatus(event.target.value as ProjectStatus | '')
-              setPaginationModel((prev) => ({ ...prev, page: 0 }))
-            }}
-          >
-            <MenuItem value="">All</MenuItem>
-            <MenuItem value="PLANNED">PLANNED</MenuItem>
-            <MenuItem value="ACTIVE">ACTIVE</MenuItem>
-            <MenuItem value="ON_HOLD">ON_HOLD</MenuItem>
-            <MenuItem value="COMPLETED">COMPLETED</MenuItem>
-            <MenuItem value="CANCELLED">CANCELLED</MenuItem>
-          </Select>
-        </FormControl>
-        <FormControl size="small" sx={{ minWidth: 160 }}>
-          <InputLabel>Health</InputLabel>
-          <Select
-            label="Health"
-            value={health}
-            onChange={(event) => {
-              setHealth(event.target.value as ReportHealth | '')
-              setPaginationModel((prev) => ({ ...prev, page: 0 }))
-            }}
-          >
-            <MenuItem value="">All</MenuItem>
-            <MenuItem value="GREEN">GREEN</MenuItem>
-            <MenuItem value="YELLOW">YELLOW</MenuItem>
-            <MenuItem value="RED">RED</MenuItem>
-          </Select>
-        </FormControl>
-      </Stack>
-
-      {isError && <Alert severity="error" sx={{ mb: 2 }}>{getErrorMessage(error)}</Alert>}
-
-      {isLoading && !data ? (
-        <LoadingState label="Projeler yükleniyor..." />
       ) : (
-        <Box sx={{ height: 560, bgcolor: 'background.paper', borderRadius: 2, border: '1px solid', borderColor: 'divider' }}>
-          <DataGrid
-            rows={rows}
-            columns={columns}
-            rowCount={data?.totalElements ?? 0}
-            loading={isFetching}
-            paginationMode="server"
-            sortingMode="server"
-            paginationModel={paginationModel}
-            onPaginationModelChange={setPaginationModel}
-            sortModel={sortModel}
-            onSortModelChange={(model) => {
-              setSortModel(model)
-              setPaginationModel((prev) => ({ ...prev, page: 0 }))
-            }}
-            pageSizeOptions={[10, 20, 50]}
-            disableRowSelectionOnClick
-          />
-        </Box>
+        <ProjectList projects={projects} canCreateReport={canCreateReport} />
       )}
     </Box>
   )

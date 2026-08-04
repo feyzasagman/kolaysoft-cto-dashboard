@@ -5,28 +5,40 @@ interface EmptyStateProps {
   title: string
   description: string
   action?: ReactNode
+  actionLabel?: string
+  onAction?: () => void
 }
 
-export function EmptyState({ title, description, action }: EmptyStateProps) {
+export function EmptyState({ title, description, action, actionLabel, onAction }: EmptyStateProps) {
   return (
     <Box
       sx={{
         border: '1px dashed',
         borderColor: 'divider',
-        borderRadius: 2,
+        borderRadius: 1.5,
         bgcolor: 'background.paper',
         px: 3,
-        py: 6,
+        py: 4,
         textAlign: 'center',
       }}
     >
-      <Typography variant="h6" mb={0.75}>
+      <Typography variant="h5" mb={0.75}>
         {title}
       </Typography>
-      <Typography color="text.secondary" mb={action ? 2 : 0} maxWidth={480} mx="auto">
+      <Typography
+        color="text.secondary"
+        mb={action || actionLabel ? 2 : 0}
+        maxWidth={460}
+        mx="auto"
+      >
         {description}
       </Typography>
       {action}
+      {!action && actionLabel && onAction && (
+        <Button variant="outlined" onClick={onAction} aria-label={actionLabel}>
+          {actionLabel}
+        </Button>
+      )}
     </Box>
   )
 }
@@ -37,7 +49,7 @@ interface ErrorStateProps {
 }
 
 export function ErrorState({
-  title = 'Proje bilgileri alınamadı.',
+  title = 'Veriler alınamadı.',
   onRetry,
 }: ErrorStateProps) {
   return (
@@ -46,13 +58,13 @@ export function ErrorState({
         border: '1px solid',
         borderColor: 'error.light',
         bgcolor: 'error.light',
-        borderRadius: 2,
+        borderRadius: 1.5,
         px: 3,
-        py: 4,
+        py: 3,
         textAlign: 'center',
       }}
     >
-      <Typography variant="h6" color="error.dark" mb={1.5}>
+      <Typography variant="h5" color="error.dark" mb={1.25}>
         {title}
       </Typography>
       {onRetry && (

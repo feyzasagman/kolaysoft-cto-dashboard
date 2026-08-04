@@ -41,11 +41,52 @@ Varsayılan API adresi: `http://localhost:8080/api/v1` (`VITE_API_BASE_URL`)
 - Dashboard layout (Sidebar / Topbar)
 - Protected routes + rol koruması
 - Dashboard summary kartları
-- Projects / Reports / Users listeleri (DataGrid)
+- Projects / Reports / Users listeleri
 - Axios interceptors + global error handling
 - Refresh token placeholder
+- Project Manager haftalık rapor / iş kalemi / risk akışı
 
-Ayrıntılar: `docs/analysis/Day12_React_Frontend_Setup.md`
+Ayrıntılar:
+- `docs/analysis/Day12_React_Frontend_Setup.md`
+- `docs/analysis/Day12_Weekly_Report_WorkItem_Risk_Frontend.md`
+
+### Frontend ortam değişkeni
+
+`frontend/.env` (örnek: `.env.example`):
+
+```env
+VITE_API_BASE_URL=http://localhost:8080/api/v1
+```
+
+### Çalıştırma sırası
+
+1. PostgreSQL (Docker) ayakta olsun
+2. Backend: `backend/cto-dashboard-api` → `./mvnw spring-boot:run -Dspring-boot.run.profiles=dev`
+3. Frontend: `cd frontend` → `npm run dev`
+4. Aç: http://localhost:5173
+
+### Demo kullanıcıları (yalnızca geliştirme)
+
+| Rol | E-posta | Şifre |
+|---|---|---|
+| ADMIN (seed) | `admin@kolaysoft.com.tr` | `Admin123!` |
+| PROJECT_MANAGER / CTO | Seed yok; ADMIN ile `POST /users` üzerinden oluşturulur | — |
+
+### Project Manager demo akışı
+
+1. ADMIN ile PM kullanıcı + atanmış proje oluşturun
+2. PM olarak giriş yapın → `/projects`
+3. İlk görünürlük için `/reports/new?projectId={id}` veya proje detayından **Haftalık Rapor Oluştur**
+4. Raporu kaydedin → `/reports/:id`
+5. İş kalemi ve risk ekleyin / durum güncelleyin
+6. CTO ile giriş yapıp aynı raporu salt okunur görüntüleyin (Düzenle gizli)
+
+### Bilinen eksikler
+
+- Backend’de PM için `GET /projects` / `GET /dashboard/projects` listesi yok (403); frontend raporlar + bilinen proje id önbelleği ile telafi eder
+- `customer` alanı entity’de var, response DTO’da yok → UI’da `—`
+- Frontend unit test kütüphanesi yok (vitest/RTL eklenmedi)
+- Refresh token endpointi yok
 
 ## Backend
 

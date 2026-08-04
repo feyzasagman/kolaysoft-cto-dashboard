@@ -7,15 +7,15 @@
 | Proje | Kolaysoft CTO Dashboard |
 | Doküman Türü | Staj Günlük Teknik Raporu — React Frontend Setup |
 | Tarih | 4 Ağustos 2026 |
-| Sürüm | 1.2 |
-| Durum | Day 12 + kompakt aktivite şeridi / detay takvimi |
+| Sürüm | 1.3 |
+| Durum | Day 12 + enterprise SaaS dashboard redesign |
 | Kapsam dışı | Backend değişikliği, DB, JWT server tarafı, AI, bildirimler |
 
 ---
 
 ## 1. Günün amacı
 
-Mevcut Spring Boot API’yi tüketen React frontend iskeletini kurmak: auth, layout, routing, API client, temel ekranlar.
+Mevcut Spring Boot API’yi tüketen React frontend iskeletini kurmak: auth, layout, routing, API client, temel ekranlar. Ardından dashboard’u Primer / Linear / modern MUI ilhamlı, özgün kurumsal SaaS arayüzüne taşımak.
 
 ---
 
@@ -27,7 +27,7 @@ Mevcut Spring Boot API’yi tüketen React frontend iskeletini kurmak: auth, lay
 | React Router | Routing + protected routes |
 | Axios | HTTP client |
 | TanStack Query | Server state |
-| Material UI + DataGrid | UI / tablolar |
+| Material UI | UI / tablolar / shell |
 | React Hook Form + Zod | Form validation |
 | React Toastify | Kullanıcı bildirimleri |
 
@@ -40,10 +40,12 @@ frontend/
   src/
     api/           # Axios instance + interceptors
     assets/        # Statik varlıklar
-    components/    # Ortak / domain bileşenleri
+    components/
+      common/      # EmptyState, ErrorState, StatusBadges
+      dashboard/   # KPI, table, panels, activity, skeleton
     contexts/      # AuthContext
     hooks/         # React Query hooks
-    layouts/       # DashboardLayout, Sidebar, Topbar
+    layouts/       # AppShell, Sidebar, Topbar
     pages/
       login/
       dashboard/
@@ -53,9 +55,9 @@ frontend/
       common/      # Settings, 404, 403
     routes/        # AppRouter, ProtectedRoute
     services/      # API service fonksiyonları
-    theme/         # MUI theme
+    theme/         # Enterprise MUI theme
     types/         # API DTO tipleri
-    utils/         # tokenStorage, error, refresh placeholder
+    utils/         # tokenStorage, activity, labels
 ```
 
 ---
@@ -71,7 +73,7 @@ Page (UI)
 ```
 
 - Auth state: `AuthContext` + `localStorage`
-- Layout: Sidebar + Topbar + Outlet
+- Layout: `AppShell` (Sidebar + Topbar + max-width Outlet)
 - Role guard: `ProtectedRoute` (`ADMIN` / `CTO` / `PROJECT_MANAGER`)
 
 ---
@@ -94,119 +96,128 @@ Refresh token endpointi backend’de henüz yoktur; `utils/tokenRefresh.ts` plac
 | Ekran | Endpoint |
 |---|---|
 | Login | `POST /auth/login` |
-| Dashboard cards | `GET /dashboard/summary` |
-| Projects DataGrid | `GET /dashboard/projects` (page/size/sort/search/filters) |
+| KPI özeti | `GET /dashboard/summary` |
+| Sağlık dağılımı | `GET /dashboard/health-distribution` |
+| Kritik riskler | `GET /dashboard/critical-risks` |
+| Proje tablosu | `GET /dashboard/projects` (page/size/sort/search/filters) |
+| Proje detay | `GET /dashboard/projects/{id}` |
 | Weekly Reports | `GET /reports`, `GET /reports/{id}` |
 | Users | `GET /users` |
 
 Base URL: `VITE_API_BASE_URL` (varsayılan `http://localhost:8080/api/v1`)
 
-CORS: backend `http://localhost:5173` izinli.
+CORS: backend `http://localhost:5173` izinli. Backend endpoint sözleşmesi değiştirilmedi.
 
 ---
 
 ## 7. Ekranlar
 
 - Login
-- Dashboard (özet kartlar)
-- Projects (DataGrid: pagination/search/filter/sort)
+- Dashboard (enterprise SaaS layout)
+- Projects
+- Project Detail (tam aktivite takvimi)
 - Weekly Reports (liste + detay dialog, edit yok)
 - Users (liste + search + pagination)
 - Settings (oturum özeti)
 - 404 Not Found
 - 403 Unauthorized
 
-Navigasyon: Dashboard, Projects, Weekly Reports, Users, Settings, Logout
+---
+
+## 8. Enterprise SaaS redesign — zayıf noktalar (öncesi)
+
+Tespit edilen görsel / IA zayıflıkları:
+
+- Kart ağırlıklı ana görünüm, tablo yoğunluğundan uzak
+- `health-distribution` ve `critical-risks` API’leri frontend’de kullanılmıyordu
+- Breadcrumb / max content width yoktu
+- Altı dağınık KPI yerine dört odaklı metrik ihtiyacı
+- Ağır gölge / kart şişkinliği riski; takvim ana ekranı şişiriyordu
 
 ---
 
-## 11. Yeni dashboard tasarım yaklaşımı
+## 9. Tasarım kararları
 
-GitHub ilhamlı, özgün kurumsal görünüm:
-
-- koyu sidebar + açık içerik
-- ince border, düşük gölge
-- kompakt kartlar ve label/badge odaklı UI
-- ana ekranda kalabalık 12 aylık takvim yok
-
-Palette: sidebar `#0D1B16`, zemin `#F6F8FA`, kart beyaz, border `#D0D7DE`.
-
----
-
-## 12. Proje kartı mimarisi (ana dashboard)
-
-`ProjectCard` bölümleri:
-
-1. Header: ad, kod, yönetici, status/health badge, son rapor haftası
-2. Progress + metrikler (risk/kritik/blocker + bu hafta rapor var/yok)
-3. **Kompakt 12 haftalık aktivite şeridi** (`ProjectActivityStrip`)
-4. “Detayı Gör” butonu → `/projects/:projectId`
-
-Kart / liste görünümü `localStorage: cto_dashboard_view_mode`.
+| Karar | Uygulama |
+|---|---|
+| İlham | Primer / Linear / modern MUI — kopya değil, özgün nötr palet |
+| Yoğunluk | İnce 1px border, gölgesiz yüzeyler, 8px spacing |
+| Shell | Sabit koyu sidebar (`#0D1117`), sticky topbar, içerik max `1440px` |
+| Tipografi | IBM Plex Sans; başlık ~28px, metrik ~28px, body 14px, secondary 12–13px |
+| Renk | Zemin `#F6F8FA`, yüzey beyaz, aksan `#0969DA`; success/warning/critical anlamlı kullanım |
+| KPI | 4 kart: Active / At Risk / Critical Risks / Missing Weekly Reports |
+| Tablo | GitHub repo-list yoğunluğu, sticky header, hover, status chip, progress, kompakt strip |
+| Aktivite | Ana ekran: 12 haftalık strip; detay: 26 haftalık contribution takvimi |
+| Veri dürüstlüğü | Aktivite yalnızca mevcut alanlardan; yoksa “Aktivite verisi bulunmuyor.” |
+| Responsive | Desktop 2 kolon; tablet stacked; mobil drawer + yatay scroll tablo |
+| A11y | focus-visible, aria-label, renk + metin badge, klavye tooltip |
 
 ---
 
-## 13. 12 haftalık aktivite şeridi
+## 10. Bileşen yapısı
 
-- Her hücre = 1 ISO hafta
-- Tooltip: yıl/hafta, rapor var/yok, iş kalemi, risk
-- Legend: Az → Çok
-- Veri yoksa: **“Aktivite verisi bulunmuyor.”**
+- `AppShell` — shell + `cto:refresh` event
+- `Sidebar` — gruplu menü, rol, logout
+- `Topbar` — breadcrumb, arama, yenile, profil
+- `PageHeader` — başlık, açıklama, dönem seçici
+- `KpiCard` — beyaz yüzey, ikon, metrik, secondary
+- `HealthDistributionPanel` — bar dağılımı
+- `CriticalRisksPanel` — kritik risk listesi
+- `FilterBar` — arama + filtreler
+- `ProjectTable` — sıralama, seçim, strip, aksiyon
+- `SelectedProjectPanel` — seçili proje aktivitesi
+- `ProjectActivityStrip` / `ProjectActivityCalendar`
+- `EmptyState` / `ErrorState` / `DashboardSkeleton`
+- `QuickActions` — role göre kısayollar
+
+---
+
+## 11. Dashboard bilgi mimarisi
+
+1. Page header + dönem etiketi (mevcut ISO hafta; backend tarih filtresi yok)
+2. Dört KPI (`summary`)
+3. Sağlık dağılımı + kritik riskler (2 kolon)
+4. FilterBar + ProjectTable + SelectedProjectPanel
+5. QuickActions
+
+Topbar Yenile → `window` `cto:refresh` → tüm dashboard sorguları refetch.
+
+---
+
+## 12. 12 haftalık aktivite şeridi
+
+- Her hücre = 1 ISO hafta; tablo satırında `compact` mod
+- Tooltip: yıl/hafta, rapor, iş kalemi, risk
 - Sahte yoğunluk üretilmez
 
 ---
 
-## 14. Tam proje aktivite takvimi (yalnızca detay)
-
-Proje detayında “Proje Aktivitesi” bölümü:
+## 13. Tam proje aktivite takvimi (yalnızca detay)
 
 - `ProjectActivityCalendar` + `ProjectActivityCell`
-- Son 26 hafta, 7 satır günlük grid, yatay scroll
-- Model: `ProjectActivityDay` (`date`, `weekNumber`, `reportCount`, `workItemCount`, `riskCount`, `activityCount`, `level`)
+- Son 26 hafta; özel aggregate endpoint yok
 
 ---
 
-## 15. Aktivite seviye hesaplama ve veri kaynakları
+## 14. Loading / empty / error / responsive / a11y
 
-Seviye:
-
-0 yok · 1 sadece rapor · 2 rapor+iş · 3 rapor+iş+risk · 4 yoğun
-
-Kaynaklar (özel endpoint yok):
-
-- Liste: `latestReportYear/Week`, `hasCurrentWeekReport`, açık risk/blocker sayıları (bilinen rapor haftasına bağlanır)
-- Detay: `lastFiveReports.submittedAt` + güncel risk/blocker metrikleri
-
-Boş haftalar/günler 0 kalır. Demo veri gerçek gibi gösterilmez.
+- Loading: layout’a uyan `DashboardSkeleton`
+- Empty: ilk kullanım vs filtre sonucu ayrımı (+ filtre temizle)
+- Error: Türkçe + Tekrar Dene
+- Desktop sidebar; tablet/mobil drawer; sayfa yatay taşması yok
 
 ---
 
-## 16. Loading / empty / error / responsive / a11y
-
-- Loading: `DashboardSkeleton`, `ProjectCardSkeleton`, strip skeleton
-- Empty: proje yok, filtre yok, aktivite yok
-- Error: Türkçe mesaj + Tekrar Dene
-- Desktop 2 sütun; mobil drawer + tek sütun; şerit yatay scroll
-- Badge metinleri, aria-label, klavye focus, tooltip
-
----
-
-## 17. Rol bazlı hızlı işlemler
-
-`QuickActions` yalnızca mevcut rotalara gider (ADMIN/CTO/PM). Sidebar menü metinleri Türkçe.
-
----
-
-## 18. Açık kalan backend ihtiyaçları
+## 15. Açık kalan backend ihtiyaçları
 
 - Dedicated weekly/daily activity aggregate endpoint
 - Work-item/risk update timestamps per week
 - Summary trend deltas
-- Global search + notifications + refresh token
+- Gerçek tarih aralığı filtresi + refresh token
 
 ---
 
-## 8. Çalıştırma
+## 16. Çalıştırma
 
 ```powershell
 cd frontend
@@ -214,24 +225,14 @@ npm install
 npm run dev
 ```
 
-Uygulama: http://localhost:5173
+Uygulama: http://localhost:5173 — Backend: http://localhost:8080
 
-Backend’in `http://localhost:8080` üzerinde çalışması gerekir.
-
----
-
-## 9. Sonraki gün planı (öneri)
-
-- User / Project CRUD formları
-- Report create/edit (PM)
-- Dedicated activity calendar API
-- Health distribution grafikleri
-- Refresh token (backend + frontend)
+Doğrulama: `npm run build`, `npm run lint` (0 error).
 
 ---
 
-## 10. Önerilen commit
+## 17. Önerilen commit
 
 ```text
-feat: redesign dashboard with compact project activity views
+feat: redesign dashboard as polished enterprise SaaS interface
 ```

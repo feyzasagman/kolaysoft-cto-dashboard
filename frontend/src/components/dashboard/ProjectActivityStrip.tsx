@@ -6,13 +6,19 @@ import { ACTIVITY_EMPTY_MESSAGE, hasStripActivity } from '@/utils/projectActivit
 interface ProjectActivityStripProps {
   weeks: ProjectActivityWeek[]
   loading?: boolean
+  /** Tablo satırı için başlık/legend gizle */
+  compact?: boolean
 }
 
-export function ProjectActivityStrip({ weeks, loading = false }: ProjectActivityStripProps) {
+export function ProjectActivityStrip({
+  weeks,
+  loading = false,
+  compact = false,
+}: ProjectActivityStripProps) {
   if (loading) {
     return (
       <Box
-        sx={{ height: 28, borderRadius: 1, bgcolor: 'action.hover' }}
+        sx={{ height: compact ? 16 : 28, borderRadius: 1, bgcolor: 'action.hover' }}
         aria-busy="true"
         aria-label="Aktivite şeridi yükleniyor"
       />
@@ -27,13 +33,17 @@ export function ProjectActivityStrip({ weeks, loading = false }: ProjectActivity
     )
   }
 
+  const cellSize = compact ? 10 : 14
+
   return (
     <Box>
-      <Typography variant="caption" color="text.secondary" display="block" mb={0.75}>
-        Son 12 haftalık aktivite
-      </Typography>
-      <Box sx={{ overflowX: 'auto', pb: 0.5 }}>
-        <Stack direction="row" spacing={0.5} alignItems="flex-end" minWidth="max-content">
+      {!compact && (
+        <Typography variant="caption" color="text.secondary" display="block" mb={0.75}>
+          Son 12 haftalık aktivite
+        </Typography>
+      )}
+      <Box sx={{ overflowX: 'auto', pb: compact ? 0 : 0.5 }}>
+        <Stack direction="row" spacing={0.4} alignItems="flex-end" minWidth="max-content">
           {weeks.map((week) => {
             const color = ACTIVITY_LEVEL_COLORS[week.level] ?? ACTIVITY_LEVEL_COLORS[0]
             const label = [
@@ -56,9 +66,9 @@ export function ProjectActivityStrip({ weeks, loading = false }: ProjectActivity
                   tabIndex={0}
                   aria-label={label.replace(/\n/g, ', ')}
                   sx={{
-                    width: 14,
-                    height: 14,
-                    borderRadius: '3px',
+                    width: cellSize,
+                    height: cellSize,
+                    borderRadius: '2px',
                     bgcolor: color,
                     border: '1px solid rgba(27,31,35,0.08)',
                     p: 0,
@@ -76,23 +86,25 @@ export function ProjectActivityStrip({ weeks, loading = false }: ProjectActivity
           })}
         </Stack>
       </Box>
-      <Stack direction="row" spacing={0.75} alignItems="center" mt={0.75}>
-        <Typography variant="caption">Az</Typography>
-        {ACTIVITY_LEVEL_COLORS.map((color, level) => (
-          <Box
-            key={color}
-            sx={{
-              width: 10,
-              height: 10,
-              borderRadius: '2px',
-              bgcolor: color,
-              border: '1px solid rgba(27,31,35,0.06)',
-            }}
-            aria-label={`Seviye ${level}`}
-          />
-        ))}
-        <Typography variant="caption">Çok</Typography>
-      </Stack>
+      {!compact && (
+        <Stack direction="row" spacing={0.75} alignItems="center" mt={0.75}>
+          <Typography variant="caption">Az</Typography>
+          {ACTIVITY_LEVEL_COLORS.map((color, level) => (
+            <Box
+              key={color}
+              sx={{
+                width: 10,
+                height: 10,
+                borderRadius: '2px',
+                bgcolor: color,
+                border: '1px solid rgba(27,31,35,0.06)',
+              }}
+              aria-label={`Seviye ${level}`}
+            />
+          ))}
+          <Typography variant="caption">Çok</Typography>
+        </Stack>
+      )}
     </Box>
   )
 }
