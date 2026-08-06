@@ -1,167 +1,166 @@
-import { Box, Button, Divider, Paper, Stack, Typography } from '@mui/material'
-import { useEffect } from 'react'
-import { Link as RouterLink, useParams } from 'react-router-dom'
-import { ErrorState } from '@/components/common/EmptyState'
-import { HealthBadge, StatusBadge } from '@/components/common/StatusBadges'
-import { LoadingState } from '@/components/common/LoadingState'
-import { ProjectActivityCalendar } from '@/components/dashboard/ProjectActivityCalendar'
-import { ProjectProgress } from '@/components/dashboard/ProjectProgress'
-import { useAuth } from '@/contexts/AuthContext'
-import { useProjectDetail } from '@/hooks/useApiQueries'
-import { formatShortDate } from '@/utils/labels'
-import { rememberProjectId } from '@/utils/projectCache'
+import { Box, Stack } from '@mui/material'
+import { useEffect, useMemo } from 'react'
+import { Navigate, useNavigate, useParams, useSearchParams } from 'react-router-dom'
+import { EmptyState } from '@/components/common/EmptyState'
+import { LatestReportPanel } from '@/components/projects/LatestReportPanel'
+import { ProjectDetailHeader } from '@/components/projects/ProjectDetailHeader'
+import { ProjectInfoCard } from '@/components/projects/ProjectInfoCard'
+import { ProjectProgressSummary } from '@/components/projects/ProjectProgressSummary'
+import { ProjectRiskSummary } from '@/components/projects/ProjectRiskSummary'
 import {
-  ACTIVITY_EMPTY_MESSAGE,
-  buildDerivedActivityFromHistory,
-} from '@/utils/projectActivity'
+  ProjectDetailErrorState,
+  ProjectDetailSkeleton,
+} from '@/components/projects/ProjectDetailSkeleton'
+import { ProjectWorkItemSummary } from '@/components/projects/ProjectWorkItemSummary'
+import { ReportHistoryPanel } from '@/components/projects/ReportHistoryPanel'
+import { useAuth } from '@/contexts/AuthContext'
+import {
+  useProjectDetail,
+  useProjectReports,
+  useRiskIssues,
+  useWeeklyReport,
+  useWorkItems,
+} from '@/hooks/useApiQueries'
+import { rememberProjectId } from '@/utils/projectCache'
+import { mapProjectDetail } from '@/utils/projectDetailMapper'
+import { getHttpStatus } from '@/utils/errorUtils'
 
 export function ProjectDetailPage() {
   const { projectId } = useParams()
+  const [searchParams] = useSearchParams()
+  const navigate = useNavigate()
+  const { user, hasAnyRole } = useAuth()
+
   const id = Number(projectId)
-  const { hasAnyRole } = useAuth()
-  const canCreateReport = hasAnyRole('ADMIN', 'PROJECT_MANAGER')
-  const { data, isLoading, isError, refetch } = useProjectDetail(Number.isFinite(id) ? id : null)
+  const validId = Number.isFinite(id) && id > 0
+  const fromDashboard = searchParams.get('from') === 'dashboard'
+  const dashboardQuery = useMemo(() => {
+    const params = new URLSearchParams(searchParams)
+    params.delete('from')
+    const q = params.toString()
+    return q ? `?${q}` : ''
+  }, [searchParams])
+
+  const detailQuery = useProjectDetail(validId ? id : null)
+  const reportsQuery = useProjectReports(validId ? id : null, Boolean(detailQuery.data))
+
+  const latestReportId = detailQuery.data?.latestReport?.reportId ?? null
+  const fullLatestQuery = useWeeklyReport(latestReportId)
+  const workItemsQuery = useWorkItems(latestReportId)
+  const risksQuery = useRiskIssues(latestReportId)
 
   useEffect(() => {
-    if (data?.projectId) rememberProjectId(data.projectId)
-  }, [data?.projectId])
+    if (detailQuery.data?.projectId) rememberProjectId(detailQuery.data.projectId)
+  }, [detailQuery.data?.projectId])
 
-  if (isLoading) {
-    return <LoadingState label="Proje detayı yükleniyor..." fullHeight />
+  if (!validId) {
+    return (
+      <EmptyState
+        title="Proje bulunamadı."
+        description="Geçersiz proje kimliği."
+        actionLabel="Dashboard’a Dön"
+        onAction={() => navigate('/dashboard')}
+      />
+    )
   }
 
-  if (isError || !data) {
-    return <ErrorState onRetry={() => void refetch()} />
+  const status = getHttpStatus(detailQuery.error)
+  if (status === 403) {
+    return <Navigate to="/unauthorized" replace />
+  }
+  if (status === 404) {
+    return (
+      <EmptyState
+        title="Proje bulunamadı."
+        description="Aradığınız proje mevcut değil veya silinmiş olabilir."
+        actionLabel="Dashboard’a Dön"
+        onAction={() => navigate(fromDashboard ? `/dashboard${dashboardQuery}` : '/projects')}
+      />
+    )
   }
 
-  const latestYear = data.latestReport?.year ?? null
-  const latestWeek = data.latestReport?.weekNumber ?? null
+  if (detailQuery.isLoading) {
+    return <ProjectDetailSkeleton />
+  }
 
-  const activity = buildDerivedActivityFromHistory(
-    data.lastFiveReports ?? [],
-    {
-      openRiskCount: data.openRisks,
-      criticalRiskCount: 0,
-      openBlockerCount: data.openBlockers,
-      hasCurrentWeekReport: false,
-      latestReportDate: data.latestReport?.submittedAt?.slice(0, 10) ?? null,
-      latestReportYear: latestYear,
-      latestReportWeek: latestWeek,
-    },
-    26,
-  )
+  if (detailQuery.isError || !detailQuery.data) {
+    return (
+      <ProjectDetailErrorState
+        onRetry={() => void detailQuery.refetch()}
+        onBack={() => navigate(fromDashboard ? `/dashboard${dashboardQuery}` : '/projects')}
+      />
+    )
+  }
+
+  const model = mapProjectDetail(detailQuery.data)
+  const isCto = hasAnyRole('CTO') && !hasAnyRole('ADMIN')
+  const isAdmin = hasAnyRole('ADMIN')
+  const isPm = hasAnyRole('PROJECT_MANAGER')
+  const isOwnProject =
+    user?.userId != null && detailQuery.data.managerId === user.userId
+  // UI aksiyonları; gerçek yetki backend 403 ile doğrulanır.
+  const canCreateReport = isAdmin || (isPm && isOwnProject)
 
   return (
     <Box>
-      <Stack direction="row" spacing={1} mb={2} useFlexGap flexWrap="wrap">
-        <Button component={RouterLink} to="/projects" aria-label="Proje listesine dön">
-          ← Projeler
-        </Button>
-        {canCreateReport && (
-          <Button
-            component={RouterLink}
-            to={`/reports/new?projectId=${data.projectId}`}
-            variant="contained"
-            aria-label="Haftalık rapor oluştur"
-          >
-            Haftalık Rapor Oluştur
-          </Button>
-        )}
-      </Stack>
+      <ProjectDetailHeader
+        model={model}
+        fromDashboard={fromDashboard}
+        dashboardQuery={dashboardQuery}
+        canCreateReport={canCreateReport}
+        canOpenLatestReport={Boolean(latestReportId)}
+        latestReportId={latestReportId}
+        isCto={isCto}
+      />
 
-      <Paper sx={{ p: 2.5, mb: 2 }}>
-        <Stack
-          direction={{ xs: 'column', md: 'row' }}
-          justifyContent="space-between"
-          spacing={1.5}
-          mb={2}
-        >
-          <Box>
-            <Typography variant="h5">{data.name}</Typography>
-            <Typography color="text.secondary">{data.code}</Typography>
-          </Box>
-          <Stack direction="row" spacing={1}>
-            <StatusBadge status={data.projectStatus} />
-            <HealthBadge health={data.latestHealth} />
-          </Stack>
-        </Stack>
-
-        <Typography color="text.secondary" mb={2}>
-          {data.description || 'Açıklama bulunmuyor.'}
-        </Typography>
-
-        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} useFlexGap flexWrap="wrap" mb={2}>
-          <Typography variant="body2">
-            Yönetici: <strong>{data.managerName ?? '—'}</strong>
-          </Typography>
-          <Typography variant="body2">
-            E-posta: <strong>{data.managerEmail ?? '—'}</strong>
-          </Typography>
-          <Typography variant="body2">
-            Başlangıç: <strong>{formatShortDate(data.startDate)}</strong>
-          </Typography>
-          <Typography variant="body2">
-            Hedef bitiş: <strong>{formatShortDate(data.targetEndDate)}</strong>
-          </Typography>
-        </Stack>
-
-        <ProjectProgress target={data.progressTarget} actual={data.progressActual} />
-
-        <Stack direction="row" spacing={3} mt={2} useFlexGap flexWrap="wrap">
-          <Typography variant="body2">
-            Açık risk: <strong>{data.openRisks}</strong>
-          </Typography>
-          <Typography variant="body2">
-            Blocker: <strong>{data.openBlockers}</strong>
-          </Typography>
-          <Typography variant="body2">
-            Rapor geçmişi: <strong>{data.reportHistoryCount}</strong>
-          </Typography>
-        </Stack>
-      </Paper>
-
-      <Paper sx={{ p: 2.5, mb: 2 }}>
-        <Typography variant="subtitle1" mb={0.5}>
-          Proje Aktivitesi
-        </Typography>
-        <Typography variant="body2" color="text.secondary" mb={1.5}>
-          Son 26 haftalık contribution graph benzeri görünüm.
-        </Typography>
-        <ProjectActivityCalendar
-          data={activity}
-          emptyMessage={ACTIVITY_EMPTY_MESSAGE}
+      <Box
+        sx={{
+          display: 'grid',
+          gap: 1.5,
+          gridTemplateColumns: { xs: '1fr', md: '1.1fr 1fr' },
+          mb: 1.5,
+        }}
+      >
+        <ProjectInfoCard model={model} />
+        <ProjectProgressSummary
+          model={model}
+          scheduleStatus={fullLatestQuery.data?.scheduleStatus}
         />
-      </Paper>
+      </Box>
 
-      <Paper sx={{ p: 2.5 }}>
-        <Typography variant="subtitle2" mb={1}>
-          Son raporlar
-        </Typography>
-        <Divider sx={{ mb: 1 }} />
-        <Stack spacing={1}>
-          {(data.lastFiveReports ?? []).length === 0 && (
-            <Typography variant="body2" color="text.secondary">
-              Rapor geçmişi bulunmuyor.
-            </Typography>
-          )}
-          {(data.lastFiveReports ?? []).map((item) => (
-            <Stack
-              key={`${item.year}-${item.weekNumber}`}
-              direction={{ xs: 'column', sm: 'row' }}
-              spacing={1}
-              justifyContent="space-between"
-              sx={{ borderBottom: '1px solid', borderColor: 'divider', py: 1 }}
-            >
-              <Typography variant="body2">
-                {item.year}-W{item.weekNumber}
-              </Typography>
-              <HealthBadge health={item.health} />
-              <Typography variant="body2">{item.progressActual ?? 0}%</Typography>
-              <Typography variant="caption">{formatShortDate(item.submittedAt)}</Typography>
-            </Stack>
-          ))}
-        </Stack>
-      </Paper>
+      <Stack spacing={1.5}>
+        <LatestReportPanel
+          latest={detailQuery.data.latestReport}
+          fullReport={fullLatestQuery.data}
+          canCreateReport={canCreateReport}
+          projectId={model.projectId}
+          readOnly={isCto}
+        />
+
+        <Box
+          sx={{
+            display: 'grid',
+            gap: 1.5,
+            gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' },
+          }}
+        >
+          <ProjectRiskSummary
+            risks={risksQuery.data?.content}
+            openRiskCount={model.openRisks}
+            openBlockerCount={model.openBlockers}
+            loading={risksQuery.isLoading}
+          />
+          <ProjectWorkItemSummary
+            items={workItemsQuery.data?.content}
+            loading={workItemsQuery.isLoading}
+          />
+        </Box>
+
+        <ReportHistoryPanel
+          history={detailQuery.data.lastFiveReports}
+          reports={reportsQuery.data?.content}
+        />
+      </Stack>
     </Box>
   )
 }

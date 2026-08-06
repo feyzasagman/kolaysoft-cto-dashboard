@@ -1,9 +1,10 @@
 import { Box, Stack } from '@mui/material'
 import { useEffect, useMemo, useState } from 'react'
-import { Navigate, useNavigate } from 'react-router-dom'
+import { Navigate, useNavigate, useSearchParams } from 'react-router-dom'
 import { EmptyState } from '@/components/common/EmptyState'
 import { CriticalRisksPanel } from '@/components/dashboard/CriticalRisksPanel'
 import { DashboardErrorState } from '@/components/dashboard/DashboardErrorState'
+import { DashboardFilterBar } from '@/components/dashboard/DashboardFilterBar'
 import { DashboardHeader } from '@/components/dashboard/DashboardHeader'
 import { DashboardSkeleton } from '@/components/dashboard/DashboardSkeleton'
 import { DashboardSummaryCards } from '@/components/dashboard/DashboardSummary'
@@ -19,28 +20,63 @@ import {
   useDashboardProjects,
   useDashboardSummary,
   useHealthDistribution,
+  useUsers,
 } from '@/hooks/useApiQueries'
+import {
+  DEFAULT_DASHBOARD_FILTERS,
+  dashboardReturnQuery,
+  hasActiveFilters,
+  parseDashboardFilters,
+  toApiProjectParams,
+  toSearchParams,
+  type DashboardFilterState,
+} from '@/utils/dashboardFilterMapper'
 import { mapPortfolioRows } from '@/utils/dashboardMapper'
 import { getHttpStatus } from '@/utils/errorUtils'
 
 /**
- * Day 13 — CTO Dashboard MVP
- * KPI + sağlık dağılımı + proje portföy tablosu (+ kritik risk önizleme).
+ * Day 14 — Dashboard MVP + temel filtreler, URL state, proje detay geçişi.
  */
 export function DashboardPage() {
   const { user, hasAnyRole } = useAuth()
   const navigate = useNavigate()
-  const [page, setPage] = useState(0)
+  const [searchParams, setSearchParams] = useSearchParams()
   const [lastRefreshedAt, setLastRefreshedAt] = useState<Date | null>(null)
+  const [searchInput, setSearchInput] = useState('')
 
   const canAccessDashboard = hasAnyRole('ADMIN', 'CTO')
+  const filters = useMemo(() => parseDashboardFilters(searchParams), [searchParams])
+
+  useEffect(() => {
+    setSearchInput(filters.search)
+  }, [filters.search])
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      if (searchInput === filters.search) return
+      const next = { ...filters, search: searchInput, page: 0 }
+      setSearchParams(toSearchParams(next), { replace: true })
+    }, 350)
+    return () => window.clearTimeout(timer)
+  }, [searchInput, filters, setSearchParams])
+
+  const updateFilters = (next: DashboardFilterState) => {
+    setSearchParams(toSearchParams(next), { replace: true })
+  }
+
+  const clearFilters = () => {
+    setSearchInput('')
+    setSearchParams(toSearchParams({ ...DEFAULT_DASHBOARD_FILTERS }), { replace: true })
+  }
+
+  const apiParams = toApiProjectParams(filters)
 
   const summaryQuery = useDashboardSummary(canAccessDashboard)
   const healthQuery = useHealthDistribution(canAccessDashboard)
   const risksQuery = useCriticalRisks(8, canAccessDashboard)
-  const projectsQuery = useDashboardProjects(
-    { page, size: 10, sort: 'name,asc' },
-    canAccessDashboard,
+  const projectsQuery = useDashboardProjects(apiParams, canAccessDashboard)
+  const managersQuery = useUsers(
+    { page: 0, size: 100, role: 'PROJECT_MANAGER', active: true },
   )
 
   const refreshAll = () => {
@@ -70,6 +106,14 @@ export function DashboardPage() {
     () => mapPortfolioRows(projectsQuery.data?.content),
     [projectsQuery.data?.content],
   )
+
+  const filterBarValue = { ...filters, search: searchInput }
+  const returnSuffix = dashboardReturnQuery(filters)
+  // from=dashboard so detail knows back target
+  const detailQuery =
+    returnSuffix.length > 0
+      ? `${returnSuffix}&from=dashboard`
+      : '?from=dashboard'
 
   if (!canAccessDashboard) {
     return <Navigate to="/unauthorized" replace />
@@ -102,6 +146,7 @@ export function DashboardPage() {
 
   const totalElements = projectsQuery.data?.totalElements ?? 0
   const totalPages = projectsQuery.data?.totalPages ?? 0
+  const filtersActive = hasActiveFilters(filters)
 
   return (
     <Box>
@@ -149,6 +194,13 @@ export function DashboardPage() {
           )}
         </Box>
 
+        <DashboardFilterBar
+          value={filterBarValue}
+          managers={managersQuery.data?.content ?? []}
+          onChange={updateFilters}
+          onClear={clearFilters}
+        />
+
         {projectsQuery.isError ? (
           <DashboardErrorState
             title="Proje portföyü alınamadı."
@@ -158,19 +210,42 @@ export function DashboardPage() {
           <ProjectTableSkeleton />
         ) : totalElements === 0 ? (
           <EmptyState
-            title="Henüz proje bulunmuyor"
-            description="Projeler eklendiğinde sağlık, ilerleme ve rapor bilgileri burada görüntülenecektir."
-            actionLabel={hasAnyRole('ADMIN') ? 'Projeleri Görüntüle' : undefined}
-            onAction={hasAnyRole('ADMIN') ? () => navigate('/projects') : undefined}
+            title={
+              filtersActive
+                ? 'Filtrelere uygun proje bulunamadı.'
+                : 'Henüz proje bulunmuyor'
+            }
+            description={
+              filtersActive
+                ? 'Filtreleri temizleyerek yeniden deneyebilirsiniz.'
+                : 'Projeler eklendiğinde sağlık, ilerleme ve rapor bilgileri burada görüntülenecektir.'
+            }
+            actionLabel={
+              filtersActive
+                ? 'Filtreleri Temizle'
+                : hasAnyRole('ADMIN')
+                  ? 'Projeleri Görüntüle'
+                  : undefined
+            }
+            onAction={
+              filtersActive
+                ? clearFilters
+                : hasAnyRole('ADMIN')
+                  ? () => navigate('/projects')
+                  : undefined
+            }
           />
         ) : (
           <ProjectPortfolioTable
             rows={portfolioRows}
-            page={page}
+            page={filters.page}
+            size={filters.size}
             totalPages={totalPages}
             totalElements={totalElements}
             loading={projectsQuery.isFetching}
-            onPageChange={setPage}
+            detailQuerySuffix={detailQuery}
+            onPageChange={(page) => updateFilters({ ...filters, page })}
+            onSizeChange={(size) => updateFilters({ ...filters, size, page: 0 })}
           />
         )}
 

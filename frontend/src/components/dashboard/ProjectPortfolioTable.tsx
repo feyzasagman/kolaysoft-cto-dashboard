@@ -1,8 +1,12 @@
 import {
   Box,
   Button,
+  FormControl,
+  InputLabel,
   LinearProgress,
+  MenuItem,
   Pagination,
+  Select,
   Stack,
   Table,
   TableBody,
@@ -23,10 +27,13 @@ import type { PortfolioRow } from '@/utils/dashboardTypes'
 interface ProjectPortfolioTableProps {
   rows: PortfolioRow[]
   page: number
+  size: number
   totalPages: number
   totalElements: number
   loading?: boolean
+  detailQuerySuffix?: string
   onPageChange: (page: number) => void
+  onSizeChange?: (size: number) => void
 }
 
 function ProgressCell({ target, actual }: { target: number; actual: number }) {
@@ -42,6 +49,9 @@ function ProgressCell({ target, actual }: { target: number; actual: number }) {
         variant="determinate"
         value={actual}
         aria-label={`Gerçekleşen ${actual} yüzde, hedef ${target} yüzde`}
+        aria-valuenow={actual}
+        aria-valuemin={0}
+        aria-valuemax={100}
         sx={{
           height: 6,
           borderRadius: 999,
@@ -59,10 +69,13 @@ function ProgressCell({ target, actual }: { target: number; actual: number }) {
 export function ProjectPortfolioTable({
   rows,
   page,
+  size,
   totalPages,
   totalElements,
   loading = false,
+  detailQuerySuffix = '',
   onPageChange,
+  onSizeChange,
 }: ProjectPortfolioTableProps) {
   const navigate = useNavigate()
 
@@ -84,9 +97,27 @@ export function ProjectPortfolioTable({
         sx={{ px: 2, py: 1.5, borderBottom: '1px solid', borderColor: 'divider' }}
       >
         <Typography variant="h5">Proje portföyü</Typography>
-        <Typography variant="caption" color="text.secondary">
-          {totalElements} proje
-        </Typography>
+        <Stack direction="row" spacing={1} alignItems="center">
+          <Typography variant="caption" color="text.secondary">
+            {totalElements} proje
+            {loading ? ' · güncelleniyor…' : ''}
+          </Typography>
+          {onSizeChange && (
+            <FormControl size="small" sx={{ minWidth: 90 }}>
+              <InputLabel id="table-size-label">Boyut</InputLabel>
+              <Select
+                labelId="table-size-label"
+                label="Boyut"
+                value={size}
+                onChange={(e) => onSizeChange(Number(e.target.value))}
+              >
+                <MenuItem value={10}>10</MenuItem>
+                <MenuItem value={20}>20</MenuItem>
+                <MenuItem value={50}>50</MenuItem>
+              </Select>
+            </FormControl>
+          )}
+        </Stack>
       </Stack>
 
       <TableContainer sx={{ maxWidth: '100%', overflowX: 'auto' }}>
@@ -113,9 +144,6 @@ export function ProjectPortfolioTable({
                   <Typography variant="body2" fontWeight={650} noWrap>
                     {row.name}
                   </Typography>
-                  <Typography variant="caption" color="text.secondary" display={{ xs: 'block', md: 'none' }}>
-                    {row.code}
-                  </Typography>
                 </TableCell>
                 <TableCell>{row.code}</TableCell>
                 <TableCell>{row.managerName}</TableCell>
@@ -138,7 +166,9 @@ export function ProjectPortfolioTable({
                   <Button
                     size="small"
                     variant="outlined"
-                    onClick={() => navigate(`/projects/${row.projectId}`)}
+                    onClick={() =>
+                      navigate(`/projects/${row.projectId}${detailQuerySuffix}`)
+                    }
                     aria-label={`${row.name} detayını gör`}
                   >
                     Detayı Gör

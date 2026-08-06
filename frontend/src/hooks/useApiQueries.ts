@@ -78,6 +78,7 @@ export function useDashboardProjects(
     health?: ReportHealth | ''
     riskLevel?: RiskLevel | ''
     hasCurrentWeekReport?: boolean
+    managerId?: number
   },
   enabled = true,
 ) {
@@ -90,6 +91,7 @@ export function useDashboardProjects(
         projectStatus: params.projectStatus || undefined,
         health: params.health || undefined,
         riskLevel: params.riskLevel || undefined,
+        managerId: params.managerId,
       })
       return data.data
     },
@@ -210,6 +212,21 @@ export function useWeeklyReports(params: PageQuery & {
     queryKey: ['reports', params],
     queryFn: async () => {
       const { data } = await reportsApi.getReports(params)
+      return data.data
+    },
+  })
+}
+
+export function useProjectReports(projectId: number | null, enabled = true) {
+  return useQuery({
+    queryKey: ['reports', 'project', projectId],
+    enabled: enabled && projectId != null && projectId > 0,
+    queryFn: async () => {
+      const { data } = await reportsApi.getReportsByProject(projectId as number, {
+        page: 0,
+        size: 10,
+        sort: 'reportDate,desc',
+      })
       return data.data
     },
   })

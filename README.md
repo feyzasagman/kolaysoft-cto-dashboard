@@ -1,4 +1,4 @@
-﻿# Kolaysoft CTO Dashboard
+# Kolaysoft CTO Dashboard
 
 ## Weekly Project Status Reporting and CTO Tracking System
 
@@ -76,6 +76,45 @@ Demo adımları:
 
 Ayrıntılar: `docs/analysis/Day13_CTO_Dashboard_MVP.md`
 
+### Day 14 — Dashboard filtreleri ve proje detayı
+
+- Dashboard filtreleri (URL query senkron): search, projectStatus, health, managerId, hasCurrentWeekReport, riskLevel, sort, page, size
+- Proje detay ekranı: `/projects/:projectId` (`GET /dashboard/projects/{id}` + rapor/risk/iş kalemi zenginleştirme)
+- Detay alanları: temel bilgi, ilerleme özeti, son haftalık rapor, risk/engel, aktif iş kalemleri, son 5 rapor
+- Rol bazlı erişim: ADMIN/CTO tüm detay; PM yalnızca atanmış proje; CTO salt okunur
+- Dashboard → detay → geri dönüşte filtre/pagination URL’de korunur
+
+Endpointler:
+
+- `GET /api/v1/dashboard/projects` (filtre + sayfalama)
+- `GET /api/v1/dashboard/projects/{projectId}`
+- `GET /api/v1/reports/{id}`, `GET /api/v1/reports/project/{projectId}`
+- `GET /api/v1/work-items?reportId=`, risk listesi (`reportId`)
+
+Demo adımları:
+
+1. ADMIN/CTO ile giriş → `/dashboard`
+2. Durum / sağlık / arama filtrelerini uygula; URL’de parametreleri kontrol et
+3. Sayfa boyutu 10/20/50 ve sıralama değiştir
+4. **Detayı Gör** → proje bilgisi, son rapor, risk, iş kalemi, geçmiş
+5. **Geri Dön** → filtrelerin korunduğunu doğrula
+6. PM: kendi proje detayı + rapor oluştur; başka proje URL → 403
+
+Filtre örneği:
+
+```
+/dashboard?projectStatus=ACTIVE&health=GREEN&hasCurrentWeekReport=false&page=0&size=20&sort=name,asc
+```
+
+Bilinen eksikler (Day 14):
+
+- Sort allowlist: `name`, `code`, `status`, `createdAt`, `id` (ilerleme/risk/son rapor tarihi yok)
+- `customer` DTO’da yok → UI `—`
+- Rapor geçmişi DTO’da `reportId` yok → yıl+hafta eşlemesi
+- Proje düzenleme route’u yok → “Projeyi Düzenle” butonu yok
+
+Ayrıntılar: `docs/analysis/Day14_Dashboard_Project_Detail_and_Filters.md`
+
 ### Frontend ortam değişkeni
 
 `frontend/.env` (örnek: `.env.example`):
@@ -111,6 +150,8 @@ VITE_API_BASE_URL=http://localhost:8080/api/v1
 
 - Backend’de PM için `GET /projects` / `GET /dashboard/projects` listesi yok (403); frontend raporlar + bilinen proje id önbelleği ile telafi eder
 - `customer` alanı entity’de var, response DTO’da yok → UI’da `—`
+- Dashboard sort alanları ilerleme / açık risk / son rapor tarihini kapsamıyor
+- Rapor history DTO’sunda `reportId` yok
 - Frontend unit test kütüphanesi yok (vitest/RTL eklenmedi)
 - Refresh token endpointi yok
 
@@ -127,8 +168,7 @@ VITE_API_BASE_URL=http://localhost:8080/api/v1
 PostgreSQL üzerinde `cto_dashboard` adında bir veritabanı oluşturun. Gerçek bağlantı bilgilerini
 repository'ye eklemeyin; ortam değişkenleri üzerinden sağlayın.
 
-Geliştirme ortamında Hibernate `ddl-auto=update` ile tablolar entity modelinden otomatik oluşturulur.
-Referans SQL şeması: `database/schema.sql`
+Şema **Flyway** migration ile yönetilir (`ddl-auto=validate`). Referans SQL (döküman): `database/schema.sql`
 
 Gerekli ortam değişkenleri:
 
@@ -158,8 +198,91 @@ $env:DB_PASSWORD="your_password"
 ./mvnw spring-boot:run
 ```
 
-Üretim profili için `SPRING_PROFILES_ACTIVE=prod` kullanın. Üretimde `ddl-auto=validate` aktiftir;
+Üretim profili için `SPRING_PROFILES_ACTIVE=prod` kullanın. Üretimde `ddl-auto=validate` ve Flyway aktiftir;
 şifre ve bağlantı bilgileri zorunlu ortam değişkenlerinden okunur.
+
+### Database Migration
+
+Şema değişiklikleri Flyway ile versiyonlanır. Hibernate tabloları otomatik oluşturmaz/güncellemez (`ddl-auto=validate`).
+
+**Migration klasörü**
+
+`backend/cto-dashboard-api/src/main/resources/db/migration`
+
+| Dosya | Açıklama |
+|---|---|
+| `V1__init_schema.sql` | Entity modeline dayalı ilk şema |
+
+`database/sample_data.sql` boştur; demo/admin kullanıcılar migration’a taşınmaz. Dev seed: `DevDataInitializer` (`dev` profili).
+
+**Yeni migration ekleme**
+
+1. `V{n}__kisa_aciklama.sql` oluşturun (ör. `V2__add_project_index.sql`)
+2. Yalnızca DDL yazın (`CREATE`/`ALTER`); demo veri eklemeyin
+3. Uygulamayı başlatın — Flyway sırayla uygular
+4. Entity ile migration’ı senkron tutun; entity’yi migration’a uydurmak için tersine çevirmeyin
+
+**Temiz kurulum (boş veritabanı)**
+
+```powershell
+# Docker örneği: yeni DB
+docker exec -it cto-dashboard-postgres psql -U postgres -c "CREATE DATABASE cto_dashboard;"
+
+cd backend/cto-dashboard-api
+$env:SPRING_PROFILES_ACTIVE="dev"
+$env:DB_URL="jdbc:postgresql://localhost:5432/cto_dashboard"
+$env:DB_USERNAME="postgres"
+$env:DB_PASSWORD="postgres"
+./mvnw spring-boot:run "-Dspring-boot.run.profiles=dev"
+```
+
+İlk açılışta V1 çalışır, `flyway_schema_history` oluşur, `DevDataInitializer` roller + admin seed eder.
+
+**Mevcut dolu development DB için baseline (tek seferlik)**
+
+Eski `cto_dashboard` Hibernate `ddl-auto=update` ile oluşmuş olabilir ve `flyway_schema_history` yoktur.
+Bu durumda uygulamayı doğrudan başlatmak V1’i yeniden çalıştırmaya çalışır ve **çakışır**.
+
+Kodda `baseline-on-migrate` **yoktur**. Tek seferlik baseline (önerilen):
+
+```powershell
+# Flyway Docker image — mevcut tabloları silmeden şemayı V1 olarak işaretler
+docker run --rm `
+  --network host `
+  -v "${PWD}/backend/cto-dashboard-api/src/main/resources/db/migration:/flyway/sql" `
+  flyway/flyway:11 `
+  -url="jdbc:postgresql://localhost:5432/cto_dashboard" `
+  -user="postgres" `
+  -password="postgres" `
+  baseline -baselineVersion="1" -baselineDescription="init schema"
+```
+
+Windows’ta `--network host` sorun çıkarırsa host IP kullanın:
+
+```powershell
+docker run --rm `
+  -v "${PWD}/flyway-sql:/flyway/sql" `
+  flyway/flyway:11 `
+  -url="jdbc:postgresql://host.docker.internal:5432/cto_dashboard" `
+  -user="postgres" `
+  -password="postgres" `
+  baseline -baselineVersion="1" -baselineDescription="init schema"
+```
+
+(`flyway-sql` klasörüne migration dosyalarını kopyalayın veya volume yolunu doğrudan `db/migration` yapın.)
+
+CLI kuruluysa:
+
+```powershell
+flyway -url="jdbc:postgresql://localhost:5432/cto_dashboard" `
+  -user=postgres -password=postgres `
+  -locations="filesystem:backend/cto-dashboard-api/src/main/resources/db/migration" `
+  baseline -baselineVersion=1 -baselineDescription="init schema"
+```
+
+Baseline sonrası uygulamayı normal başlatın. Sonraki şema değişiklikleri `V2+` olarak eklenir.
+
+**Not:** `cto_dashboard_flyway_test` gibi boş bir DB ile Flyway’i doğrulamak baseline gerektirmez.
 
 ### Test
 

@@ -76,6 +76,18 @@ export function riskStatusLabel(status: string | null | undefined): string {
   return RISK_STATUS_LABELS[status as RiskStatus] ?? status
 }
 
+const SCHEDULE_LABELS: Record<string, string> = {
+  ON_TRACK: 'Takvimde',
+  AT_RISK: 'Risk altında',
+  DELAYED: 'Gecikmiş',
+  AHEAD: 'İleride',
+}
+
+export function scheduleStatusLabel(status: string | null | undefined): string {
+  if (!status) return '—'
+  return SCHEDULE_LABELS[status.trim().toUpperCase()] ?? status
+}
+
 /** ISO hafta numarası (1–53). */
 export function currentIsoWeek(date = new Date()): { year: number; week: number; reportDate: string } {
   const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()))
