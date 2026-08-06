@@ -1,53 +1,70 @@
-import FilterAltOutlinedIcon from '@mui/icons-material/FilterAltOutlined'
 import RefreshIcon from '@mui/icons-material/Refresh'
 import { Button, Stack, Typography } from '@mui/material'
+import type { RoleType } from '@/types/api'
+import { mapDashboardHeader } from '@/utils/dashboardMapper'
 
 interface DashboardHeaderProps {
+  role?: RoleType
   fullName?: string | null
+  lastRefreshedAt?: Date | null
+  refreshing?: boolean
   onRefresh: () => void
 }
 
-export function DashboardHeader({ fullName, onRefresh }: DashboardHeaderProps) {
+export function DashboardHeader({
+  role,
+  fullName,
+  lastRefreshedAt,
+  refreshing = false,
+  onRefresh,
+}: DashboardHeaderProps) {
+  const model = mapDashboardHeader(role, fullName)
+  const refreshedLabel = lastRefreshedAt
+    ? lastRefreshedAt.toLocaleString('tr-TR', {
+        day: '2-digit',
+        month: 'short',
+        hour: '2-digit',
+        minute: '2-digit',
+      })
+    : null
+
   return (
     <Stack
-      direction={{ xs: 'column', lg: 'row' }}
+      direction={{ xs: 'column', md: 'row' }}
       justifyContent="space-between"
-      alignItems={{ lg: 'flex-start' }}
-      spacing={2}
+      alignItems={{ md: 'flex-start' }}
+      spacing={1.5}
       mb={2.5}
     >
-      <Stack spacing={0.5}>
-        <Typography variant="h5">Proje Genel Görünümü</Typography>
-        <Typography color="text.secondary">
-          Projelerin sağlık, ilerleme, risk ve haftalık aktivite durumlarının güncel özeti.
+      <Stack spacing={0.5} sx={{ minWidth: 0 }}>
+        <Typography variant="h1" sx={{ fontSize: { xs: '1.5rem', md: '1.75rem' } }}>
+          {model.title}
         </Typography>
-        {fullName && (
-          <Typography variant="body2" fontWeight={600}>
-            Hoş geldiniz, {fullName}
+        <Typography color="text.secondary" maxWidth={720}>
+          {model.description}
+        </Typography>
+        {model.welcome && (
+          <Typography variant="body2" fontWeight={650}>
+            {model.welcome}
+          </Typography>
+        )}
+        {refreshedLabel && (
+          <Typography variant="caption" color="text.secondary">
+            Son yenilenme: {refreshedLabel}
           </Typography>
         )}
       </Stack>
 
-      <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">
-        <Button
-          variant="outlined"
-          startIcon={<FilterAltOutlinedIcon />}
-          aria-label="Filtrelere git"
-          onClick={() => {
-            document.getElementById('dashboard-filters')?.scrollIntoView({ behavior: 'smooth' })
-          }}
-        >
-          Filtre
-        </Button>
-        <Button
-          variant="outlined"
-          startIcon={<RefreshIcon />}
-          onClick={onRefresh}
-          aria-label="Dashboard verilerini yenile"
-        >
-          Yenile
-        </Button>
-      </Stack>
+      <Button
+        variant="outlined"
+        startIcon={<RefreshIcon />}
+        onClick={onRefresh}
+        disabled={refreshing}
+        aria-label="Dashboard verilerini yenile"
+        sx={{ alignSelf: { xs: 'stretch', md: 'flex-start' }, minHeight: 36 }}
+      >
+        {refreshing ? 'Yenileniyor…' : 'Yenile'}
+      </Button>
     </Stack>
   )
 }

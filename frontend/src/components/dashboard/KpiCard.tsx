@@ -1,4 +1,4 @@
-import { Box, Stack, Typography } from '@mui/material'
+import { Box, Skeleton, Stack, Tooltip, Typography } from '@mui/material'
 import type { ReactNode } from 'react'
 
 interface KpiCardProps {
@@ -7,7 +7,7 @@ interface KpiCardProps {
   secondary?: string
   icon: ReactNode
   tone?: string
-  trendLabel?: string
+  tooltip?: string
 }
 
 export function KpiCard({
@@ -16,9 +16,9 @@ export function KpiCard({
   secondary,
   icon,
   tone = '#0969DA',
-  trendLabel,
+  tooltip,
 }: KpiCardProps) {
-  return (
+  const card = (
     <Box
       sx={{
         bgcolor: 'background.paper',
@@ -53,18 +53,30 @@ export function KpiCard({
           <Typography variant="caption" fontWeight={650} color="text.secondary">
             {label}
           </Typography>
-          <Typography sx={{ fontSize: '1.75rem', fontWeight: 700, lineHeight: 1.15, my: 0.25 }}>
+          <Typography
+            sx={{ fontSize: { xs: '1.5rem', md: '1.75rem' }, fontWeight: 700, lineHeight: 1.15, my: 0.25 }}
+            aria-label={`${label}: ${value ?? '—'}`}
+          >
             {value ?? '—'}
           </Typography>
-          {(secondary || trendLabel) && (
+          {secondary && (
             <Typography variant="caption" color="text.secondary" display="block">
               {secondary}
-              {secondary && trendLabel ? ' · ' : ''}
-              {trendLabel}
             </Typography>
           )}
         </Box>
       </Stack>
     </Box>
   )
+
+  if (!tooltip) return card
+  return (
+    <Tooltip title={tooltip} enterDelay={200} describeChild>
+      <Box sx={{ height: '100%' }}>{card}</Box>
+    </Tooltip>
+  )
+}
+
+export function KpiCardSkeleton() {
+  return <Skeleton variant="rounded" height={96} aria-label="KPI yükleniyor" />
 }

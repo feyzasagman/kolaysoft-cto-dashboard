@@ -39,9 +39,10 @@ export function useLoginMutation() {
   })
 }
 
-export function useDashboardSummary() {
+export function useDashboardSummary(enabled = true) {
   return useQuery({
     queryKey: ['dashboard', 'summary'],
+    enabled,
     queryFn: async () => {
       const { data } = await dashboardApi.getSummary()
       return data.data
@@ -49,9 +50,10 @@ export function useDashboardSummary() {
   })
 }
 
-export function useHealthDistribution() {
+export function useHealthDistribution(enabled = true) {
   return useQuery({
     queryKey: ['dashboard', 'health-distribution'],
+    enabled,
     queryFn: async () => {
       const { data } = await dashboardApi.getHealthDistribution()
       return data.data
@@ -59,9 +61,10 @@ export function useHealthDistribution() {
   })
 }
 
-export function useCriticalRisks(limit = 8) {
+export function useCriticalRisks(limit = 8, enabled = true) {
   return useQuery({
     queryKey: ['dashboard', 'critical-risks', limit],
+    enabled,
     queryFn: async () => {
       const { data } = await dashboardApi.getCriticalRisks({ limit })
       return data.data

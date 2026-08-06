@@ -1,108 +1,55 @@
 import {
-  AssessmentOutlined,
+  AssignmentLateOutlined,
   FolderOpenOutlined,
   ReportProblemOutlined,
   TaskAltOutlined,
   WarningAmberOutlined,
   WorkOutlineOutlined,
 } from '@mui/icons-material'
-import { Box, Paper, Stack, Typography } from '@mui/material'
+import { Box } from '@mui/material'
 import type { ReactNode } from 'react'
+import { KpiCard, KpiCardSkeleton } from '@/components/dashboard/KpiCard'
 import type { DashboardSummary } from '@/types/api'
+import { mapSummaryToKpis } from '@/utils/dashboardMapper'
 
-interface SummaryCardProps {
-  title: string
-  value: number
-  description: string
-  icon: ReactNode
-  tone?: string
-}
-
-export function SummaryCard({ title, value, description, icon, tone = '#1F6F54' }: SummaryCardProps) {
-  return (
-    <Paper sx={{ p: 1.75, height: '100%' }}>
-      <Stack direction="row" spacing={1.5} alignItems="flex-start">
-        <Box
-          sx={{
-            width: 34,
-            height: 34,
-            borderRadius: 1,
-            display: 'grid',
-            placeItems: 'center',
-            bgcolor: `${tone}14`,
-            color: tone,
-            border: '1px solid',
-            borderColor: 'divider',
-            flexShrink: 0,
-          }}
-        >
-          {icon}
-        </Box>
-        <Box sx={{ minWidth: 0 }}>
-          <Typography variant="caption" color="text.secondary">
-            {title}
-          </Typography>
-          <Typography variant="h5" fontWeight={700} lineHeight={1.2}>
-            {value}
-          </Typography>
-          <Typography variant="caption" color="text.secondary">
-            {description}
-          </Typography>
-        </Box>
-      </Stack>
-    </Paper>
-  )
+const ICONS: Record<string, ReactNode> = {
+  totalProjects: <FolderOpenOutlined fontSize="small" />,
+  activeProjects: <WorkOutlineOutlined fontSize="small" />,
+  completedProjects: <TaskAltOutlined fontSize="small" />,
+  openRisks: <WarningAmberOutlined fontSize="small" />,
+  criticalRisks: <ReportProblemOutlined fontSize="small" />,
+  projectsWithoutCurrentWeekReport: <AssignmentLateOutlined fontSize="small" />,
 }
 
 interface DashboardSummaryProps {
-  summary: DashboardSummary
+  summary: DashboardSummary | null | undefined
+  loading?: boolean
 }
 
-export function DashboardSummaryCards({ summary }: DashboardSummaryProps) {
-  const cards = [
-    {
-      title: 'Toplam Proje',
-      value: summary.totalProjects,
-      description: 'Kayıtlı tüm projeler',
-      icon: <FolderOpenOutlined fontSize="small" />,
-      tone: '#24292F',
-    },
-    {
-      title: 'Aktif Proje',
-      value: summary.activeProjects,
-      description: 'Devam eden çalışmalar',
-      icon: <WorkOutlineOutlined fontSize="small" />,
-      tone: '#1F6F54',
-    },
-    {
-      title: 'Tamamlanan Proje',
-      value: summary.completedProjects,
-      description: 'Kapanmış projeler',
-      icon: <TaskAltOutlined fontSize="small" />,
-      tone: '#1A7F37',
-    },
-    {
-      title: 'Açık Risk',
-      value: summary.openRisks,
-      description: 'OPEN / IN_PROGRESS',
-      icon: <WarningAmberOutlined fontSize="small" />,
-      tone: '#9A6700',
-    },
-    {
-      title: 'Kritik Risk',
-      value: summary.criticalRisks,
-      description: 'Öncelikli riskler',
-      icon: <ReportProblemOutlined fontSize="small" />,
-      tone: '#CF222E',
-    },
-    {
-      title: 'Gönderilen Rapor',
-      value: summary.submittedReports,
-      description: 'Haftalık raporlar',
-      icon: <AssessmentOutlined fontSize="small" />,
-      tone: '#0969DA',
-    },
-  ]
+export function DashboardSummaryCards({ summary, loading = false }: DashboardSummaryProps) {
+  if (loading) {
+    return (
+      <Box
+        sx={{
+          display: 'grid',
+          gap: 1.5,
+          gridTemplateColumns: {
+            xs: '1fr',
+            sm: 'repeat(2, minmax(0, 1fr))',
+            lg: 'repeat(3, minmax(0, 1fr))',
+          },
+        }}
+        aria-busy="true"
+        aria-label="Özet metrikler yükleniyor"
+      >
+        {Array.from({ length: 6 }).map((_, i) => (
+          <KpiCardSkeleton key={i} />
+        ))}
+      </Box>
+    )
+  }
+
+  const cards = mapSummaryToKpis(summary)
 
   return (
     <Box
@@ -115,10 +62,22 @@ export function DashboardSummaryCards({ summary }: DashboardSummaryProps) {
           lg: 'repeat(3, minmax(0, 1fr))',
         },
       }}
+      aria-label="Özet metrik kartları"
     >
       {cards.map((card) => (
-        <SummaryCard key={card.title} {...card} />
+        <KpiCard
+          key={card.key}
+          label={card.label}
+          value={card.value}
+          secondary={card.description}
+          tooltip={card.description}
+          icon={ICONS[card.key]}
+          tone={card.tone}
+        />
       ))}
     </Box>
   )
 }
+
+/** Day 13 export alias */
+export { DashboardSummaryCards as DashboardSummary }

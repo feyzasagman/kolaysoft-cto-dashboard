@@ -1,49 +1,14 @@
-import { Box, LinearProgress, Stack, Typography } from '@mui/material'
+import { Box, LinearProgress, Stack, Tooltip, Typography } from '@mui/material'
 import type { HealthDistribution } from '@/types/api'
+import { mapHealthDistribution } from '@/utils/dashboardMapper'
 
 interface HealthDistributionPanelProps {
-  data: HealthDistribution
+  data: HealthDistribution | null | undefined
+  loading?: boolean
 }
 
-function Row({
-  label,
-  value,
-  total,
-  color,
-}: {
-  label: string
-  value: number
-  total: number
-  color: string
-}) {
-  const pct = total > 0 ? Math.round((value / total) * 100) : 0
-  return (
-    <Box>
-      <Stack direction="row" justifyContent="space-between" mb={0.5}>
-        <Typography variant="body2" fontWeight={600}>
-          {label}
-        </Typography>
-        <Typography variant="caption">
-          {value} · {pct}%
-        </Typography>
-      </Stack>
-      <LinearProgress
-        variant="determinate"
-        value={pct}
-        aria-label={`${label} ${value}`}
-        sx={{
-          height: 8,
-          borderRadius: 999,
-          bgcolor: '#EBEDF0',
-          '& .MuiLinearProgress-bar': { bgcolor: color, borderRadius: 999 },
-        }}
-      />
-    </Box>
-  )
-}
-
-export function HealthDistributionPanel({ data }: HealthDistributionPanelProps) {
-  const total = data.green + data.yellow + data.red + data.noReport
+export function HealthDistributionPanel({ data, loading = false }: HealthDistributionPanelProps) {
+  const { total, slices } = mapHealthDistribution(data)
 
   return (
     <Box
@@ -55,6 +20,7 @@ export function HealthDistributionPanel({ data }: HealthDistributionPanelProps) 
         p: 2,
         height: '100%',
       }}
+      aria-label="Sağlık dağılımı paneli"
     >
       <Typography variant="h5" mb={0.5}>
         Sağlık dağılımı
@@ -62,16 +28,42 @@ export function HealthDistributionPanel({ data }: HealthDistributionPanelProps) 
       <Typography variant="caption" color="text.secondary" display="block" mb={2}>
         Aktif projelerin son rapor sağlığı
       </Typography>
-      {total === 0 ? (
+
+      {loading ? (
+        <Typography variant="body2" color="text.secondary" aria-busy="true">
+          Dağılım yükleniyor…
+        </Typography>
+      ) : total === 0 ? (
         <Typography variant="body2" color="text.secondary">
-          Dağılım verisi bulunmuyor.
+          Sağlık dağılımı için yeterli veri bulunmuyor.
         </Typography>
       ) : (
         <Stack spacing={1.5}>
-          <Row label="Sağlıklı" value={data.green} total={total} color="#1A7F37" />
-          <Row label="Dikkat" value={data.yellow} total={total} color="#9A6700" />
-          <Row label="Kritik" value={data.red} total={total} color="#CF222E" />
-          <Row label="Rapor yok" value={data.noReport} total={total} color="#656D76" />
+          {slices.map((slice) => (
+            <Box key={slice.key}>
+              <Stack direction="row" justifyContent="space-between" mb={0.5} gap={1}>
+                <Typography variant="body2" fontWeight={600}>
+                  {slice.label}
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  {slice.value} · {slice.percent}%
+                </Typography>
+              </Stack>
+              <Tooltip title={`${slice.label}: ${slice.value} proje (${slice.percent}%)`} describeChild>
+                <LinearProgress
+                  variant="determinate"
+                  value={slice.percent}
+                  aria-label={`${slice.label} ${slice.value} proje, yüzde ${slice.percent}`}
+                  sx={{
+                    height: 8,
+                    borderRadius: 999,
+                    bgcolor: '#EBEDF0',
+                    '& .MuiLinearProgress-bar': { bgcolor: slice.color, borderRadius: 999 },
+                  }}
+                />
+              </Tooltip>
+            </Box>
+          ))}
         </Stack>
       )}
     </Box>

@@ -50,6 +50,32 @@ Ayrıntılar:
 - `docs/analysis/Day12_React_Frontend_Setup.md`
 - `docs/analysis/Day12_Weekly_Report_WorkItem_Risk_Frontend.md`
 
+### Day 13 — CTO Dashboard MVP
+
+- Rol bazlı başlık: CTO / Yönetim / Proje Genel Bakış
+- 6 KPI kartı: toplam, aktif, tamamlanan, açık risk, kritik risk, eksik haftalık rapor
+- Sağlık dağılımı (`health-distribution`)
+- Proje portföy tablosu (`dashboard/projects`)
+- Kritik risk önizlemesi (`critical-risks`)
+- `dashboardMapper` ile null-güvenli dönüşüm
+- ADMIN/CTO genel dashboard; PROJECT_MANAGER genel dashboard’a erişmez
+
+Endpointler:
+
+- `GET /api/v1/dashboard/summary`
+- `GET /api/v1/dashboard/health-distribution`
+- `GET /api/v1/dashboard/critical-risks`
+- `GET /api/v1/dashboard/projects`
+
+Demo adımları:
+
+1. ADMIN veya CTO ile giriş
+2. `/dashboard` → KPI, sağlık, portföy tablosu
+3. Yenile butonu ile refetch
+4. Satırdan **Detayı Gör** → `/projects/:id`
+
+Ayrıntılar: `docs/analysis/Day13_CTO_Dashboard_MVP.md`
+
 ### Frontend ortam değişkeni
 
 `frontend/.env` (örnek: `.env.example`):

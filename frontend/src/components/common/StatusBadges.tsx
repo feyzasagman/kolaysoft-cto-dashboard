@@ -101,3 +101,22 @@ export function RiskStatusBadge({ status }: { status: string | null | undefined 
     />
   )
 }
+
+/** Project status alias — Day 13 naming. */
+export const ProjectStatusBadge = StatusBadge
+
+export function ReportAvailabilityBadge({ available }: { available: boolean }) {
+  const styles = available
+    ? { bgcolor: '#DAFBE1', color: '#116329', borderColor: '#4AC26B' }
+    : { bgcolor: '#FFF8C5', color: '#7D4E00', borderColor: '#D4A72C' }
+  const label = available ? 'Var' : 'Eksik'
+  return (
+    <Chip
+      size="small"
+      variant="outlined"
+      label={label}
+      aria-label={`Mevcut hafta raporu: ${label}`}
+      sx={{ ...styles, fontWeight: 600 }}
+    />
+  )
+}

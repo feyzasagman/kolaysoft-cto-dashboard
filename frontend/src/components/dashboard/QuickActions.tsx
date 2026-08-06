@@ -1,4 +1,4 @@
-import { Button, Stack, Typography, Box } from '@mui/material'
+import { Box, Button, Stack, Typography } from '@mui/material'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
 import type { RoleType } from '@/types/api'
@@ -9,13 +9,13 @@ interface QuickAction {
   roles: RoleType[]
 }
 
+/** Yalnızca mevcut rotalar. */
 const ACTIONS: QuickAction[] = [
-  { label: 'Yeni Proje', to: '/projects', roles: ['ADMIN'] },
+  { label: 'Projeler', to: '/projects', roles: ['ADMIN'] },
   { label: 'Kullanıcılar', to: '/users', roles: ['ADMIN'] },
-  { label: 'Tüm Raporlar', to: '/reports', roles: ['ADMIN'] },
-  { label: 'Projeleri Görüntüle', to: '/projects', roles: ['CTO'] },
+  { label: 'Haftalık Raporlar', to: '/reports', roles: ['ADMIN'] },
+  { label: 'Projeler', to: '/projects', roles: ['CTO'] },
   { label: 'Haftalık Raporlar', to: '/reports', roles: ['CTO'] },
-  { label: 'Riskleri İncele', to: '/dashboard', roles: ['CTO'] },
   { label: 'Projelerim', to: '/projects', roles: ['PROJECT_MANAGER'] },
   { label: 'Raporlarım', to: '/reports', roles: ['PROJECT_MANAGER'] },
   { label: 'Yeni Rapor', to: '/reports/new', roles: ['PROJECT_MANAGER'] },
