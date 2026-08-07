@@ -2,11 +2,11 @@ import {
   Alert,
   Box,
   TextField,
-  Typography,
 } from '@mui/material'
 import { DataGrid, type GridColDef, type GridPaginationModel, type GridSortModel } from '@mui/x-data-grid'
 import { useEffect, useMemo, useState } from 'react'
 import { LoadingState } from '@/components/common/LoadingState'
+import { PageHeader } from '@/components/common/PageHeader'
 import { useUsers } from '@/hooks/useApiQueries'
 import { getErrorMessage } from '@/utils/errorUtils'
 
@@ -67,12 +67,10 @@ export function UsersPage() {
 
   return (
     <Box>
-      <Typography variant="h5" mb={0.5}>
-        Users
-      </Typography>
-      <Typography color="text.secondary" mb={2.5}>
-        Kullanıcı listesi — arama ve sayfalama. CRUD sonraki günde.
-      </Typography>
+      <PageHeader
+        title="Users"
+        subtitle="Kullanıcı listesi — arama ve sayfalama. CRUD sonraki günde."
+      />
 
       <TextField
         size="small"

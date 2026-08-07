@@ -13,6 +13,7 @@ import {
   Link,
   TextField,
   Toolbar,
+  Tooltip,
   Typography,
 } from '@mui/material'
 import { useState } from 'react'
@@ -23,11 +24,18 @@ import { SIDEBAR_WIDTH } from '@/theme/appTheme'
 interface TopbarProps {
   title: string
   breadcrumbs?: Array<{ label: string; to?: string }>
+  sidebarWidth?: number
   onMenuClick: () => void
   onRefresh?: () => void
 }
 
-export function Topbar({ title, breadcrumbs = [], onMenuClick, onRefresh }: TopbarProps) {
+export function Topbar({
+  title,
+  breadcrumbs = [],
+  sidebarWidth = SIDEBAR_WIDTH,
+  onMenuClick,
+  onRefresh,
+}: TopbarProps) {
   const { user } = useAuth()
   const navigate = useNavigate()
   const [query, setQuery] = useState('')
@@ -42,8 +50,9 @@ export function Topbar({ title, breadcrumbs = [], onMenuClick, onRefresh }: Topb
     <AppBar
       position="sticky"
       sx={{
-        width: { md: `calc(100% - ${SIDEBAR_WIDTH}px)` },
-        ml: { md: `${SIDEBAR_WIDTH}px` },
+        width: { md: `calc(100% - ${sidebarWidth}px)` },
+        ml: { md: `${sidebarWidth}px` },
+        transition: 'width 200ms ease, margin 200ms ease',
       }}
     >
       <Toolbar sx={{ gap: 1.25, minHeight: 56, px: { xs: 1.5, md: 2.5 } }}>
@@ -112,17 +121,23 @@ export function Topbar({ title, breadcrumbs = [], onMenuClick, onRefresh }: Topb
         <Box sx={{ flexGrow: 1 }} />
 
         {onRefresh && (
-          <IconButton onClick={onRefresh} aria-label="Yenile" size="small">
-            <RefreshIcon fontSize="small" />
-          </IconButton>
+          <Tooltip title="Yenile">
+            <IconButton onClick={onRefresh} aria-label="Yenile" size="small">
+              <RefreshIcon fontSize="small" />
+            </IconButton>
+          </Tooltip>
         )}
-        <IconButton aria-label="Bildirimler (yakında)" disabled size="small">
-          <NotificationsNoneOutlinedIcon fontSize="small" />
-        </IconButton>
+        <Tooltip title="Bildirimler (yakında)">
+          <span>
+            <IconButton aria-label="Bildirimler (yakında)" disabled size="small">
+              <NotificationsNoneOutlinedIcon fontSize="small" />
+            </IconButton>
+          </span>
+        </Tooltip>
 
         {user && (
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <Chip size="small" label={user.role} variant="outlined" />
+            <Chip size="small" label={user.role} variant="outlined" sx={{ display: { xs: 'none', sm: 'inline-flex' } }} />
             <Avatar sx={{ bgcolor: 'primary.main', width: 28, height: 28, fontSize: 12 }}>
               {user.fullName.charAt(0).toUpperCase()}
             </Avatar>

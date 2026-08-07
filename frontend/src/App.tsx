@@ -26,7 +26,21 @@ export default function App() {
           <BrowserRouter>
             <AppRouter />
           </BrowserRouter>
-          <ToastContainer position="top-right" autoClose={3500} newestOnTop closeOnClick theme="colored" />
+          <ToastContainer
+            position="top-right"
+            autoClose={3200}
+            newestOnTop
+            closeOnClick
+            pauseOnHover
+            theme="light"
+            toastStyle={{
+              border: '1px solid #D0D7DE',
+              borderRadius: 8,
+              boxShadow: '0 4px 12px rgba(31, 35, 40, 0.08)',
+              fontFamily: '"IBM Plex Sans", "Segoe UI", Helvetica, Arial, sans-serif',
+              fontSize: 13,
+            }}
+          />
         </AuthProvider>
       </ThemeProvider>
     </QueryClientProvider>

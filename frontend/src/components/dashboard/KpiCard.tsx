@@ -1,5 +1,10 @@
+import TrendingDownIcon from '@mui/icons-material/TrendingDown'
+import TrendingFlatIcon from '@mui/icons-material/TrendingFlat'
+import TrendingUpIcon from '@mui/icons-material/TrendingUp'
 import { Box, Skeleton, Stack, Tooltip, Typography } from '@mui/material'
 import type { ReactNode } from 'react'
+
+export type KpiTrend = 'up' | 'down' | 'flat'
 
 interface KpiCardProps {
   label: string
@@ -8,6 +13,27 @@ interface KpiCardProps {
   icon: ReactNode
   tone?: string
   tooltip?: string
+  trend?: KpiTrend
+  trendLabel?: string
+  updatedLabel?: string | null
+}
+
+function TrendChip({ trend, label }: { trend: KpiTrend; label?: string }) {
+  const config =
+    trend === 'up'
+      ? { icon: <TrendingUpIcon sx={{ fontSize: 14 }} />, color: 'success.main' }
+      : trend === 'down'
+        ? { icon: <TrendingDownIcon sx={{ fontSize: 14 }} />, color: 'error.main' }
+        : { icon: <TrendingFlatIcon sx={{ fontSize: 14 }} />, color: 'text.secondary' }
+
+  return (
+    <Stack direction="row" spacing={0.5} alignItems="center" sx={{ color: config.color }}>
+      {config.icon}
+      <Typography variant="caption" fontWeight={650} color="inherit">
+        {label ?? (trend === 'up' ? 'Yüksek' : trend === 'down' ? 'Düşük' : 'Stabil')}
+      </Typography>
+    </Stack>
+  )
 }
 
 export function KpiCard({
@@ -17,6 +43,9 @@ export function KpiCard({
   icon,
   tone = '#0969DA',
   tooltip,
+  trend = 'flat',
+  trendLabel,
+  updatedLabel,
 }: KpiCardProps) {
   const card = (
     <Box
@@ -25,17 +54,21 @@ export function KpiCard({
         border: '1px solid',
         borderColor: 'divider',
         borderRadius: 1.5,
-        p: 1.75,
+        p: 2,
         height: '100%',
-        transition: 'border-color 120ms ease',
-        '&:hover': { borderColor: '#AFB8C1' },
+        transition: 'border-color 160ms ease, box-shadow 160ms ease, transform 160ms ease',
+        '&:hover': {
+          borderColor: '#AFB8C1',
+          boxShadow: 1,
+          transform: 'translateY(-1px)',
+        },
       }}
     >
-      <Stack direction="row" spacing={1.25} alignItems="flex-start">
+      <Stack direction="row" spacing={1.25} alignItems="flex-start" justifyContent="space-between">
         <Box
           sx={{
-            width: 32,
-            height: 32,
+            width: 34,
+            height: 34,
             borderRadius: 1,
             display: 'grid',
             placeItems: 'center',
@@ -49,23 +82,31 @@ export function KpiCard({
         >
           {icon}
         </Box>
-        <Box sx={{ minWidth: 0 }}>
-          <Typography variant="caption" fontWeight={650} color="text.secondary">
-            {label}
-          </Typography>
-          <Typography
-            sx={{ fontSize: { xs: '1.5rem', md: '1.75rem' }, fontWeight: 700, lineHeight: 1.15, my: 0.25 }}
-            aria-label={`${label}: ${value ?? '—'}`}
-          >
-            {value ?? '—'}
-          </Typography>
-          {secondary && (
-            <Typography variant="caption" color="text.secondary" display="block">
-              {secondary}
-            </Typography>
-          )}
-        </Box>
+        <TrendChip trend={trend} label={trendLabel} />
       </Stack>
+
+      <Typography
+        variant="overline"
+        sx={{ display: 'block', mt: 1.5, mb: 0.25, letterSpacing: '0.04em' }}
+      >
+        {label}
+      </Typography>
+      <Typography
+        sx={{ fontSize: { xs: '1.625rem', md: '1.875rem' }, fontWeight: 700, lineHeight: 1.1 }}
+        aria-label={`${label}: ${value ?? '—'}`}
+      >
+        {value ?? '—'}
+      </Typography>
+      {secondary && (
+        <Typography variant="caption" color="text.secondary" display="block" mt={0.75}>
+          {secondary}
+        </Typography>
+      )}
+      {updatedLabel && (
+        <Typography variant="caption" color="text.disabled" display="block" mt={0.75}>
+          {updatedLabel}
+        </Typography>
+      )}
     </Box>
   )
 
@@ -78,5 +119,25 @@ export function KpiCard({
 }
 
 export function KpiCardSkeleton() {
-  return <Skeleton variant="rounded" height={96} aria-label="KPI yükleniyor" />
+  return (
+    <Box
+      sx={{
+        border: '1px solid',
+        borderColor: 'divider',
+        borderRadius: 1.5,
+        bgcolor: 'background.paper',
+        p: 2,
+        height: 132,
+      }}
+      aria-label="KPI yükleniyor"
+    >
+      <Stack direction="row" justifyContent="space-between" mb={2}>
+        <Skeleton variant="rounded" width={34} height={34} />
+        <Skeleton width={48} height={16} />
+      </Stack>
+      <Skeleton width="40%" height={14} />
+      <Skeleton width="55%" height={36} sx={{ mt: 0.75 }} />
+      <Skeleton width="70%" height={14} sx={{ mt: 1 }} />
+    </Box>
+  )
 }

@@ -8,7 +8,7 @@ import {
 } from '@mui/icons-material'
 import { Box } from '@mui/material'
 import type { ReactNode } from 'react'
-import { KpiCard, KpiCardSkeleton } from '@/components/dashboard/KpiCard'
+import { KpiCard, KpiCardSkeleton, type KpiTrend } from '@/components/dashboard/KpiCard'
 import type { DashboardSummary } from '@/types/api'
 import { mapSummaryToKpis } from '@/utils/dashboardMapper'
 
@@ -21,22 +21,44 @@ const ICONS: Record<string, ReactNode> = {
   projectsWithoutCurrentWeekReport: <AssignmentLateOutlined fontSize="small" />,
 }
 
+function trendFor(key: string, value: number): { trend: KpiTrend; trendLabel: string } {
+  if (key === 'criticalRisks') {
+    if (value === 0) return { trend: 'up', trendLabel: 'Temiz' }
+    if (value >= 3) return { trend: 'down', trendLabel: 'Dikkat' }
+    return { trend: 'flat', trendLabel: 'İzle' }
+  }
+  if (key === 'projectsWithoutCurrentWeekReport') {
+    if (value === 0) return { trend: 'up', trendLabel: 'Güncel' }
+    return { trend: 'down', trendLabel: 'Eksik' }
+  }
+  if (key === 'activeProjects' || key === 'completedProjects') {
+    return { trend: 'flat', trendLabel: 'Güncel' }
+  }
+  return { trend: 'flat', trendLabel: 'Özet' }
+}
+
 interface DashboardSummaryProps {
   summary: DashboardSummary | null | undefined
   loading?: boolean
+  updatedLabel?: string | null
 }
 
-export function DashboardSummaryCards({ summary, loading = false }: DashboardSummaryProps) {
+export function DashboardSummaryCards({
+  summary,
+  loading = false,
+  updatedLabel = null,
+}: DashboardSummaryProps) {
   if (loading) {
     return (
       <Box
         sx={{
           display: 'grid',
-          gap: 1.5,
+          gap: 2,
           gridTemplateColumns: {
             xs: '1fr',
             sm: 'repeat(2, minmax(0, 1fr))',
             lg: 'repeat(3, minmax(0, 1fr))',
+            xl: 'repeat(4, minmax(0, 1fr))',
           },
         }}
         aria-busy="true"
@@ -55,26 +77,34 @@ export function DashboardSummaryCards({ summary, loading = false }: DashboardSum
     <Box
       sx={{
         display: 'grid',
-        gap: 1.5,
+        gap: 2,
         gridTemplateColumns: {
           xs: '1fr',
           sm: 'repeat(2, minmax(0, 1fr))',
           lg: 'repeat(3, minmax(0, 1fr))',
+          xl: 'repeat(4, minmax(0, 1fr))',
         },
       }}
       aria-label="Özet metrik kartları"
+      className="fade-in-up"
     >
-      {cards.map((card) => (
-        <KpiCard
-          key={card.key}
-          label={card.label}
-          value={card.value}
-          secondary={card.description}
-          tooltip={card.description}
-          icon={ICONS[card.key]}
-          tone={card.tone}
-        />
-      ))}
+      {cards.map((card) => {
+        const { trend, trendLabel } = trendFor(card.key, card.value)
+        return (
+          <KpiCard
+            key={card.key}
+            label={card.label}
+            value={card.value}
+            secondary={card.description}
+            tooltip={card.description}
+            icon={ICONS[card.key]}
+            tone={card.tone}
+            trend={trend}
+            trendLabel={trendLabel}
+            updatedLabel={updatedLabel}
+          />
+        )
+      })}
     </Box>
   )
 }

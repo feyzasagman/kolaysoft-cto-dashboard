@@ -1,10 +1,5 @@
 import { Box, Breadcrumbs, Button, Link, Stack, Typography } from '@mui/material'
 import { Link as RouterLink } from 'react-router-dom'
-import {
-  HealthBadge,
-  ProjectStatusBadge,
-  ReportAvailabilityBadge,
-} from '@/components/common/StatusBadges'
 import type { ProjectDetailViewModel } from '@/utils/projectDetailMapper'
 
 interface ProjectDetailHeaderProps {
@@ -41,7 +36,7 @@ export function ProjectDetailHeader({
           Dashboard
         </Link>
         <Link component={RouterLink} to={backTo} underline="hover" color="inherit" variant="caption">
-          Projeler
+          Projects
         </Link>
         <Typography variant="caption" color="text.primary" fontWeight={650}>
           {model.name}
@@ -51,25 +46,13 @@ export function ProjectDetailHeader({
       <Stack
         direction={{ xs: 'column', md: 'row' }}
         justifyContent="space-between"
-        alignItems={{ md: 'flex-start' }}
+        alignItems={{ md: 'center' }}
         spacing={1.5}
       >
         <Box sx={{ minWidth: 0 }}>
-          <Typography variant="h1" sx={{ fontSize: { xs: '1.5rem', md: '1.75rem' } }}>
-            {model.name}
-          </Typography>
-          <Typography color="text.secondary">
-            {model.code} · Müşteri: {model.customer}
-          </Typography>
-          <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap" mt={1}>
-            <ProjectStatusBadge status={model.projectStatus} />
-            <HealthBadge health={model.health} />
-            <ReportAvailabilityBadge available={model.hasCurrentWeekReport} />
-          </Stack>
-          <Typography variant="body2" color="text.secondary" mt={1}>
-            Yönetici: <strong>{model.managerName}</strong>
-            {' · '}
-            Son güncelleme: {model.lastUpdateLabel}
+          <Typography variant="overline">Project detail</Typography>
+          <Typography color="text.secondary" mt={0.25}>
+            Haftalık durum, risk ve iş kalemlerinin kurumsal görünümü
           </Typography>
         </Box>
 

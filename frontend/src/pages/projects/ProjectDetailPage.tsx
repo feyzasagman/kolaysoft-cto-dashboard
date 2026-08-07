@@ -1,5 +1,5 @@
-import { Box, Stack } from '@mui/material'
-import { useEffect, useMemo } from 'react'
+import { Box, Fade, Stack, Tab, Tabs } from '@mui/material'
+import { useEffect, useMemo, useState, type SyntheticEvent } from 'react'
 import { Navigate, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { EmptyState } from '@/components/common/EmptyState'
 import { LatestReportPanel } from '@/components/projects/LatestReportPanel'
@@ -11,6 +11,7 @@ import {
   ProjectDetailErrorState,
   ProjectDetailSkeleton,
 } from '@/components/projects/ProjectDetailSkeleton'
+import { ProjectSummaryCard } from '@/components/projects/ProjectSummaryCard'
 import { ProjectWorkItemSummary } from '@/components/projects/ProjectWorkItemSummary'
 import { ReportHistoryPanel } from '@/components/projects/ReportHistoryPanel'
 import { useAuth } from '@/contexts/AuthContext'
@@ -25,11 +26,29 @@ import { rememberProjectId } from '@/utils/projectCache'
 import { mapProjectDetail } from '@/utils/projectDetailMapper'
 import { getHttpStatus } from '@/utils/errorUtils'
 
+type DetailTab =
+  | 'overview'
+  | 'timeline'
+  | 'reports'
+  | 'risks'
+  | 'workItems'
+  | 'history'
+
+const TABS: Array<{ id: DetailTab; label: string }> = [
+  { id: 'overview', label: 'Overview' },
+  { id: 'timeline', label: 'Timeline' },
+  { id: 'reports', label: 'Weekly Reports' },
+  { id: 'risks', label: 'Risks' },
+  { id: 'workItems', label: 'Work Items' },
+  { id: 'history', label: 'History' },
+]
+
 export function ProjectDetailPage() {
   const { projectId } = useParams()
   const [searchParams] = useSearchParams()
   const navigate = useNavigate()
   const { user, hasAnyRole } = useAuth()
+  const [tab, setTab] = useState<DetailTab>('overview')
 
   const id = Number(projectId)
   const validId = Number.isFinite(id) && id > 0
@@ -98,8 +117,11 @@ export function ProjectDetailPage() {
   const isPm = hasAnyRole('PROJECT_MANAGER')
   const isOwnProject =
     user?.userId != null && detailQuery.data.managerId === user.userId
-  // UI aksiyonları; gerçek yetki backend 403 ile doğrulanır.
   const canCreateReport = isAdmin || (isPm && isOwnProject)
+
+  const handleTabChange = (_: SyntheticEvent, value: DetailTab) => {
+    setTab(value)
+  }
 
   return (
     <Box>
@@ -113,54 +135,112 @@ export function ProjectDetailPage() {
         isCto={isCto}
       />
 
+      <ProjectSummaryCard model={model} />
+
       <Box
         sx={{
-          display: 'grid',
-          gap: 1.5,
-          gridTemplateColumns: { xs: '1fr', md: '1.1fr 1fr' },
-          mb: 1.5,
+          border: '1px solid',
+          borderColor: 'divider',
+          borderRadius: 1.5,
+          bgcolor: 'background.paper',
+          overflow: 'hidden',
         }}
       >
-        <ProjectInfoCard model={model} />
-        <ProjectProgressSummary
-          model={model}
-          scheduleStatus={fullLatestQuery.data?.scheduleStatus}
-        />
-      </Box>
-
-      <Stack spacing={1.5}>
-        <LatestReportPanel
-          latest={detailQuery.data.latestReport}
-          fullReport={fullLatestQuery.data}
-          canCreateReport={canCreateReport}
-          projectId={model.projectId}
-          readOnly={isCto}
-        />
-
-        <Box
+        <Tabs
+          value={tab}
+          onChange={handleTabChange}
+          variant="scrollable"
+          scrollButtons="auto"
+          aria-label="Proje detay sekmeleri"
           sx={{
-            display: 'grid',
-            gap: 1.5,
-            gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' },
+            px: 1,
+            borderBottom: '1px solid',
+            borderColor: 'divider',
+            bgcolor: '#FBFCFD',
           }}
         >
-          <ProjectRiskSummary
-            risks={risksQuery.data?.content}
-            openRiskCount={model.openRisks}
-            openBlockerCount={model.openBlockers}
-            loading={risksQuery.isLoading}
-          />
-          <ProjectWorkItemSummary
-            items={workItemsQuery.data?.content}
-            loading={workItemsQuery.isLoading}
-          />
-        </Box>
+          {TABS.map((item) => (
+            <Tab key={item.id} value={item.id} label={item.label} id={`project-tab-${item.id}`} />
+          ))}
+        </Tabs>
 
-        <ReportHistoryPanel
-          history={detailQuery.data.lastFiveReports}
-          reports={reportsQuery.data?.content}
-        />
-      </Stack>
+        <Box sx={{ p: { xs: 1.5, md: 2.5 }, minHeight: 280 }}>
+          <Fade in key={tab} timeout={180}>
+            <Box>
+              {tab === 'overview' && (
+                <Stack spacing={2}>
+                  <Box
+                    sx={{
+                      display: 'grid',
+                      gap: 2,
+                      gridTemplateColumns: { xs: '1fr', md: '1.1fr 1fr' },
+                    }}
+                  >
+                    <ProjectInfoCard model={model} />
+                    <ProjectProgressSummary
+                      model={model}
+                      scheduleStatus={fullLatestQuery.data?.scheduleStatus}
+                    />
+                  </Box>
+                  <LatestReportPanel
+                    latest={detailQuery.data.latestReport}
+                    fullReport={fullLatestQuery.data}
+                    canCreateReport={canCreateReport}
+                    projectId={model.projectId}
+                    readOnly={isCto}
+                  />
+                </Stack>
+              )}
+
+              {tab === 'timeline' && (
+                <ReportHistoryPanel
+                  history={detailQuery.data.lastFiveReports}
+                  reports={reportsQuery.data?.content}
+                />
+              )}
+
+              {tab === 'reports' && (
+                <Stack spacing={2}>
+                  <LatestReportPanel
+                    latest={detailQuery.data.latestReport}
+                    fullReport={fullLatestQuery.data}
+                    canCreateReport={canCreateReport}
+                    projectId={model.projectId}
+                    readOnly={isCto}
+                  />
+                  <ReportHistoryPanel
+                    history={detailQuery.data.lastFiveReports}
+                    reports={reportsQuery.data?.content}
+                  />
+                </Stack>
+              )}
+
+              {tab === 'risks' && (
+                <ProjectRiskSummary
+                  risks={risksQuery.data?.content}
+                  openRiskCount={model.openRisks}
+                  openBlockerCount={model.openBlockers}
+                  loading={risksQuery.isLoading}
+                />
+              )}
+
+              {tab === 'workItems' && (
+                <ProjectWorkItemSummary
+                  items={workItemsQuery.data?.content}
+                  loading={workItemsQuery.isLoading}
+                />
+              )}
+
+              {tab === 'history' && (
+                <ReportHistoryPanel
+                  history={detailQuery.data.lastFiveReports}
+                  reports={reportsQuery.data?.content}
+                />
+              )}
+            </Box>
+          </Fade>
+        </Box>
+      </Box>
     </Box>
   )
 }

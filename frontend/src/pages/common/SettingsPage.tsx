@@ -1,4 +1,6 @@
-import { Alert, Box, Paper, Stack, Typography } from '@mui/material'
+import { Alert, Box, Stack, Typography } from '@mui/material'
+import { PageHeader } from '@/components/common/PageHeader'
+import { SurfaceCard } from '@/components/common/SurfaceCard'
 import { useAuth } from '@/contexts/AuthContext'
 
 export function SettingsPage() {
@@ -6,26 +8,21 @@ export function SettingsPage() {
 
   return (
     <Box>
-      <Typography variant="h5" mb={0.5}>
-        Settings
-      </Typography>
-      <Typography color="text.secondary" mb={2.5}>
-        Hesap özeti. Gelişmiş ayarlar sonraki günlerde eklenecek.
-      </Typography>
+      <PageHeader
+        title="Settings"
+        subtitle="Hesap özeti. Gelişmiş ayarlar sonraki günlerde eklenecek."
+      />
 
-      <Paper sx={{ p: 3, maxWidth: 560 }}>
-        <Stack spacing={1.5}>
-          <Typography variant="subtitle2" color="text.secondary">
-            Active Session
-          </Typography>
+      <SurfaceCard title="Active Session" sx={{ maxWidth: 560 }}>
+        <Stack spacing={1.25}>
           <Typography><strong>Name:</strong> {user?.fullName}</Typography>
           <Typography><strong>Email:</strong> {user?.email}</Typography>
           <Typography><strong>Role:</strong> {user?.role}</Typography>
-          <Alert severity="info" sx={{ mt: 1 }}>
+          <Alert severity="info" sx={{ mt: 0.5 }}>
             Token localStorage üzerinde tutulur. Refresh token endpointi henüz yoktur; yapı placeholder olarak hazırdır.
           </Alert>
         </Stack>
-      </Paper>
+      </SurfaceCard>
     </Box>
   )
 }

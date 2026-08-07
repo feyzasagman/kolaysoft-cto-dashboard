@@ -1,16 +1,22 @@
+import FilterListIcon from '@mui/icons-material/FilterList'
+import SearchIcon from '@mui/icons-material/Search'
 import {
   Box,
   Button,
+  Chip,
   FormControl,
+  InputAdornment,
   InputLabel,
   MenuItem,
   Select,
   Stack,
   TextField,
+  Typography,
 } from '@mui/material'
 import type { ProjectStatus, ReportHealth, RiskLevel, UserRow } from '@/types/api'
 import {
   DASHBOARD_SORT_OPTIONS,
+  hasActiveFilters,
   type DashboardFilterState,
 } from '@/utils/dashboardFilterMapper'
 
@@ -19,6 +25,36 @@ interface DashboardFilterBarProps {
   managers?: UserRow[]
   onChange: (next: DashboardFilterState) => void
   onClear: () => void
+}
+
+function FilterChip({
+  label,
+  active,
+  onClick,
+}: {
+  label: string
+  active: boolean
+  onClick: () => void
+}) {
+  return (
+    <Chip
+      label={label}
+      onClick={onClick}
+      clickable
+      variant={active ? 'filled' : 'outlined'}
+      color={active ? 'primary' : 'default'}
+      size="small"
+      sx={{
+        fontWeight: 650,
+        bgcolor: active ? 'primary.main' : 'background.paper',
+        color: active ? 'primary.contrastText' : 'text.secondary',
+        borderColor: active ? 'primary.main' : 'divider',
+        '&:hover': {
+          bgcolor: active ? 'primary.dark' : 'action.hover',
+        },
+      }}
+    />
+  )
 }
 
 export function DashboardFilterBar({
@@ -31,38 +67,76 @@ export function DashboardFilterBar({
     onChange({ ...value, ...partial, page: 0 })
   }
 
+  const active = hasActiveFilters(value)
+  const managerName =
+    managers.find((m) => String(m.id) === value.managerId)?.fullName ?? value.managerId
+
   return (
     <Box
       id="dashboard-filters"
       sx={{
         border: '1px solid',
-        borderColor: 'divider',
+        borderColor: active ? 'primary.light' : 'divider',
         borderRadius: 1.5,
         bgcolor: 'background.paper',
-        p: 1.5,
+        p: 2,
+        transition: 'border-color 160ms ease',
       }}
     >
+      <Stack
+        direction="row"
+        alignItems="center"
+        justifyContent="space-between"
+        spacing={1}
+        mb={1.5}
+      >
+        <Stack direction="row" spacing={1} alignItems="center">
+          <FilterListIcon fontSize="small" color="action" />
+          <Typography variant="h5" component="h2">
+            Filtreler
+          </Typography>
+          {active && (
+            <Chip size="small" color="primary" label="Aktif" sx={{ height: 20, fontSize: '0.7rem' }} />
+          )}
+        </Stack>
+        <Button
+          variant={active ? 'contained' : 'outlined'}
+          onClick={onClear}
+          disabled={!active}
+          aria-label="Filtreleri temizle"
+        >
+          Clear Filters
+        </Button>
+      </Stack>
+
       <Stack
         direction={{ xs: 'column', md: 'row' }}
         spacing={1}
         useFlexGap
         flexWrap="wrap"
         alignItems={{ md: 'center' }}
+        mb={1.5}
       >
         <TextField
-          label="Ara"
           placeholder="Proje adı veya kod"
           value={value.search}
           onChange={(e) => patch({ search: e.target.value })}
-          sx={{ minWidth: { xs: '100%', md: 200 } }}
+          sx={{ minWidth: { xs: '100%', md: 220 } }}
           inputProps={{ 'aria-label': 'Proje ara' }}
+          InputProps={{
+            startAdornment: (
+              <InputAdornment position="start">
+                <SearchIcon fontSize="small" htmlColor="#656D76" />
+              </InputAdornment>
+            ),
+          }}
         />
 
-        <FormControl sx={{ minWidth: 150 }}>
-          <InputLabel id="filter-status-label">Durum</InputLabel>
+        <FormControl sx={{ minWidth: 140 }}>
+          <InputLabel id="filter-status-label">Status</InputLabel>
           <Select
             labelId="filter-status-label"
-            label="Durum"
+            label="Status"
             value={value.projectStatus}
             onChange={(e) => patch({ projectStatus: e.target.value as ProjectStatus | '' })}
           >
@@ -75,11 +149,11 @@ export function DashboardFilterBar({
           </Select>
         </FormControl>
 
-        <FormControl sx={{ minWidth: 150 }}>
-          <InputLabel id="filter-health-label">Sağlık</InputLabel>
+        <FormControl sx={{ minWidth: 140 }}>
+          <InputLabel id="filter-health-label">Health</InputLabel>
           <Select
             labelId="filter-health-label"
-            label="Sağlık"
+            label="Health"
             value={value.health}
             onChange={(e) => patch({ health: e.target.value as ReportHealth | '' })}
           >
@@ -91,26 +165,10 @@ export function DashboardFilterBar({
         </FormControl>
 
         <FormControl sx={{ minWidth: 160 }}>
-          <InputLabel id="filter-week-label">Bu hafta rapor</InputLabel>
-          <Select
-            labelId="filter-week-label"
-            label="Bu hafta rapor"
-            value={value.hasCurrentWeekReport}
-            onChange={(e) =>
-              patch({ hasCurrentWeekReport: e.target.value as '' | 'true' | 'false' })
-            }
-          >
-            <MenuItem value="">Tümü</MenuItem>
-            <MenuItem value="true">Rapor Var</MenuItem>
-            <MenuItem value="false">Rapor Eksik</MenuItem>
-          </Select>
-        </FormControl>
-
-        <FormControl sx={{ minWidth: 160 }}>
-          <InputLabel id="filter-manager-label">Yönetici</InputLabel>
+          <InputLabel id="filter-manager-label">Manager</InputLabel>
           <Select
             labelId="filter-manager-label"
-            label="Yönetici"
+            label="Manager"
             value={value.managerId}
             onChange={(e) => patch({ managerId: String(e.target.value) })}
           >
@@ -123,11 +181,27 @@ export function DashboardFilterBar({
           </Select>
         </FormControl>
 
+        <FormControl sx={{ minWidth: 150 }}>
+          <InputLabel id="filter-week-label">Week report</InputLabel>
+          <Select
+            labelId="filter-week-label"
+            label="Week report"
+            value={value.hasCurrentWeekReport}
+            onChange={(e) =>
+              patch({ hasCurrentWeekReport: e.target.value as '' | 'true' | 'false' })
+            }
+          >
+            <MenuItem value="">Tümü</MenuItem>
+            <MenuItem value="true">Rapor Var</MenuItem>
+            <MenuItem value="false">Rapor Eksik</MenuItem>
+          </Select>
+        </FormControl>
+
         <FormControl sx={{ minWidth: 140 }}>
-          <InputLabel id="filter-risk-label">Risk seviyesi</InputLabel>
+          <InputLabel id="filter-risk-label">Risk</InputLabel>
           <Select
             labelId="filter-risk-label"
-            label="Risk seviyesi"
+            label="Risk"
             value={value.riskLevel}
             onChange={(e) => patch({ riskLevel: e.target.value as RiskLevel | '' })}
           >
@@ -139,7 +213,7 @@ export function DashboardFilterBar({
           </Select>
         </FormControl>
 
-        <FormControl sx={{ minWidth: 180 }}>
+        <FormControl sx={{ minWidth: 170 }}>
           <InputLabel id="filter-sort-label">Sıralama</InputLabel>
           <Select
             labelId="filter-sort-label"
@@ -154,24 +228,58 @@ export function DashboardFilterBar({
             ))}
           </Select>
         </FormControl>
+      </Stack>
 
-        <FormControl sx={{ minWidth: 110 }}>
-          <InputLabel id="filter-size-label">Sayfa boyutu</InputLabel>
-          <Select
-            labelId="filter-size-label"
-            label="Sayfa boyutu"
-            value={value.size}
-            onChange={(e) => patch({ size: Number(e.target.value), page: 0 })}
-          >
-            <MenuItem value={10}>10</MenuItem>
-            <MenuItem value={20}>20</MenuItem>
-            <MenuItem value={50}>50</MenuItem>
-          </Select>
-        </FormControl>
-
-        <Button variant="outlined" onClick={onClear} aria-label="Filtreleri temizle">
-          Filtreleri Temizle
-        </Button>
+      <Stack direction="row" spacing={0.75} useFlexGap flexWrap="wrap" alignItems="center">
+        <Typography variant="caption" color="text.secondary" mr={0.5}>
+          Hızlı seçim:
+        </Typography>
+        <FilterChip
+          label="Aktif"
+          active={value.projectStatus === 'ACTIVE'}
+          onClick={() =>
+            patch({ projectStatus: value.projectStatus === 'ACTIVE' ? '' : 'ACTIVE' })
+          }
+        />
+        <FilterChip
+          label="Kritik sağlık"
+          active={value.health === 'RED'}
+          onClick={() => patch({ health: value.health === 'RED' ? '' : 'RED' })}
+        />
+        <FilterChip
+          label="Rapor eksik"
+          active={value.hasCurrentWeekReport === 'false'}
+          onClick={() =>
+            patch({
+              hasCurrentWeekReport: value.hasCurrentWeekReport === 'false' ? '' : 'false',
+            })
+          }
+        />
+        <FilterChip
+          label="Kritik risk"
+          active={value.riskLevel === 'CRITICAL'}
+          onClick={() =>
+            patch({ riskLevel: value.riskLevel === 'CRITICAL' ? '' : 'CRITICAL' })
+          }
+        />
+        {value.search && (
+          <Chip
+            size="small"
+            label={`Search: ${value.search}`}
+            onDelete={() => patch({ search: '' })}
+            color="primary"
+            variant="outlined"
+          />
+        )}
+        {value.managerId && (
+          <Chip
+            size="small"
+            label={`Manager: ${managerName}`}
+            onDelete={() => patch({ managerId: '' })}
+            color="primary"
+            variant="outlined"
+          />
+        )}
       </Stack>
     </Box>
   )

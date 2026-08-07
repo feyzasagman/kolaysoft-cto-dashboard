@@ -1,15 +1,14 @@
 import {
   Box,
   Button,
-  Stack,
   TextField,
-  Typography,
 } from '@mui/material'
 import { DataGrid, type GridColDef, type GridPaginationModel, type GridSortModel } from '@mui/x-data-grid'
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { EmptyState, ErrorState } from '@/components/common/EmptyState'
 import { LoadingState } from '@/components/common/LoadingState'
+import { PageHeader } from '@/components/common/PageHeader'
 import { useAuth } from '@/contexts/AuthContext'
 import { useWeeklyReports } from '@/hooks/useApiQueries'
 import { getErrorMessage } from '@/utils/errorUtils'
@@ -68,27 +67,17 @@ export function ReportsPage() {
 
   return (
     <Box>
-      <Stack
-        direction={{ xs: 'column', sm: 'row' }}
-        justifyContent="space-between"
-        alignItems={{ sm: 'center' }}
-        spacing={1.5}
-        mb={2}
-      >
-        <Box>
-          <Typography variant="h1" sx={{ fontSize: { xs: '1.5rem', md: '1.75rem' } }}>
-            Haftalık Raporlar
-          </Typography>
-          <Typography color="text.secondary">
-            Raporları listeleyin, detaya gidin{canCreate ? ' veya yeni rapor oluşturun' : ''}.
-          </Typography>
-        </Box>
-        {canCreate && (
-          <Button variant="contained" onClick={() => navigate('/reports/new')} aria-label="Yeni haftalık rapor">
-            Yeni Rapor
-          </Button>
-        )}
-      </Stack>
+      <PageHeader
+        title="Haftalık Raporlar"
+        subtitle={`Raporları listeleyin, detaya gidin${canCreate ? ' veya yeni rapor oluşturun' : ''}.`}
+        actions={
+          canCreate ? (
+            <Button variant="contained" onClick={() => navigate('/reports/new')} aria-label="Yeni haftalık rapor">
+              Yeni Rapor
+            </Button>
+          ) : undefined
+        }
+      />
 
       <TextField
         size="small"

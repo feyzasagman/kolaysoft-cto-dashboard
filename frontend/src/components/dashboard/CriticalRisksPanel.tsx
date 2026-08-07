@@ -1,5 +1,6 @@
 import { Box, Link, Stack, Typography } from '@mui/material'
 import { Link as RouterLink } from 'react-router-dom'
+import { SurfaceCard } from '@/components/common/SurfaceCard'
 import type { CriticalRisk } from '@/types/api'
 import { mapCriticalRiskPreview } from '@/utils/dashboardMapper'
 
@@ -12,26 +13,11 @@ export function CriticalRisksPanel({ risks, loading = false }: CriticalRisksPane
   const items = mapCriticalRiskPreview(risks)
 
   return (
-    <Box
-      sx={{
-        bgcolor: 'background.paper',
-        border: '1px solid',
-        borderColor: 'divider',
-        borderRadius: 1.5,
-        p: 2,
-        height: '100%',
-        display: 'flex',
-        flexDirection: 'column',
-      }}
+    <SurfaceCard
+      title="Recent Risks"
+      subtitle="Yüksek öncelikli açık riskler"
       aria-label="Kritik risk önizlemesi"
     >
-      <Typography variant="h5" mb={0.5}>
-        Kritik riskler
-      </Typography>
-      <Typography variant="caption" color="text.secondary" display="block" mb={1.5}>
-        Yüksek öncelikli açık riskler
-      </Typography>
-
       {loading ? (
         <Typography variant="body2" color="text.secondary" aria-busy="true">
           Riskler yükleniyor…
@@ -41,7 +27,7 @@ export function CriticalRisksPanel({ risks, loading = false }: CriticalRisksPane
           Kritik risk bulunmuyor.
         </Typography>
       ) : (
-        <Stack spacing={1} sx={{ overflowY: 'auto', maxHeight: 280 }}>
+        <Stack spacing={1} sx={{ overflowY: 'auto', maxHeight: 300 }}>
           {items.map((risk) => (
             <Box
               key={risk.id}
@@ -50,6 +36,8 @@ export function CriticalRisksPanel({ risks, loading = false }: CriticalRisksPane
                 borderColor: 'divider',
                 borderRadius: 1,
                 p: 1.25,
+                transition: 'border-color 160ms ease, background-color 160ms ease',
+                '&:hover': { borderColor: '#AFB8C1', bgcolor: 'action.hover' },
               }}
             >
               <Stack direction="row" justifyContent="space-between" gap={1} mb={0.5}>
@@ -79,6 +67,6 @@ export function CriticalRisksPanel({ risks, loading = false }: CriticalRisksPane
           ))}
         </Stack>
       )}
-    </Box>
+    </SurfaceCard>
   )
 }

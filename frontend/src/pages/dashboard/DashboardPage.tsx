@@ -1,3 +1,4 @@
+import FolderOffOutlinedIcon from '@mui/icons-material/FolderOffOutlined'
 import { Box, Stack } from '@mui/material'
 import { useEffect, useMemo, useState } from 'react'
 import { Navigate, useNavigate, useSearchParams } from 'react-router-dom'
@@ -14,6 +15,8 @@ import {
   ProjectTableSkeleton,
 } from '@/components/dashboard/ProjectPortfolioTable'
 import { QuickActions } from '@/components/dashboard/QuickActions'
+import { RecentActivityPanel } from '@/components/dashboard/RecentActivityPanel'
+import { RecentReportsPanel } from '@/components/dashboard/RecentReportsPanel'
 import { useAuth } from '@/contexts/AuthContext'
 import {
   useCriticalRisks,
@@ -32,10 +35,11 @@ import {
   type DashboardFilterState,
 } from '@/utils/dashboardFilterMapper'
 import { mapPortfolioRows } from '@/utils/dashboardMapper'
+import { formatRelativeTime } from '@/utils/formatRelative'
 import { getHttpStatus } from '@/utils/errorUtils'
 
 /**
- * Day 14 — Dashboard MVP + temel filtreler, URL state, proje detay geçişi.
+ * Enterprise dashboard — mevcut endpoint’lerle yeniden düzenlenmiş layout.
  */
 export function DashboardPage() {
   const { user, hasAnyRole } = useAuth()
@@ -109,7 +113,6 @@ export function DashboardPage() {
 
   const filterBarValue = { ...filters, search: searchInput }
   const returnSuffix = dashboardReturnQuery(filters)
-  // from=dashboard so detail knows back target
   const detailQuery =
     returnSuffix.length > 0
       ? `${returnSuffix}&from=dashboard`
@@ -147,6 +150,7 @@ export function DashboardPage() {
   const totalElements = projectsQuery.data?.totalElements ?? 0
   const totalPages = projectsQuery.data?.totalPages ?? 0
   const filtersActive = hasActiveFilters(filters)
+  const updatedLabel = lastRefreshedAt ? `Updated ${formatRelativeTime(lastRefreshedAt)}` : null
 
   return (
     <Box>
@@ -158,20 +162,22 @@ export function DashboardPage() {
         onRefresh={refreshAll}
       />
 
-      <Stack spacing={2}>
+      <Stack spacing={3}>
+        {/* KPI */}
         {summaryQuery.isError ? (
           <DashboardErrorState
             title="Özet metrikler alınamadı."
             onRetry={() => void summaryQuery.refetch()}
           />
         ) : (
-          <DashboardSummaryCards summary={summaryQuery.data} />
+          <DashboardSummaryCards summary={summaryQuery.data} updatedLabel={updatedLabel} />
         )}
 
+        {/* Health + Recent Reports */}
         <Box
           sx={{
             display: 'grid',
-            gap: 1.5,
+            gap: 2.5,
             gridTemplateColumns: { xs: '1fr', lg: '1.1fr 1fr' },
           }}
         >
@@ -183,7 +189,80 @@ export function DashboardPage() {
           ) : (
             <HealthDistributionPanel data={healthQuery.data} loading={healthQuery.isLoading} />
           )}
+          <RecentReportsPanel
+            rows={portfolioRows}
+            loading={projectsQuery.isLoading}
+            detailQuerySuffix={detailQuery}
+          />
+        </Box>
 
+        {/* Portfolio filters + table */}
+        <Stack spacing={2}>
+          <DashboardFilterBar
+            value={filterBarValue}
+            managers={managersQuery.data?.content ?? []}
+            onChange={updateFilters}
+            onClear={clearFilters}
+          />
+
+          {projectsQuery.isError ? (
+            <DashboardErrorState
+              title="Proje portföyü alınamadı."
+              onRetry={() => void projectsQuery.refetch()}
+            />
+          ) : projectsQuery.isLoading && !projectsQuery.data ? (
+            <ProjectTableSkeleton />
+          ) : totalElements === 0 ? (
+            <EmptyState
+              icon={<FolderOffOutlinedIcon />}
+              title={
+                filtersActive
+                  ? 'Filtrelere uygun proje bulunamadı.'
+                  : 'Henüz proje bulunmuyor.'
+              }
+              description={
+                filtersActive
+                  ? 'Filtreleri temizleyerek yeniden deneyebilirsiniz.'
+                  : 'İlk projeyi oluşturun. Projeler eklendiğinde sağlık, ilerleme ve rapor bilgileri burada görüntülenir.'
+              }
+              actionLabel={
+                filtersActive
+                  ? 'Clear Filters'
+                  : hasAnyRole('ADMIN')
+                    ? 'Projeleri Görüntüle'
+                    : undefined
+              }
+              onAction={
+                filtersActive
+                  ? clearFilters
+                  : hasAnyRole('ADMIN')
+                    ? () => navigate('/projects')
+                    : undefined
+              }
+            />
+          ) : (
+            <ProjectPortfolioTable
+              rows={portfolioRows}
+              page={filters.page}
+              size={filters.size}
+              totalPages={totalPages}
+              totalElements={totalElements}
+              loading={projectsQuery.isFetching}
+              detailQuerySuffix={detailQuery}
+              onPageChange={(page) => updateFilters({ ...filters, page })}
+              onSizeChange={(size) => updateFilters({ ...filters, size, page: 0 })}
+            />
+          )}
+        </Stack>
+
+        {/* Risks + Activity */}
+        <Box
+          sx={{
+            display: 'grid',
+            gap: 2.5,
+            gridTemplateColumns: { xs: '1fr', lg: '1fr 1fr' },
+          }}
+        >
           {risksQuery.isError ? (
             <DashboardErrorState
               title="Kritik riskler alınamadı."
@@ -192,62 +271,12 @@ export function DashboardPage() {
           ) : (
             <CriticalRisksPanel risks={risksQuery.data} loading={risksQuery.isLoading} />
           )}
-        </Box>
-
-        <DashboardFilterBar
-          value={filterBarValue}
-          managers={managersQuery.data?.content ?? []}
-          onChange={updateFilters}
-          onClear={clearFilters}
-        />
-
-        {projectsQuery.isError ? (
-          <DashboardErrorState
-            title="Proje portföyü alınamadı."
-            onRetry={() => void projectsQuery.refetch()}
-          />
-        ) : projectsQuery.isLoading && !projectsQuery.data ? (
-          <ProjectTableSkeleton />
-        ) : totalElements === 0 ? (
-          <EmptyState
-            title={
-              filtersActive
-                ? 'Filtrelere uygun proje bulunamadı.'
-                : 'Henüz proje bulunmuyor'
-            }
-            description={
-              filtersActive
-                ? 'Filtreleri temizleyerek yeniden deneyebilirsiniz.'
-                : 'Projeler eklendiğinde sağlık, ilerleme ve rapor bilgileri burada görüntülenecektir.'
-            }
-            actionLabel={
-              filtersActive
-                ? 'Filtreleri Temizle'
-                : hasAnyRole('ADMIN')
-                  ? 'Projeleri Görüntüle'
-                  : undefined
-            }
-            onAction={
-              filtersActive
-                ? clearFilters
-                : hasAnyRole('ADMIN')
-                  ? () => navigate('/projects')
-                  : undefined
-            }
-          />
-        ) : (
-          <ProjectPortfolioTable
+          <RecentActivityPanel
+            risks={risksQuery.data}
             rows={portfolioRows}
-            page={filters.page}
-            size={filters.size}
-            totalPages={totalPages}
-            totalElements={totalElements}
-            loading={projectsQuery.isFetching}
-            detailQuerySuffix={detailQuery}
-            onPageChange={(page) => updateFilters({ ...filters, page })}
-            onSizeChange={(size) => updateFilters({ ...filters, size, page: 0 })}
+            loading={risksQuery.isLoading || projectsQuery.isLoading}
           />
-        )}
+        </Box>
 
         <QuickActions />
       </Stack>

@@ -1,5 +1,6 @@
-import { Box, Button, Stack, Typography } from '@mui/material'
+import { Button, Stack, Typography } from '@mui/material'
 import { useNavigate } from 'react-router-dom'
+import { SurfaceCard } from '@/components/common/SurfaceCard'
 import { useAuth } from '@/contexts/AuthContext'
 import type { RoleType } from '@/types/api'
 
@@ -34,21 +35,7 @@ export function QuickActions() {
   )
 
   return (
-    <Box
-      sx={{
-        border: '1px solid',
-        borderColor: 'divider',
-        borderRadius: 1.5,
-        bgcolor: 'background.paper',
-        p: 2,
-      }}
-    >
-      <Typography variant="h5" mb={0.5}>
-        Hızlı işlemler
-      </Typography>
-      <Typography variant="caption" color="text.secondary" display="block" mb={1.25}>
-        Rolünüze göre erişilebilir kısayollar
-      </Typography>
+    <SurfaceCard title="Hızlı işlemler" subtitle="Rolünüze göre erişilebilir kısayollar">
       <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">
         {unique.map((action) => (
           <Button
@@ -62,6 +49,9 @@ export function QuickActions() {
           </Button>
         ))}
       </Stack>
-    </Box>
+      <Typography variant="caption" color="text.secondary" display="block" mt={1.5}>
+        Enterprise kısayollar — mevcut sayfalara yönlendirir.
+      </Typography>
+    </SurfaceCard>
   )
 }
