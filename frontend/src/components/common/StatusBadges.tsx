@@ -49,7 +49,8 @@ const riskLevelSx: Record<string, BadgeTone> = {
   CRITICAL: { bgcolor: '#FFEBE9', color: '#A40E26', borderColor: '#FFC1C0' },
 }
 
-function EnterpriseBadge({
+/** Ortak enterprise badge — Status / Health / Report ve diğerleri. */
+export function EnterpriseBadge({
   label,
   tone,
   ariaLabel,
@@ -68,6 +69,8 @@ function EnterpriseBadge({
     />
   )
 }
+
+export type { BadgeTone }
 
 export function HealthBadge({ health }: { health: string | null | undefined }) {
   const key = health && healthSx[health] ? health : 'NO_REPORT'

@@ -1,177 +1,185 @@
-import {
-  Alert,
-  Box,
-  Button,
-  FormControl,
-  InputLabel,
-  MenuItem,
-  Select,
-  Stack,
-  TextField,
-  Typography,
-} from '@mui/material'
-import { DataGrid, type GridColDef, type GridPaginationModel, type GridSortModel } from '@mui/x-data-grid'
+import FolderOffOutlinedIcon from '@mui/icons-material/FolderOffOutlined'
+import { Box } from '@mui/material'
 import { useEffect, useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { LoadingState } from '@/components/common/LoadingState'
+import { toast } from 'react-toastify'
+import { AppErrorState } from '@/components/common/AppErrorState'
+import { EmptyState } from '@/components/common/EmptyState'
+import { ProjectPortfolioFilterBar } from '@/components/portfolio/ProjectPortfolioFilterBar'
+import { ProjectPortfolioHeader } from '@/components/portfolio/ProjectPortfolioHeader'
+import { ProjectPortfolioList } from '@/components/portfolio/ProjectPortfolioList'
+import { ProjectPortfolioSkeleton } from '@/components/portfolio/ProjectPortfolioSkeleton'
 import { useAuth } from '@/contexts/AuthContext'
-import { useDashboardProjects } from '@/hooks/useApiQueries'
-import type { ProjectStatus, ReportHealth } from '@/types/api'
-import { getErrorMessage } from '@/utils/errorUtils'
+import {
+  useDashboardProjects,
+  useDashboardSummary,
+  useUsers,
+} from '@/hooks/useApiQueries'
+import { mapPortfolioRows } from '@/utils/dashboardMapper'
+import {
+  DEFAULT_PORTFOLIO_FILTERS,
+  type PortfolioFilterState,
+} from '@/utils/portfolioFilterState'
 
-const columns: GridColDef[] = [
-  { field: 'code', headerName: 'Kod', width: 120 },
-  { field: 'name', headerName: 'Ad', flex: 1, minWidth: 180 },
-  { field: 'managerName', headerName: 'Yönetici', width: 160 },
-  { field: 'projectStatus', headerName: 'Durum', width: 130 },
-  { field: 'latestHealth', headerName: 'Sağlık', width: 110 },
-  { field: 'progressActual', headerName: 'İlerleme %', width: 120 },
-  { field: 'hasCurrentWeekReport', headerName: 'Bu hafta', width: 110, type: 'boolean' },
-]
-
+/**
+ * Sprint 3 — Project Portfolio Enterprise Redesign (ADMIN / CTO).
+ * Mevcut dashboard projects endpoint’i; DataGrid yerine GitHub-tarzı liste.
+ */
 export function AdminProjectsView() {
-  const navigate = useNavigate()
   const { hasAnyRole } = useAuth()
   const canCreateReport = hasAnyRole('ADMIN')
+  const canCreateProject = hasAnyRole('ADMIN')
 
-  const [search, setSearch] = useState('')
-  const [debouncedSearch, setDebouncedSearch] = useState('')
-  const [projectStatus, setProjectStatus] = useState<ProjectStatus | ''>('')
-  const [health, setHealth] = useState<ReportHealth | ''>('')
-  const [paginationModel, setPaginationModel] = useState<GridPaginationModel>({
-    page: 0,
-    pageSize: 10,
-  })
-  const [sortModel, setSortModel] = useState<GridSortModel>([{ field: 'name', sort: 'asc' }])
+  const [filters, setFilters] = useState<PortfolioFilterState>(DEFAULT_PORTFOLIO_FILTERS)
+  const [searchInput, setSearchInput] = useState('')
+  const [page, setPage] = useState(0)
+  const [size, setSize] = useState(20)
+  const [lastRefreshedAt, setLastRefreshedAt] = useState<Date | null>(null)
+
+  useEffect(() => {
+    setSearchInput(filters.search)
+  }, [filters.search])
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
-      setDebouncedSearch(search.trim())
-      setPaginationModel((prev) => ({ ...prev, page: 0 }))
+      setFilters((prev) => {
+        if (prev.search === searchInput) return prev
+        setPage(0)
+        return { ...prev, search: searchInput }
+      })
     }, 350)
     return () => window.clearTimeout(timer)
-  }, [search])
+  }, [searchInput])
 
-  const sort = useMemo(() => {
-    const first = sortModel[0]
-    if (!first?.field) return 'name,asc'
-    const fieldMap: Record<string, string> = {
-      code: 'code',
-      name: 'name',
-      projectStatus: 'status',
-      projectId: 'id',
-    }
-    return `${fieldMap[first.field] ?? 'name'},${first.sort ?? 'asc'}`
-  }, [sortModel])
+  const filterValue = { ...filters, search: searchInput }
 
-  const { data, isLoading, isFetching, isError, error } = useDashboardProjects({
-    page: paginationModel.page,
-    size: paginationModel.pageSize,
-    sort,
-    search: debouncedSearch || undefined,
-    projectStatus,
-    health,
+  const summaryQuery = useDashboardSummary(true)
+  const managersQuery = useUsers({
+    page: 0,
+    size: 100,
+    role: 'PROJECT_MANAGER',
+    active: true,
+  })
+  const projectsQuery = useDashboardProjects({
+    page,
+    size,
+    sort: filters.sort,
+    search: filters.search.trim() || undefined,
+    projectStatus: filters.projectStatus || undefined,
+    health: filters.health || undefined,
+    managerId: filters.managerId ? Number(filters.managerId) : undefined,
+    hasCurrentWeekReport:
+      filters.hasCurrentWeekReport === ''
+        ? undefined
+        : filters.hasCurrentWeekReport === 'true',
   })
 
   const rows = useMemo(
-    () => (data?.content ?? []).map((row) => ({ id: row.projectId, ...row })),
-    [data],
+    () => mapPortfolioRows(projectsQuery.data?.content),
+    [projectsQuery.data?.content],
   )
+
+  useEffect(() => {
+    if (projectsQuery.dataUpdatedAt) setLastRefreshedAt(new Date())
+  }, [projectsQuery.dataUpdatedAt])
+
+  const refreshAll = () => {
+    void Promise.all([summaryQuery.refetch(), projectsQuery.refetch(), managersQuery.refetch()]).then(
+      () => setLastRefreshedAt(new Date()),
+    )
+  }
+
+  const clearFilters = () => {
+    setSearchInput('')
+    setFilters(DEFAULT_PORTFOLIO_FILTERS)
+    setPage(0)
+  }
+
+  const updateFilters = (next: PortfolioFilterState) => {
+    setSearchInput(next.search)
+    setFilters({
+      ...next,
+      // Arama debounce ile API’ye gider; diğer filtreler anında.
+      search: filters.search,
+    })
+    setPage(0)
+  }
+
+  if (projectsQuery.isLoading && !projectsQuery.data) {
+    return <ProjectPortfolioSkeleton />
+  }
+
+  if (projectsQuery.isError && !projectsQuery.data) {
+    return (
+      <AppErrorState
+        kind="network"
+        title="Proje portföyü alınamadı."
+        onRetry={() => void projectsQuery.refetch()}
+      />
+    )
+  }
+
+  const totalElements = projectsQuery.data?.totalElements ?? 0
+  const totalPages = projectsQuery.data?.totalPages ?? 0
+  const totalProjects = summaryQuery.data?.totalProjects ?? totalElements
+  const activeProjects = summaryQuery.data?.activeProjects ?? 0
+  const filtersActive = Boolean(
+    filters.search.trim() ||
+      filters.projectStatus ||
+      filters.health ||
+      filters.managerId ||
+      filters.hasCurrentWeekReport,
+  )
+  const refreshing = projectsQuery.isFetching || summaryQuery.isFetching
 
   return (
     <Box>
-      <Stack
-        direction={{ xs: 'column', sm: 'row' }}
-        justifyContent="space-between"
-        alignItems={{ sm: 'center' }}
-        spacing={1}
-        mb={2}
-      >
-        <Box>
-          <Typography variant="h1" sx={{ fontSize: { xs: '1.5rem', md: '1.75rem' } }}>
-            Projeler
-          </Typography>
-          <Typography color="text.secondary">
-            Dashboard proje listesi — arama, filtre, sıralama ve sayfalama.
-          </Typography>
-        </Box>
-        {canCreateReport && (
-          <Button variant="contained" onClick={() => navigate('/reports/new')} aria-label="Haftalık rapor oluştur">
-            Haftalık Rapor Oluştur
-          </Button>
-        )}
-      </Stack>
+      <ProjectPortfolioHeader
+        totalProjects={totalProjects}
+        activeProjects={activeProjects}
+        lastRefreshedAt={lastRefreshedAt}
+        refreshing={refreshing}
+        canCreateProject={canCreateProject}
+        onRefresh={refreshAll}
+        onCreateProject={() =>
+          toast.info('Yeni proje ekranı henüz eklenmedi. Backend create akışı sonraki sprint.')
+        }
+        onExport={() => toast.info('Export yakında eklenecek.')}
+      />
 
-      <Stack direction={{ xs: 'column', md: 'row' }} spacing={1.5} mb={2} useFlexGap flexWrap="wrap">
-        <TextField
-          size="small"
-          label="Ara"
-          placeholder="Kod veya ad"
-          value={search}
-          onChange={(event) => setSearch(event.target.value)}
-          sx={{ minWidth: 220 }}
+      <ProjectPortfolioFilterBar
+        value={filterValue}
+        managers={managersQuery.data?.content ?? []}
+        onChange={updateFilters}
+        onClear={clearFilters}
+      />
+
+      {totalElements === 0 ? (
+        <EmptyState
+          icon={<FolderOffOutlinedIcon />}
+          title={filtersActive ? 'Filtrelere uygun proje yok' : 'Henüz proje bulunmuyor'}
+          description={
+            filtersActive
+              ? 'Filtreleri temizleyerek yeniden deneyin.'
+              : 'İlk projeyi oluşturduğunuzda portföy burada listelenir.'
+          }
+          actionLabel={filtersActive ? 'Clear Filters' : undefined}
+          onAction={filtersActive ? clearFilters : undefined}
         />
-        <FormControl size="small" sx={{ minWidth: 160 }}>
-          <InputLabel>Durum</InputLabel>
-          <Select
-            label="Durum"
-            value={projectStatus}
-            onChange={(event) => {
-              setProjectStatus(event.target.value as ProjectStatus | '')
-              setPaginationModel((prev) => ({ ...prev, page: 0 }))
-            }}
-          >
-            <MenuItem value="">Tümü</MenuItem>
-            <MenuItem value="PLANNED">Planlandı</MenuItem>
-            <MenuItem value="ACTIVE">Aktif</MenuItem>
-            <MenuItem value="ON_HOLD">Beklemede</MenuItem>
-            <MenuItem value="COMPLETED">Tamamlandı</MenuItem>
-            <MenuItem value="CANCELLED">İptal</MenuItem>
-          </Select>
-        </FormControl>
-        <FormControl size="small" sx={{ minWidth: 160 }}>
-          <InputLabel>Sağlık</InputLabel>
-          <Select
-            label="Sağlık"
-            value={health}
-            onChange={(event) => {
-              setHealth(event.target.value as ReportHealth | '')
-              setPaginationModel((prev) => ({ ...prev, page: 0 }))
-            }}
-          >
-            <MenuItem value="">Tümü</MenuItem>
-            <MenuItem value="GREEN">Sağlıklı</MenuItem>
-            <MenuItem value="YELLOW">Dikkat</MenuItem>
-            <MenuItem value="RED">Kritik</MenuItem>
-          </Select>
-        </FormControl>
-      </Stack>
-
-      {isError && <Alert severity="error" sx={{ mb: 2 }}>{getErrorMessage(error)}</Alert>}
-
-      {isLoading && !data ? (
-        <LoadingState label="Projeler yükleniyor..." />
       ) : (
-        <Box sx={{ height: 560, bgcolor: 'background.paper', borderRadius: 2, border: '1px solid', borderColor: 'divider' }}>
-          <DataGrid
-            rows={rows}
-            columns={columns}
-            rowCount={data?.totalElements ?? 0}
-            loading={isFetching}
-            paginationMode="server"
-            sortingMode="server"
-            paginationModel={paginationModel}
-            onPaginationModelChange={setPaginationModel}
-            sortModel={sortModel}
-            onSortModelChange={(model) => {
-              setSortModel(model)
-              setPaginationModel((prev) => ({ ...prev, page: 0 }))
-            }}
-            pageSizeOptions={[10, 20, 50]}
-            disableRowSelectionOnClick
-            onRowClick={(params) => navigate(`/projects/${params.id}`)}
-          />
-        </Box>
+        <ProjectPortfolioList
+          rows={rows}
+          page={page}
+          size={size}
+          totalPages={totalPages}
+          totalElements={totalElements}
+          loading={projectsQuery.isFetching}
+          canCreateReport={canCreateReport}
+          onPageChange={setPage}
+          onSizeChange={(next) => {
+            setSize(next)
+            setPage(0)
+          }}
+        />
       )}
     </Box>
   )

@@ -117,7 +117,8 @@ Ayrıntılar: `docs/analysis/Day14_Dashboard_Project_Detail_and_Filters.md`
 
 Enterprise UI/UX yükseltmesi (frontend-only): [`docs/analysis/Day15_UI_UX_Enhancement.md`](docs/analysis/Day15_UI_UX_Enhancement.md)  
 Sprint 1 Dashboard redesign: [`docs/analysis/Day16_Dashboard_Enterprise_Redesign.md`](docs/analysis/Day16_Dashboard_Enterprise_Redesign.md)  
-Sprint 2 Project Detail redesign: [`docs/analysis/Day15_Project_Detail_Enterprise_Redesign.md`](docs/analysis/Day15_Project_Detail_Enterprise_Redesign.md)
+Sprint 2 Project Detail redesign: [`docs/analysis/Day15_Project_Detail_Enterprise_Redesign.md`](docs/analysis/Day15_Project_Detail_Enterprise_Redesign.md)  
+Sprint 3 Project Portfolio redesign: [`docs/analysis/Day15_Project_Portfolio_Enterprise_Redesign.md`](docs/analysis/Day15_Project_Portfolio_Enterprise_Redesign.md)
 
 ### Frontend ortam değişkeni
 
