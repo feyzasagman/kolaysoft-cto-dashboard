@@ -115,7 +115,8 @@ Bilinen eksikler (Day 14):
 
 Ayrıntılar: `docs/analysis/Day14_Dashboard_Project_Detail_and_Filters.md`
 
-Enterprise UI/UX yükseltmesi (frontend-only): [`docs/analysis/Day15_UI_UX_Enhancement.md`](docs/analysis/Day15_UI_UX_Enhancement.md)
+Enterprise UI/UX yükseltmesi (frontend-only): [`docs/analysis/Day15_UI_UX_Enhancement.md`](docs/analysis/Day15_UI_UX_Enhancement.md)  
+Sprint 1 Dashboard redesign: [`docs/analysis/Day16_Dashboard_Enterprise_Redesign.md`](docs/analysis/Day16_Dashboard_Enterprise_Redesign.md)
 
 ### Frontend ortam değişkeni
 

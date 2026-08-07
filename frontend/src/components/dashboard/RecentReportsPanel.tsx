@@ -1,8 +1,8 @@
-import { Box, Link, Stack, Typography } from '@mui/material'
+import { Box, Link, Skeleton, Stack, Typography } from '@mui/material'
 import { Link as RouterLink } from 'react-router-dom'
 import { EmptyState } from '@/components/common/EmptyState'
 import { HealthBadge } from '@/components/common/StatusBadges'
-import { SurfaceCard } from '@/components/common/SurfaceCard'
+import { DASH, surfaceSx } from '@/theme/dashboardTokens'
 import { formatRelativeTime } from '@/utils/formatRelative'
 import type { PortfolioRow } from '@/utils/dashboardTypes'
 
@@ -27,35 +27,49 @@ export function RecentReportsPanel({
     .slice(0, 6)
 
   return (
-    <SurfaceCard
-      title="Recent Reports"
-      subtitle="Portföydeki en güncel raporlar"
+    <Box
+      sx={{
+        ...surfaceSx,
+        p: DASH.cardPadding,
+        minHeight: DASH.panelMinHeight,
+        height: '100%',
+      }}
       aria-label="Son raporlar"
     >
+      <Typography variant="h5" component="h2">
+        Recent Reports
+      </Typography>
+      <Typography variant="caption" color="text.secondary" display="block" mt={0.5} mb={DASH.space2}>
+        Portföydeki en güncel haftalık raporlar
+      </Typography>
+
       {loading ? (
-        <Typography variant="body2" color="text.secondary" aria-busy="true">
-          Raporlar yükleniyor…
-        </Typography>
+        <Stack spacing={DASH.space1} aria-busy="true">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <Skeleton key={i} variant="rounded" height={52} />
+          ))}
+        </Stack>
       ) : items.length === 0 ? (
         <EmptyState
           title="Henüz rapor yok"
           description="Projeler haftalık rapor gönderdiğinde burada listelenir."
         />
       ) : (
-        <Stack spacing={1}>
+        <Stack spacing={DASH.space1}>
           {items.map((row) => (
             <Box
               key={row.projectId}
               sx={{
-                border: '1px solid',
+                border: DASH.border,
                 borderColor: 'divider',
                 borderRadius: 1,
-                p: 1.25,
+                px: DASH.space2,
+                py: 1.25,
                 transition: 'border-color 160ms ease, background-color 160ms ease',
                 '&:hover': { borderColor: '#AFB8C1', bgcolor: 'action.hover' },
               }}
             >
-              <Stack direction="row" justifyContent="space-between" gap={1} alignItems="center">
+              <Stack direction="row" justifyContent="space-between" gap={DASH.space1} alignItems="center">
                 <Box sx={{ minWidth: 0 }}>
                   <Link
                     component={RouterLink}
@@ -79,6 +93,6 @@ export function RecentReportsPanel({
           ))}
         </Stack>
       )}
-    </SurfaceCard>
+    </Box>
   )
 }

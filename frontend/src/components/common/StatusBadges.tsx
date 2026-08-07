@@ -7,97 +7,116 @@ import {
   workItemStatusLabel,
 } from '@/utils/labels'
 
-const healthSx: Record<string, { bgcolor: string; color: string; borderColor: string }> = {
-  GREEN: { bgcolor: '#DAFBE1', color: '#116329', borderColor: '#4AC26B' },
-  YELLOW: { bgcolor: '#FFF8C5', color: '#7D4E00', borderColor: '#D4A72C' },
-  RED: { bgcolor: '#FFEBE9', color: '#A40E26', borderColor: '#FF8182' },
+type BadgeTone = { bgcolor: string; color: string; borderColor: string }
+
+/** Minimal enterprise badge — pastel + border + readable text. */
+const badgeBaseSx = {
+  height: 22,
+  borderRadius: '999px',
+  fontWeight: 650,
+  fontSize: '0.6875rem',
+  letterSpacing: '0.01em',
+  border: '1px solid',
+  '& .MuiChip-label': { px: 1 },
+} as const
+
+const healthSx: Record<string, BadgeTone> = {
+  GREEN: { bgcolor: '#DAFBE1', color: '#116329', borderColor: '#B4EFC4' },
+  YELLOW: { bgcolor: '#FFF8C5', color: '#7D4E00', borderColor: '#F0E09A' },
+  RED: { bgcolor: '#FFEBE9', color: '#A40E26', borderColor: '#FFC1C0' },
   NO_REPORT: { bgcolor: '#F6F8FA', color: '#656D76', borderColor: '#D0D7DE' },
 }
 
-const statusSx: Record<string, { bgcolor: string; color: string; borderColor: string }> = {
-  PLANNED: { bgcolor: '#DDF4FF', color: '#0550AE', borderColor: '#54AEFF' },
-  ACTIVE: { bgcolor: '#DAFBE1', color: '#116329', borderColor: '#4AC26B' },
-  ON_HOLD: { bgcolor: '#FFF8C5', color: '#7D4E00', borderColor: '#D4A72C' },
+const statusSx: Record<string, BadgeTone> = {
+  PLANNED: { bgcolor: '#DDF4FF', color: '#0550AE', borderColor: '#B6E3FF' },
+  ACTIVE: { bgcolor: '#DAFBE1', color: '#116329', borderColor: '#B4EFC4' },
+  ON_HOLD: { bgcolor: '#FFF8C5', color: '#7D4E00', borderColor: '#F0E09A' },
   COMPLETED: { bgcolor: '#F6F8FA', color: '#1F2328', borderColor: '#D0D7DE' },
-  CANCELLED: { bgcolor: '#FFEBE9', color: '#A40E26', borderColor: '#FF8182' },
+  CANCELLED: { bgcolor: '#FFEBE9', color: '#A40E26', borderColor: '#FFC1C0' },
 }
 
-export function HealthBadge({ health }: { health: string | null | undefined }) {
-  const key = health && healthSx[health] ? health : 'NO_REPORT'
-  const styles = healthSx[key]
+const workItemSx: Record<string, BadgeTone> = {
+  TODO: { bgcolor: '#F6F8FA', color: '#656D76', borderColor: '#D0D7DE' },
+  IN_PROGRESS: { bgcolor: '#DDF4FF', color: '#0550AE', borderColor: '#B6E3FF' },
+  DONE: { bgcolor: '#DAFBE1', color: '#116329', borderColor: '#B4EFC4' },
+  BLOCKED: { bgcolor: '#FFEBE9', color: '#A40E26', borderColor: '#FFC1C0' },
+}
+
+const riskLevelSx: Record<string, BadgeTone> = {
+  LOW: { bgcolor: '#DAFBE1', color: '#116329', borderColor: '#B4EFC4' },
+  MEDIUM: { bgcolor: '#FFF8C5', color: '#7D4E00', borderColor: '#F0E09A' },
+  HIGH: { bgcolor: '#FFF1E5', color: '#9A6700', borderColor: '#FFD8B5' },
+  CRITICAL: { bgcolor: '#FFEBE9', color: '#A40E26', borderColor: '#FFC1C0' },
+}
+
+function EnterpriseBadge({
+  label,
+  tone,
+  ariaLabel,
+}: {
+  label: string
+  tone: BadgeTone
+  ariaLabel: string
+}) {
   return (
     <Chip
       size="small"
       variant="outlined"
+      label={label}
+      aria-label={ariaLabel}
+      sx={{ ...badgeBaseSx, ...tone }}
+    />
+  )
+}
+
+export function HealthBadge({ health }: { health: string | null | undefined }) {
+  const key = health && healthSx[health] ? health : 'NO_REPORT'
+  return (
+    <EnterpriseBadge
       label={healthLabel(health)}
-      aria-label={`Sağlık: ${healthLabel(health)}`}
-      sx={{ ...styles, fontWeight: 600 }}
+      tone={healthSx[key]}
+      ariaLabel={`Sağlık: ${healthLabel(health)}`}
     />
   )
 }
 
 export function StatusBadge({ status }: { status: string | null | undefined }) {
   const key = status && statusSx[status] ? status : 'PLANNED'
-  const styles = statusSx[key] ?? statusSx.PLANNED
   return (
-    <Chip
-      size="small"
-      variant="outlined"
+    <EnterpriseBadge
       label={statusLabel(status)}
-      aria-label={`Durum: ${statusLabel(status)}`}
-      sx={{ ...styles, fontWeight: 600 }}
+      tone={statusSx[key] ?? statusSx.PLANNED}
+      ariaLabel={`Durum: ${statusLabel(status)}`}
     />
   )
 }
 
-const workItemSx: Record<string, { bgcolor: string; color: string; borderColor: string }> = {
-  TODO: { bgcolor: '#F6F8FA', color: '#656D76', borderColor: '#D0D7DE' },
-  IN_PROGRESS: { bgcolor: '#DDF4FF', color: '#0550AE', borderColor: '#54AEFF' },
-  DONE: { bgcolor: '#DAFBE1', color: '#116329', borderColor: '#4AC26B' },
-  BLOCKED: { bgcolor: '#FFEBE9', color: '#A40E26', borderColor: '#FF8182' },
-}
-
-const riskLevelSx: Record<string, { bgcolor: string; color: string; borderColor: string }> = {
-  LOW: { bgcolor: '#DAFBE1', color: '#116329', borderColor: '#4AC26B' },
-  MEDIUM: { bgcolor: '#FFF8C5', color: '#7D4E00', borderColor: '#D4A72C' },
-  HIGH: { bgcolor: '#FFF1E5', color: '#9A6700', borderColor: '#FB8F44' },
-  CRITICAL: { bgcolor: '#FFEBE9', color: '#A40E26', borderColor: '#FF8182' },
-}
-
 export function WorkItemStatusBadge({ status }: { status: string | null | undefined }) {
-  const styles = (status && workItemSx[status]) || workItemSx.TODO
   return (
-    <Chip
-      size="small"
-      variant="outlined"
+    <EnterpriseBadge
       label={workItemStatusLabel(status)}
-      aria-label={`İş kalemi durumu: ${workItemStatusLabel(status)}`}
-      sx={{ ...styles, fontWeight: 600 }}
+      tone={(status && workItemSx[status]) || workItemSx.TODO}
+      ariaLabel={`İş kalemi durumu: ${workItemStatusLabel(status)}`}
     />
   )
 }
 
 export function RiskLevelBadge({ level }: { level: string | null | undefined }) {
-  const styles = (level && riskLevelSx[level]) || riskLevelSx.MEDIUM
   return (
-    <Chip
-      size="small"
-      variant="outlined"
+    <EnterpriseBadge
       label={riskLevelLabel(level)}
-      aria-label={`Risk seviyesi: ${riskLevelLabel(level)}`}
-      sx={{ ...styles, fontWeight: 600 }}
+      tone={(level && riskLevelSx[level]) || riskLevelSx.MEDIUM}
+      ariaLabel={`Risk seviyesi: ${riskLevelLabel(level)}`}
     />
   )
 }
 
 export function RiskStatusBadge({ status }: { status: string | null | undefined }) {
   return (
-    <Chip
-      size="small"
-      variant="outlined"
+    <EnterpriseBadge
       label={riskStatusLabel(status)}
-      aria-label={`Risk durumu: ${riskStatusLabel(status)}`}
-      sx={{ fontWeight: 600 }}
+      tone={{ bgcolor: '#F6F8FA', color: '#656D76', borderColor: '#D0D7DE' }}
+      ariaLabel={`Risk durumu: ${riskStatusLabel(status)}`}
     />
   )
 }
@@ -106,17 +125,15 @@ export function RiskStatusBadge({ status }: { status: string | null | undefined 
 export const ProjectStatusBadge = StatusBadge
 
 export function ReportAvailabilityBadge({ available }: { available: boolean }) {
-  const styles = available
-    ? { bgcolor: '#DAFBE1', color: '#116329', borderColor: '#4AC26B' }
-    : { bgcolor: '#FFF8C5', color: '#7D4E00', borderColor: '#D4A72C' }
-  const label = available ? 'Var' : 'Eksik'
+  const tone = available
+    ? { bgcolor: '#DAFBE1', color: '#116329', borderColor: '#B4EFC4' }
+    : { bgcolor: '#FFF8C5', color: '#7D4E00', borderColor: '#F0E09A' }
+  const label = available ? 'Rapor var' : 'Rapor eksik'
   return (
-    <Chip
-      size="small"
-      variant="outlined"
+    <EnterpriseBadge
       label={label}
-      aria-label={`Mevcut hafta raporu: ${label}`}
-      sx={{ ...styles, fontWeight: 600 }}
+      tone={tone}
+      ariaLabel={`Mevcut hafta raporu: ${label}`}
     />
   )
 }

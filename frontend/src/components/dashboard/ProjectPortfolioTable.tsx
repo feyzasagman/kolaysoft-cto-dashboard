@@ -31,6 +31,7 @@ import {
   ReportAvailabilityBadge,
 } from '@/components/common/StatusBadges'
 import { UserAvatar } from '@/components/common/UserAvatar'
+import { DASH, surfaceSx } from '@/theme/dashboardTokens'
 import { formatRelativeTime } from '@/utils/formatRelative'
 import type { PortfolioRow } from '@/utils/dashboardTypes'
 
@@ -55,13 +56,17 @@ const ProgressCell = memo(function ProgressCell({
 }) {
   const behind = actual < target
   return (
-    <Box sx={{ minWidth: 110, maxWidth: 140 }}>
+    <Box sx={{ minWidth: 120, maxWidth: 160 }}>
       <Stack direction="row" justifyContent="space-between" mb={0.5}>
-        <Typography variant="caption" fontWeight={650} color={behind ? 'warning.dark' : 'text.primary'}>
+        <Typography
+          variant="caption"
+          fontWeight={700}
+          color={behind ? 'warning.dark' : 'text.primary'}
+        >
           {actual}%
         </Typography>
         <Typography variant="caption" color="text.secondary">
-          / {target}%
+          hedef {target}%
         </Typography>
       </Stack>
       <LinearProgress
@@ -72,7 +77,7 @@ const ProgressCell = memo(function ProgressCell({
         aria-valuemin={0}
         aria-valuemax={100}
         sx={{
-          height: 6,
+          height: 7,
           bgcolor: '#EBEDF0',
           '& .MuiLinearProgress-bar': {
             bgcolor: behind ? 'warning.main' : 'success.main',
@@ -95,7 +100,7 @@ function RowActions({
 
   return (
     <>
-      <Tooltip title="İşlemler">
+      <Tooltip title="Actions">
         <IconButton
           size="small"
           aria-label={`${row.name} işlem menüsü`}
@@ -146,22 +151,18 @@ export function ProjectPortfolioTable({
   const navigate = useNavigate()
 
   return (
-    <Box
-      sx={{
-        border: '1px solid',
-        borderColor: 'divider',
-        borderRadius: 1.5,
-        bgcolor: 'background.paper',
-        overflow: 'hidden',
-      }}
-      className="fade-in-up"
-    >
+    <Box sx={{ ...surfaceSx, overflow: 'hidden' }} className="fade-in-up">
       <Stack
         direction={{ xs: 'column', sm: 'row' }}
         justifyContent="space-between"
         alignItems={{ sm: 'center' }}
-        spacing={1}
-        sx={{ px: 2, py: 1.75, borderBottom: '1px solid', borderColor: 'divider' }}
+        spacing={DASH.space1}
+        sx={{
+          px: DASH.space3,
+          py: DASH.space2,
+          borderBottom: DASH.border,
+          borderColor: 'divider',
+        }}
       >
         <Box>
           <Typography variant="h5" component="h2">
@@ -173,7 +174,7 @@ export function ProjectPortfolioTable({
           </Typography>
         </Box>
         {onSizeChange && (
-          <FormControl size="small" sx={{ minWidth: 90 }}>
+          <FormControl size="small" sx={{ minWidth: 96 }}>
             <InputLabel id="table-size-label">Boyut</InputLabel>
             <Select
               labelId="table-size-label"
@@ -193,14 +194,17 @@ export function ProjectPortfolioTable({
         <Table size="small" stickyHeader aria-label="Proje portföy tablosu" aria-busy={loading}>
           <TableHead>
             <TableRow>
-              <TableCell>Project</TableCell>
-              <TableCell>Status</TableCell>
-              <TableCell>Health</TableCell>
+              <TableCell>Project Name</TableCell>
+              <TableCell sx={{ display: { xs: 'none', sm: 'table-cell' } }}>Code</TableCell>
               <TableCell>Manager</TableCell>
+              <TableCell>Health</TableCell>
+              <TableCell>Status</TableCell>
               <TableCell>Progress</TableCell>
-              <TableCell sx={{ display: { xs: 'none', md: 'table-cell' } }}>Latest report</TableCell>
+              <TableCell sx={{ display: { xs: 'none', md: 'table-cell' } }}>Last Report</TableCell>
               <TableCell sx={{ display: { xs: 'none', lg: 'table-cell' } }}>Updated</TableCell>
-              <TableCell align="right" width={48} />
+              <TableCell align="right" width={52}>
+                Actions
+              </TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -209,28 +213,28 @@ export function ProjectPortfolioTable({
                 key={row.projectId}
                 hover
                 onClick={() => navigate(`/projects/${row.projectId}${detailQuerySuffix}`)}
-                sx={{ cursor: 'pointer' }}
+                sx={{
+                  cursor: 'pointer',
+                  '&:hover': { bgcolor: 'rgba(208, 215, 222, 0.28)' },
+                }}
               >
                 <TableCell>
-                  <Stack spacing={0.15}>
-                    <Typography variant="body2" fontWeight={650} noWrap>
-                      {row.name}
-                    </Typography>
-                    <Typography variant="caption" color="text.secondary" noWrap>
-                      {row.code}
-                      {row.criticalRiskCount > 0
-                        ? ` · ${row.criticalRiskCount} kritik risk`
-                        : row.openRiskCount > 0
-                          ? ` · ${row.openRiskCount} açık risk`
-                          : ''}
-                    </Typography>
-                  </Stack>
+                  <Typography variant="body2" fontWeight={700} noWrap>
+                    {row.name}
+                  </Typography>
+                  <Typography
+                    variant="caption"
+                    color="text.secondary"
+                    noWrap
+                    sx={{ display: { xs: 'block', sm: 'none' } }}
+                  >
+                    {row.code}
+                  </Typography>
                 </TableCell>
-                <TableCell>
-                  <ProjectStatusBadge status={row.projectStatus} />
-                </TableCell>
-                <TableCell>
-                  <HealthBadge health={row.latestHealth} />
+                <TableCell sx={{ display: { xs: 'none', sm: 'table-cell' } }}>
+                  <Typography variant="caption" color="text.secondary" fontWeight={600}>
+                    {row.code}
+                  </Typography>
                 </TableCell>
                 <TableCell>
                   <Stack direction="row" spacing={1} alignItems="center">
@@ -238,17 +242,23 @@ export function ProjectPortfolioTable({
                     <Typography
                       variant="body2"
                       noWrap
-                      sx={{ display: { xs: 'none', sm: 'block' }, maxWidth: 120 }}
+                      sx={{ display: { xs: 'none', md: 'block' }, maxWidth: 128 }}
                     >
                       {row.managerName}
                     </Typography>
                   </Stack>
                 </TableCell>
                 <TableCell>
+                  <HealthBadge health={row.latestHealth} />
+                </TableCell>
+                <TableCell>
+                  <ProjectStatusBadge status={row.projectStatus} />
+                </TableCell>
+                <TableCell>
                   <ProgressCell target={row.progressTarget} actual={row.progressActual} />
                 </TableCell>
                 <TableCell sx={{ display: { xs: 'none', md: 'table-cell' } }}>
-                  <Stack spacing={0.25}>
+                  <Stack spacing={0.5} alignItems="flex-start">
                     <ReportAvailabilityBadge available={row.hasCurrentWeekReport} />
                     <Typography variant="caption" color="text.secondary">
                       {row.latestReportLabel}
@@ -270,7 +280,7 @@ export function ProjectPortfolioTable({
       </TableContainer>
 
       {totalPages > 1 && (
-        <Stack alignItems="center" py={1.75}>
+        <Stack alignItems="center" py={DASH.space2}>
           <Pagination
             page={page + 1}
             count={totalPages}
@@ -287,41 +297,42 @@ export function ProjectPortfolioTable({
 
 export function ProjectTableSkeleton() {
   return (
-    <Box
-      sx={{
-        border: '1px solid',
-        borderColor: 'divider',
-        borderRadius: 1.5,
-        bgcolor: 'background.paper',
-        overflow: 'hidden',
-      }}
-      aria-busy="true"
-      aria-label="Proje tablosu yükleniyor"
-    >
-      <Box sx={{ px: 2, py: 1.75, borderBottom: '1px solid', borderColor: 'divider' }}>
-        <Skeleton width={160} height={22} />
-        <Skeleton width={80} height={14} sx={{ mt: 0.5 }} />
+    <Box sx={{ ...surfaceSx, overflow: 'hidden' }} aria-busy="true" aria-label="Proje tablosu yükleniyor">
+      <Box
+        sx={{
+          px: DASH.space3,
+          py: DASH.space2,
+          borderBottom: DASH.border,
+          borderColor: 'divider',
+        }}
+      >
+        <Skeleton width={170} height={22} />
+        <Skeleton width={90} height={14} sx={{ mt: 0.75 }} />
       </Box>
-      <Stack spacing={0}>
-        {Array.from({ length: 6 }).map((_, i) => (
-          <Stack
-            key={i}
-            direction="row"
-            spacing={2}
-            alignItems="center"
-            sx={{ px: 2, py: 1.5, borderBottom: '1px solid', borderColor: 'divider' }}
-          >
-            <Box sx={{ flex: 1.4 }}>
-              <Skeleton width="55%" height={16} />
-              <Skeleton width="30%" height={12} sx={{ mt: 0.5 }} />
-            </Box>
-            <Skeleton width={64} height={20} />
-            <Skeleton width={64} height={20} />
-            <Skeleton variant="circular" width={26} height={26} />
-            <Skeleton width={100} height={10} sx={{ display: { xs: 'none', md: 'block' } }} />
-          </Stack>
-        ))}
-      </Stack>
+      {Array.from({ length: 7 }).map((_, i) => (
+        <Stack
+          key={i}
+          direction="row"
+          spacing={DASH.space2}
+          alignItems="center"
+          sx={{
+            px: DASH.space3,
+            py: DASH.space2,
+            borderBottom: DASH.border,
+            borderColor: 'divider',
+          }}
+        >
+          <Box sx={{ flex: 1.6, minWidth: 0 }}>
+            <Skeleton width="58%" height={16} />
+            <Skeleton width="28%" height={12} sx={{ mt: 0.5 }} />
+          </Box>
+          <Skeleton variant="circular" width={26} height={26} />
+          <Skeleton width={72} height={22} />
+          <Skeleton width={72} height={22} />
+          <Skeleton width={110} height={10} sx={{ display: { xs: 'none', md: 'block' } }} />
+          <Skeleton width={28} height={28} />
+        </Stack>
+      ))}
     </Box>
   )
 }

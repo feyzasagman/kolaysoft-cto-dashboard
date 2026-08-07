@@ -3,6 +3,7 @@ import TrendingFlatIcon from '@mui/icons-material/TrendingFlat'
 import TrendingUpIcon from '@mui/icons-material/TrendingUp'
 import { Box, Skeleton, Stack, Tooltip, Typography } from '@mui/material'
 import type { ReactNode } from 'react'
+import { DASH, surfaceSx } from '@/theme/dashboardTokens'
 
 export type KpiTrend = 'up' | 'down' | 'flat'
 
@@ -15,7 +16,6 @@ interface KpiCardProps {
   tooltip?: string
   trend?: KpiTrend
   trendLabel?: string
-  updatedLabel?: string | null
 }
 
 function TrendChip({ trend, label }: { trend: KpiTrend; label?: string }) {
@@ -27,10 +27,16 @@ function TrendChip({ trend, label }: { trend: KpiTrend; label?: string }) {
         : { icon: <TrendingFlatIcon sx={{ fontSize: 14 }} />, color: 'text.secondary' }
 
   return (
-    <Stack direction="row" spacing={0.5} alignItems="center" sx={{ color: config.color }}>
+    <Stack
+      direction="row"
+      spacing={0.5}
+      alignItems="center"
+      sx={{ color: config.color, flexShrink: 0 }}
+      aria-label={`Trend: ${label ?? trend}`}
+    >
       {config.icon}
       <Typography variant="caption" fontWeight={650} color="inherit">
-        {label ?? (trend === 'up' ? 'Yüksek' : trend === 'down' ? 'Düşük' : 'Stabil')}
+        {label ?? (trend === 'up' ? 'İyi' : trend === 'down' ? 'Dikkat' : 'Stabil')}
       </Typography>
     </Stack>
   )
@@ -45,36 +51,35 @@ export function KpiCard({
   tooltip,
   trend = 'flat',
   trendLabel,
-  updatedLabel,
 }: KpiCardProps) {
   const card = (
     <Box
       sx={{
-        bgcolor: 'background.paper',
-        border: '1px solid',
-        borderColor: 'divider',
-        borderRadius: 1.5,
-        p: 2,
+        ...surfaceSx,
+        p: DASH.cardPadding,
+        minHeight: DASH.kpiMinHeight,
         height: '100%',
+        display: 'flex',
+        flexDirection: 'column',
         transition: 'border-color 160ms ease, box-shadow 160ms ease, transform 160ms ease',
         '&:hover': {
           borderColor: '#AFB8C1',
-          boxShadow: 1,
-          transform: 'translateY(-1px)',
+          boxShadow: 2,
+          transform: DASH.hoverLift,
         },
       }}
     >
-      <Stack direction="row" spacing={1.25} alignItems="flex-start" justifyContent="space-between">
+      <Stack direction="row" spacing={DASH.space2} alignItems="flex-start" justifyContent="space-between">
         <Box
           sx={{
-            width: 34,
-            height: 34,
+            width: 36,
+            height: 36,
             borderRadius: 1,
             display: 'grid',
             placeItems: 'center',
             bgcolor: `${tone}14`,
             color: tone,
-            border: '1px solid',
+            border: DASH.border,
             borderColor: 'divider',
             flexShrink: 0,
           }}
@@ -85,26 +90,31 @@ export function KpiCard({
         <TrendChip trend={trend} label={trendLabel} />
       </Stack>
 
-      <Typography
-        variant="overline"
-        sx={{ display: 'block', mt: 1.5, mb: 0.25, letterSpacing: '0.04em' }}
-      >
+      <Typography variant="overline" sx={{ display: 'block', mt: DASH.space2, mb: 0.5 }}>
         {label}
       </Typography>
       <Typography
-        sx={{ fontSize: { xs: '1.625rem', md: '1.875rem' }, fontWeight: 700, lineHeight: 1.1 }}
+        component="p"
+        sx={{
+          fontSize: { xs: '1.75rem', md: '2rem' },
+          fontWeight: 700,
+          lineHeight: 1.1,
+          letterSpacing: '-0.02em',
+          m: 0,
+        }}
         aria-label={`${label}: ${value ?? '—'}`}
       >
         {value ?? '—'}
       </Typography>
       {secondary && (
-        <Typography variant="caption" color="text.secondary" display="block" mt={0.75}>
+        <Typography
+          variant="caption"
+          color="text.secondary"
+          display="block"
+          mt="auto"
+          pt={DASH.space1}
+        >
           {secondary}
-        </Typography>
-      )}
-      {updatedLabel && (
-        <Typography variant="caption" color="text.disabled" display="block" mt={0.75}>
-          {updatedLabel}
         </Typography>
       )}
     </Box>
@@ -122,22 +132,19 @@ export function KpiCardSkeleton() {
   return (
     <Box
       sx={{
-        border: '1px solid',
-        borderColor: 'divider',
-        borderRadius: 1.5,
-        bgcolor: 'background.paper',
-        p: 2,
-        height: 132,
+        ...surfaceSx,
+        p: DASH.cardPadding,
+        minHeight: DASH.kpiMinHeight,
       }}
       aria-label="KPI yükleniyor"
     >
-      <Stack direction="row" justifyContent="space-between" mb={2}>
-        <Skeleton variant="rounded" width={34} height={34} />
-        <Skeleton width={48} height={16} />
+      <Stack direction="row" justifyContent="space-between" mb={DASH.space2}>
+        <Skeleton variant="rounded" width={36} height={36} />
+        <Skeleton width={52} height={16} />
       </Stack>
-      <Skeleton width="40%" height={14} />
-      <Skeleton width="55%" height={36} sx={{ mt: 0.75 }} />
-      <Skeleton width="70%" height={14} sx={{ mt: 1 }} />
+      <Skeleton width="45%" height={12} />
+      <Skeleton width="40%" height={40} sx={{ mt: 1 }} />
+      <Skeleton width="75%" height={14} sx={{ mt: DASH.space2 }} />
     </Box>
   )
 }

@@ -1,3 +1,4 @@
+import CloseIcon from '@mui/icons-material/Close'
 import FilterListIcon from '@mui/icons-material/FilterList'
 import SearchIcon from '@mui/icons-material/Search'
 import {
@@ -14,6 +15,7 @@ import {
   Typography,
 } from '@mui/material'
 import type { ProjectStatus, ReportHealth, RiskLevel, UserRow } from '@/types/api'
+import { DASH, surfaceSx } from '@/theme/dashboardTokens'
 import {
   DASHBOARD_SORT_OPTIONS,
   hasActiveFilters,
@@ -41,11 +43,13 @@ function FilterChip({
       label={label}
       onClick={onClick}
       clickable
+      size="small"
       variant={active ? 'filled' : 'outlined'}
       color={active ? 'primary' : 'default'}
-      size="small"
       sx={{
         fontWeight: 650,
+        height: 28,
+        borderRadius: '999px',
         bgcolor: active ? 'primary.main' : 'background.paper',
         color: active ? 'primary.contrastText' : 'text.secondary',
         borderColor: active ? 'primary.main' : 'divider',
@@ -75,11 +79,9 @@ export function DashboardFilterBar({
     <Box
       id="dashboard-filters"
       sx={{
-        border: '1px solid',
+        ...surfaceSx,
+        p: DASH.cardPadding,
         borderColor: active ? 'primary.light' : 'divider',
-        borderRadius: 1.5,
-        bgcolor: 'background.paper',
-        p: 2,
         transition: 'border-color 160ms ease',
       }}
     >
@@ -87,35 +89,41 @@ export function DashboardFilterBar({
         direction="row"
         alignItems="center"
         justifyContent="space-between"
-        spacing={1}
-        mb={1.5}
+        spacing={DASH.space1}
+        mb={DASH.space2}
       >
         <Stack direction="row" spacing={1} alignItems="center">
-          <FilterListIcon fontSize="small" color="action" />
+          <FilterListIcon fontSize="small" color="action" aria-hidden />
           <Typography variant="h5" component="h2">
             Filtreler
           </Typography>
           {active && (
-            <Chip size="small" color="primary" label="Aktif" sx={{ height: 20, fontSize: '0.7rem' }} />
+            <Chip
+              size="small"
+              color="primary"
+              label="Aktif"
+              sx={{ height: 20, fontSize: '0.68rem', fontWeight: 700 }}
+            />
           )}
         </Stack>
         <Button
           variant={active ? 'contained' : 'outlined'}
+          startIcon={<CloseIcon />}
           onClick={onClear}
           disabled={!active}
           aria-label="Filtreleri temizle"
         >
-          Clear Filters
+          Filtreleri Temizle
         </Button>
       </Stack>
 
       <Stack
         direction={{ xs: 'column', md: 'row' }}
-        spacing={1}
+        spacing={DASH.space1}
         useFlexGap
         flexWrap="wrap"
         alignItems={{ md: 'center' }}
-        mb={1.5}
+        mb={DASH.space2}
       >
         <TextField
           placeholder="Proje adı veya kod"
@@ -182,10 +190,10 @@ export function DashboardFilterBar({
         </FormControl>
 
         <FormControl sx={{ minWidth: 150 }}>
-          <InputLabel id="filter-week-label">Week report</InputLabel>
+          <InputLabel id="filter-week-label">Report</InputLabel>
           <Select
             labelId="filter-week-label"
-            label="Week report"
+            label="Report"
             value={value.hasCurrentWeekReport}
             onChange={(e) =>
               patch({ hasCurrentWeekReport: e.target.value as '' | 'true' | 'false' })
@@ -230,7 +238,7 @@ export function DashboardFilterBar({
         </FormControl>
       </Stack>
 
-      <Stack direction="row" spacing={0.75} useFlexGap flexWrap="wrap" alignItems="center">
+      <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap" alignItems="center">
         <Typography variant="caption" color="text.secondary" mr={0.5}>
           Hızlı seçim:
         </Typography>

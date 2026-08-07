@@ -1,6 +1,7 @@
-import { Box, Link, Stack, Typography } from '@mui/material'
+import { Box, Link, Skeleton, Stack, Typography } from '@mui/material'
 import { Link as RouterLink } from 'react-router-dom'
-import { SurfaceCard } from '@/components/common/SurfaceCard'
+import { EmptyState } from '@/components/common/EmptyState'
+import { DASH, surfaceSx } from '@/theme/dashboardTokens'
 import type { CriticalRisk } from '@/types/api'
 import { mapCriticalRiskPreview } from '@/utils/dashboardMapper'
 
@@ -13,34 +14,48 @@ export function CriticalRisksPanel({ risks, loading = false }: CriticalRisksPane
   const items = mapCriticalRiskPreview(risks)
 
   return (
-    <SurfaceCard
-      title="Recent Risks"
-      subtitle="Yüksek öncelikli açık riskler"
+    <Box
+      sx={{
+        ...surfaceSx,
+        p: DASH.cardPadding,
+        minHeight: 240,
+      }}
       aria-label="Kritik risk önizlemesi"
     >
+      <Typography variant="h5" component="h2">
+        Recent Risks
+      </Typography>
+      <Typography variant="caption" color="text.secondary" display="block" mt={0.5} mb={DASH.space2}>
+        Yüksek öncelikli açık riskler
+      </Typography>
+
       {loading ? (
-        <Typography variant="body2" color="text.secondary" aria-busy="true">
-          Riskler yükleniyor…
-        </Typography>
+        <Stack spacing={DASH.space1} aria-busy="true">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <Skeleton key={i} variant="rounded" height={64} />
+          ))}
+        </Stack>
       ) : items.length === 0 ? (
-        <Typography variant="body2" color="text.secondary">
-          Kritik risk bulunmuyor.
-        </Typography>
+        <EmptyState
+          title="Kritik risk bulunmuyor"
+          description="Açık kritik risk oluştuğunda burada listelenir."
+        />
       ) : (
-        <Stack spacing={1} sx={{ overflowY: 'auto', maxHeight: 300 }}>
+        <Stack spacing={DASH.space1} sx={{ overflowY: 'auto', maxHeight: 320 }}>
           {items.map((risk) => (
             <Box
               key={risk.id}
               sx={{
-                border: '1px solid',
+                border: DASH.border,
                 borderColor: 'divider',
                 borderRadius: 1,
-                p: 1.25,
+                px: DASH.space2,
+                py: 1.25,
                 transition: 'border-color 160ms ease, background-color 160ms ease',
                 '&:hover': { borderColor: '#AFB8C1', bgcolor: 'action.hover' },
               }}
             >
-              <Stack direction="row" justifyContent="space-between" gap={1} mb={0.5}>
+              <Stack direction="row" justifyContent="space-between" gap={DASH.space1} mb={0.5}>
                 <Typography variant="body2" fontWeight={650} noWrap title={risk.title}>
                   {risk.title}
                 </Typography>
@@ -67,6 +82,6 @@ export function CriticalRisksPanel({ risks, loading = false }: CriticalRisksPane
           ))}
         </Stack>
       )}
-    </SurfaceCard>
+    </Box>
   )
 }

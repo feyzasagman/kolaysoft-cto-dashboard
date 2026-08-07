@@ -14,8 +14,6 @@ import {
   ProjectPortfolioTable,
   ProjectTableSkeleton,
 } from '@/components/dashboard/ProjectPortfolioTable'
-import { QuickActions } from '@/components/dashboard/QuickActions'
-import { RecentActivityPanel } from '@/components/dashboard/RecentActivityPanel'
 import { RecentReportsPanel } from '@/components/dashboard/RecentReportsPanel'
 import { useAuth } from '@/contexts/AuthContext'
 import {
@@ -25,6 +23,7 @@ import {
   useHealthDistribution,
   useUsers,
 } from '@/hooks/useApiQueries'
+import { DASH, twoColGridSx } from '@/theme/dashboardTokens'
 import {
   DEFAULT_DASHBOARD_FILTERS,
   dashboardReturnQuery,
@@ -35,11 +34,11 @@ import {
   type DashboardFilterState,
 } from '@/utils/dashboardFilterMapper'
 import { mapPortfolioRows } from '@/utils/dashboardMapper'
-import { formatRelativeTime } from '@/utils/formatRelative'
 import { getHttpStatus } from '@/utils/errorUtils'
 
 /**
- * Enterprise dashboard — mevcut endpoint’lerle yeniden düzenlenmiş layout.
+ * Sprint 1 — Enterprise Dashboard Redesign.
+ * Mevcut endpoint’ler; yalnızca UX/UI kalitesi.
  */
 export function DashboardPage() {
   const { user, hasAnyRole } = useAuth()
@@ -150,7 +149,6 @@ export function DashboardPage() {
   const totalElements = projectsQuery.data?.totalElements ?? 0
   const totalPages = projectsQuery.data?.totalPages ?? 0
   const filtersActive = hasActiveFilters(filters)
-  const updatedLabel = lastRefreshedAt ? `Updated ${formatRelativeTime(lastRefreshedAt)}` : null
 
   return (
     <Box>
@@ -162,25 +160,19 @@ export function DashboardPage() {
         onRefresh={refreshAll}
       />
 
-      <Stack spacing={3}>
-        {/* KPI */}
+      <Stack spacing={DASH.sectionGap}>
+        {/* KPI — 3 × 2 */}
         {summaryQuery.isError ? (
           <DashboardErrorState
             title="Özet metrikler alınamadı."
             onRetry={() => void summaryQuery.refetch()}
           />
         ) : (
-          <DashboardSummaryCards summary={summaryQuery.data} updatedLabel={updatedLabel} />
+          <DashboardSummaryCards summary={summaryQuery.data} />
         )}
 
         {/* Health + Recent Reports */}
-        <Box
-          sx={{
-            display: 'grid',
-            gap: 2.5,
-            gridTemplateColumns: { xs: '1fr', lg: '1.1fr 1fr' },
-          }}
-        >
+        <Box sx={twoColGridSx}>
           {healthQuery.isError ? (
             <DashboardErrorState
               title="Sağlık dağılımı alınamadı."
@@ -196,8 +188,8 @@ export function DashboardPage() {
           />
         </Box>
 
-        {/* Portfolio filters + table */}
-        <Stack spacing={2}>
+        {/* Project Portfolio */}
+        <Stack spacing={DASH.space2}>
           <DashboardFilterBar
             value={filterBarValue}
             managers={managersQuery.data?.content ?? []}
@@ -227,7 +219,7 @@ export function DashboardPage() {
               }
               actionLabel={
                 filtersActive
-                  ? 'Clear Filters'
+                  ? 'Filtreleri Temizle'
                   : hasAnyRole('ADMIN')
                     ? 'Projeleri Görüntüle'
                     : undefined
@@ -255,30 +247,15 @@ export function DashboardPage() {
           )}
         </Stack>
 
-        {/* Risks + Activity */}
-        <Box
-          sx={{
-            display: 'grid',
-            gap: 2.5,
-            gridTemplateColumns: { xs: '1fr', lg: '1fr 1fr' },
-          }}
-        >
-          {risksQuery.isError ? (
-            <DashboardErrorState
-              title="Kritik riskler alınamadı."
-              onRetry={() => void risksQuery.refetch()}
-            />
-          ) : (
-            <CriticalRisksPanel risks={risksQuery.data} loading={risksQuery.isLoading} />
-          )}
-          <RecentActivityPanel
-            risks={risksQuery.data}
-            rows={portfolioRows}
-            loading={risksQuery.isLoading || projectsQuery.isLoading}
+        {/* Recent Risks */}
+        {risksQuery.isError ? (
+          <DashboardErrorState
+            title="Kritik riskler alınamadı."
+            onRetry={() => void risksQuery.refetch()}
           />
-        </Box>
-
-        <QuickActions />
+        ) : (
+          <CriticalRisksPanel risks={risksQuery.data} loading={risksQuery.isLoading} />
+        )}
       </Stack>
     </Box>
   )
