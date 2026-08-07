@@ -291,6 +291,9 @@ cd backend/cto-dashboard-api
 ./mvnw test
 ```
 
+MVP test turu raporu: [`docs/testing/Day15_MVP_Test_Report.md`](docs/testing/Day15_MVP_Test_Report.md)  
+Açık hatalar: [`docs/testing/Day15_Bug_List.md`](docs/testing/Day15_Bug_List.md)
+
 ### Swagger
 
 Uygulama çalışırken Swagger arayüzü:
