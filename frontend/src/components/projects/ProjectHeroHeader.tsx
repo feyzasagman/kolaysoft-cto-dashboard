@@ -1,22 +1,14 @@
-import EditOutlinedIcon from '@mui/icons-material/EditOutlined'
-import MoreHorizIcon from '@mui/icons-material/MoreHoriz'
 import RefreshIcon from '@mui/icons-material/Refresh'
 import {
   Box,
   Breadcrumbs,
   Button,
-  IconButton,
   LinearProgress,
   Link,
-  ListItemText,
-  Menu,
-  MenuItem,
   Stack,
-  Tooltip,
   Typography,
 } from '@mui/material'
-import { useState } from 'react'
-import { Link as RouterLink, useNavigate } from 'react-router-dom'
+import { Link as RouterLink } from 'react-router-dom'
 import {
   HealthBadge,
   ProjectStatusBadge,
@@ -35,8 +27,9 @@ interface ProjectHeroHeaderProps {
   fromDashboard?: boolean
   dashboardQuery?: string
   canCreateReport?: boolean
-  canEditLatestReport?: boolean
-  isCto?: boolean
+  canViewLatestReport?: boolean
+  /** Proje edit route yok — false bırakın. */
+  canEditProject?: boolean
   refreshing?: boolean
   onRefresh: () => void
 }
@@ -46,16 +39,13 @@ export function ProjectHeroHeader({
   fromDashboard = false,
   dashboardQuery = '',
   canCreateReport = false,
-  canEditLatestReport = false,
-  isCto = false,
+  canViewLatestReport = false,
+  canEditProject = false,
   refreshing = false,
   onRefresh,
 }: ProjectHeroHeaderProps) {
-  const navigate = useNavigate()
-  const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null)
-  const backTo = fromDashboard ? `/dashboard${dashboardQuery}` : '/projects'
+  const projectsTo = fromDashboard ? `/dashboard${dashboardQuery}` : '/projects'
   const behind = model.progressActual < model.progressTarget
-  const barColor = progressBarColor(model.health, behind)
 
   return (
     <Box
@@ -64,11 +54,11 @@ export function ProjectHeroHeader({
       sx={{
         ...surfaceSx,
         px: { xs: DASH.space2, md: DASH.space3 },
-        py: { xs: DASH.space2, md: DASH.space3 },
-        mb: DASH.sectionGap,
+        py: DASH.space2,
+        mb: DASH.space3,
       }}
     >
-      <Breadcrumbs aria-label="breadcrumb" sx={{ mb: DASH.space2 }}>
+      <Breadcrumbs aria-label="Sayfa konumu" sx={{ mb: DASH.space2 }}>
         <Link
           component={RouterLink}
           to={fromDashboard ? `/dashboard${dashboardQuery}` : '/dashboard'}
@@ -79,8 +69,15 @@ export function ProjectHeroHeader({
         >
           Dashboard
         </Link>
-        <Link component={RouterLink} to={backTo} underline="hover" color="text.secondary" variant="caption" fontWeight={600}>
-          Projects
+        <Link
+          component={RouterLink}
+          to={projectsTo}
+          underline="hover"
+          color="text.secondary"
+          variant="caption"
+          fontWeight={600}
+        >
+          Projeler
         </Link>
         <Typography variant="caption" color="text.primary" fontWeight={650} noWrap>
           {model.name}
@@ -91,23 +88,26 @@ export function ProjectHeroHeader({
         direction={{ xs: 'column', lg: 'row' }}
         justifyContent="space-between"
         alignItems={{ lg: 'flex-start' }}
-        spacing={DASH.space3}
+        spacing={DASH.space2}
       >
         <Box sx={{ minWidth: 0, flex: 1 }}>
-          <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap" alignItems="center" mb={1}>
-            <Typography variant="overline">Project</Typography>
+          <Stack direction="row" spacing={1} alignItems="baseline" useFlexGap flexWrap="wrap" mb={0.75}>
+            <Typography
+              variant="h1"
+              component="h1"
+              sx={{ fontSize: { xs: '1.375rem', md: '1.625rem' } }}
+            >
+              {model.name}
+            </Typography>
             <Typography variant="caption" color="text.secondary" fontWeight={700}>
               {model.code}
             </Typography>
+            {model.customer !== '—' && (
+              <Typography variant="caption" color="text.secondary">
+                · {model.customer}
+              </Typography>
+            )}
           </Stack>
-
-          <Typography
-            variant="h1"
-            component="h1"
-            sx={{ fontSize: { xs: '1.5rem', md: '1.875rem' }, mb: 1 }}
-          >
-            {model.name}
-          </Typography>
 
           <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap" mb={DASH.space2}>
             <ProjectStatusBadge status={model.projectStatus} />
@@ -117,17 +117,17 @@ export function ProjectHeroHeader({
 
           <Stack
             direction={{ xs: 'column', sm: 'row' }}
-            spacing={{ xs: DASH.space2, sm: DASH.space3 }}
+            spacing={{ xs: 1.25, sm: DASH.space3 }}
             useFlexGap
             flexWrap="wrap"
             alignItems={{ sm: 'center' }}
-            mb={DASH.space3}
+            mb={DASH.space2}
           >
             <Stack direction="row" spacing={1} alignItems="center">
-              <UserAvatar name={model.managerName} size={32} />
+              <UserAvatar name={model.managerName} size={28} />
               <Box>
                 <Typography variant="caption" color="text.secondary" display="block">
-                  Manager
+                  Project Manager
                 </Typography>
                 <Typography variant="body2" fontWeight={650}>
                   {model.managerName}
@@ -136,7 +136,7 @@ export function ProjectHeroHeader({
             </Stack>
             <Box>
               <Typography variant="caption" color="text.secondary" display="block">
-                Last updated
+                Last Updated
               </Typography>
               <Typography variant="body2" fontWeight={650}>
                 {model.lastUpdateRaw
@@ -146,7 +146,7 @@ export function ProjectHeroHeader({
             </Box>
             <Box>
               <Typography variant="caption" color="text.secondary" display="block">
-                Started
+                Start
               </Typography>
               <Typography variant="body2" fontWeight={650}>
                 {model.startDateLabel}
@@ -154,58 +154,73 @@ export function ProjectHeroHeader({
             </Box>
             <Box>
               <Typography variant="caption" color="text.secondary" display="block">
-                Current week
+                Target End
               </Typography>
               <Typography variant="body2" fontWeight={650}>
-                {model.currentWeekLabel}
+                {model.targetEndDateLabel}
               </Typography>
             </Box>
           </Stack>
 
-          <Box sx={{ maxWidth: 520 }}>
-            <Stack direction="row" justifyContent="space-between" mb={0.75}>
+          <Box sx={{ maxWidth: 480 }}>
+            <Stack direction="row" justifyContent="space-between" mb={0.5}>
               <Typography variant="caption" color="text.secondary" fontWeight={650}>
-                Progress
+                Gerçekleşen {model.progressActual}%
               </Typography>
-              <Typography variant="caption" fontWeight={700}>
-                {model.progressActual}% · target {model.progressTarget}%
+              <Typography variant="caption" color="text.secondary" fontWeight={650}>
+                Hedef {model.progressTarget}%
               </Typography>
             </Stack>
             <LinearProgress
               variant="determinate"
               value={model.progressActual}
-              aria-label={`İlerleme ${model.progressActual} yüzde`}
+              aria-label={`Gerçekleşen ilerleme ${model.progressActual} yüzde`}
+              aria-valuenow={model.progressActual}
+              aria-valuemin={0}
+              aria-valuemax={100}
               sx={{
-                height: 10,
+                height: 6,
                 bgcolor: '#EBEDF0',
-                '& .MuiLinearProgress-bar': { bgcolor: barColor },
+                '& .MuiLinearProgress-bar': {
+                  bgcolor: progressBarColor(model.health, behind),
+                },
               }}
             />
           </Box>
         </Box>
 
-        <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap" sx={{ flexShrink: 0 }}>
-          <Tooltip
-            title={
-              canEditLatestReport
-                ? 'Son raporu düzenle'
-                : 'Düzenlenecek rapor yok'
-            }
-          >
-            <span>
-              <Button
-                variant="outlined"
-                startIcon={<EditOutlinedIcon />}
-                disabled={!canEditLatestReport}
-                onClick={() => {
-                  if (model.latestReportId) navigate(`/reports/${model.latestReportId}/edit`)
-                }}
-                aria-label="Düzenle"
-              >
-                Edit
-              </Button>
-            </span>
-          </Tooltip>
+        <Stack
+          direction="row"
+          spacing={1}
+          useFlexGap
+          flexWrap="wrap"
+          sx={{ flexShrink: 0 }}
+        >
+          {canEditProject && (
+            <Button variant="outlined" disabled aria-label="Düzenle">
+              Düzenle
+            </Button>
+          )}
+          {canCreateReport && (
+            <Button
+              component={RouterLink}
+              to={`/reports/new?projectId=${model.projectId}`}
+              variant="contained"
+              aria-label="Haftalık rapor oluştur"
+            >
+              Haftalık Rapor Oluştur
+            </Button>
+          )}
+          {canViewLatestReport && model.latestReportId && (
+            <Button
+              component={RouterLink}
+              to={`/reports/${model.latestReportId}`}
+              variant="outlined"
+              aria-label="Son raporu gör"
+            >
+              Raporu Gör
+            </Button>
+          )}
           <Button
             variant="outlined"
             startIcon={<RefreshIcon />}
@@ -213,57 +228,8 @@ export function ProjectHeroHeader({
             disabled={refreshing}
             aria-label="Yenile"
           >
-            {refreshing ? 'Refreshing…' : 'Refresh'}
+            {refreshing ? 'Yenileniyor…' : 'Yenile'}
           </Button>
-          <Tooltip title="More actions">
-            <IconButton
-              aria-label="Daha fazla işlem"
-              aria-haspopup="menu"
-              onClick={(e) => setMenuAnchor(e.currentTarget)}
-              sx={{ border: DASH.border, borderColor: 'divider', borderRadius: 1 }}
-            >
-              <MoreHorizIcon />
-            </IconButton>
-          </Tooltip>
-          <Menu
-            anchorEl={menuAnchor}
-            open={Boolean(menuAnchor)}
-            onClose={() => setMenuAnchor(null)}
-          >
-            <MenuItem
-              onClick={() => {
-                setMenuAnchor(null)
-                navigate(backTo)
-              }}
-            >
-              <ListItemText>Geri dön</ListItemText>
-            </MenuItem>
-            {model.latestReportId && (
-              <MenuItem
-                onClick={() => {
-                  setMenuAnchor(null)
-                  navigate(`/reports/${model.latestReportId}`)
-                }}
-              >
-                <ListItemText>Son raporu gör</ListItemText>
-              </MenuItem>
-            )}
-            {canCreateReport && (
-              <MenuItem
-                onClick={() => {
-                  setMenuAnchor(null)
-                  navigate(`/reports/new?projectId=${model.projectId}`)
-                }}
-              >
-                <ListItemText>Haftalık rapor oluştur</ListItemText>
-              </MenuItem>
-            )}
-            {isCto && (
-              <MenuItem disabled>
-                <ListItemText>Salt okunur görünüm</ListItemText>
-              </MenuItem>
-            )}
-          </Menu>
         </Stack>
       </Stack>
     </Box>

@@ -203,13 +203,20 @@ export function countWorkByStatus(items: WorkItem[] | null | undefined) {
 export function countRisksByLevel(items: RiskIssue[] | null | undefined) {
   const list = items ?? []
   const open = list.filter((i) => i.status === 'OPEN' || i.status === 'IN_PROGRESS')
+  const resolved = list.filter((i) => i.status === 'RESOLVED' || i.status === 'ACCEPTED')
   return {
     critical: open.filter((i) => i.riskLevel === 'CRITICAL').length,
     high: open.filter((i) => i.riskLevel === 'HIGH').length,
     medium: open.filter((i) => i.riskLevel === 'MEDIUM').length,
     low: open.filter((i) => i.riskLevel === 'LOW').length,
     openTotal: open.length,
+    resolvedTotal: resolved.length,
   }
+}
+
+export function countOpenWorkItems(items: WorkItem[] | null | undefined) {
+  const stats = countWorkByStatus(items)
+  return stats.active + stats.blocked
 }
 
 /** Mevcut DTO’lardan türetilmiş aktivite zaman çizelgesi — yeni endpoint yok. */
