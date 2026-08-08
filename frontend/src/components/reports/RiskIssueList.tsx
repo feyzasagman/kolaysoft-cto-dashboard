@@ -1,6 +1,7 @@
 import AddIcon from '@mui/icons-material/Add'
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline'
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined'
+import ReportProblemOutlinedIcon from '@mui/icons-material/ReportProblemOutlined'
 import {
   Box,
   Button,
@@ -9,20 +10,14 @@ import {
   InputLabel,
   MenuItem,
   Select,
+  Skeleton,
   Stack,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
   Typography,
 } from '@mui/material'
 import { useState } from 'react'
 import { toast } from 'react-toastify'
 import { ConfirmDialog } from '@/components/common/ConfirmDialog'
 import { EmptyState, ErrorState } from '@/components/common/EmptyState'
-import { LoadingState } from '@/components/common/LoadingState'
 import { RiskLevelBadge, RiskStatusBadge } from '@/components/common/StatusBadges'
 import { RiskIssueFormDialog } from '@/components/reports/RiskIssueFormDialog'
 import {
@@ -31,6 +26,7 @@ import {
   useRiskIssues,
   useUpdateRiskIssue,
 } from '@/hooks/useApiQueries'
+import { DASH, surfaceSx } from '@/theme/dashboardTokens'
 import type { RiskIssue, RiskIssueRequest, RiskIssueUpdateRequest, RiskStatus } from '@/types/api'
 import { getErrorMessage } from '@/utils/errorUtils'
 
@@ -103,72 +99,97 @@ export function RiskIssueList({ reportId, canEdit }: RiskIssueListProps) {
     }
   }
 
+  const sorted = [...items].sort((a, b) => {
+    const rank = (level: string) =>
+      level === 'CRITICAL' ? 0 : level === 'HIGH' ? 1 : level === 'MEDIUM' ? 2 : 3
+    return rank(String(a.riskLevel)) - rank(String(b.riskLevel))
+  })
+
   return (
-    <Box
-      sx={{
-        border: '1px solid',
-        borderColor: 'divider',
-        borderRadius: 1.5,
-        bgcolor: 'background.paper',
-        p: 2,
-      }}
-    >
-      <Stack direction="row" justifyContent="space-between" alignItems="center" mb={1.5} gap={1}>
-        <Typography variant="h5">Riskler ve Engeller</Typography>
+    <Box>
+      <Stack direction="row" justifyContent="space-between" alignItems="center" mb={DASH.space2} gap={1}>
+        <Box>
+          <Typography variant="h5" component="h2">
+            Riskler / Engeller
+          </Typography>
+          <Typography variant="caption" color="text.secondary">
+            Bu haftaya bağlı risk kayıtları
+          </Typography>
+        </Box>
         {canEdit && (
-          <Button startIcon={<AddIcon />} size="small" variant="contained" onClick={openCreate} aria-label="Risk ekle">
+          <Button
+            startIcon={<AddIcon />}
+            size="small"
+            variant="contained"
+            onClick={openCreate}
+            aria-label="Risk ekle"
+          >
             Ekle
           </Button>
         )}
       </Stack>
 
-      {query.isLoading && <LoadingState label="Riskler yükleniyor…" />}
+      {query.isLoading && (
+        <Stack spacing={1} aria-busy="true" aria-label="Riskler yükleniyor">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <Skeleton key={i} variant="rounded" height={80} />
+          ))}
+        </Stack>
+      )}
       {query.isError && <ErrorState onRetry={() => void query.refetch()} />}
       {!query.isLoading && !query.isError && items.length === 0 && (
         <EmptyState
-          title="Risk / engel bulunmuyor"
-          description="Bu haftalık rapora henüz risk veya engel eklenmemiş."
+          icon={<ReportProblemOutlinedIcon />}
+          title="Açık risk veya engel bulunmuyor."
+          description="Bu haftalık rapora henüz risk kaydı eklenmemiş."
           actionLabel={canEdit ? 'Risk ekle' : undefined}
           onAction={canEdit ? openCreate : undefined}
         />
       )}
 
-      {items.length > 0 && (
-        <TableContainer sx={{ overflowX: 'auto' }}>
-          <Table size="small" aria-label="Riskler tablosu">
-            <TableHead>
-              <TableRow>
-                <TableCell>Başlık</TableCell>
-                <TableCell>Seviye</TableCell>
-                <TableCell>Durum</TableCell>
-                <TableCell>Etki</TableCell>
-                {canEdit && <TableCell align="right">İşlem</TableCell>}
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {items.map((item) => (
-                <TableRow key={item.id} hover>
-                  <TableCell>
-                    <Typography variant="body2" fontWeight={650}>
-                      {item.title}
-                    </Typography>
-                    {item.description && (
-                      <Typography variant="caption" color="text.secondary" display="block">
-                        {item.description}
-                      </Typography>
-                    )}
-                  </TableCell>
-                  <TableCell>
+      {sorted.length > 0 && (
+        <Stack spacing={DASH.space1} role="list" aria-label="Riskler">
+          {sorted.map((item) => {
+            const priority =
+              item.riskLevel === 'CRITICAL' || item.riskLevel === 'HIGH'
+            return (
+              <Box
+                key={item.id}
+                role="listitem"
+                sx={{
+                  ...surfaceSx,
+                  p: DASH.space2,
+                  borderLeft: priority ? '3px solid' : DASH.border,
+                  borderLeftColor: priority
+                    ? item.riskLevel === 'CRITICAL'
+                      ? 'error.main'
+                      : 'warning.main'
+                    : 'divider',
+                  transition: 'background-color 140ms ease',
+                  '&:hover': { bgcolor: 'action.hover' },
+                }}
+              >
+                <Stack
+                  direction={{ xs: 'column', sm: 'row' }}
+                  justifyContent="space-between"
+                  spacing={1}
+                  mb={0.75}
+                >
+                  <Typography variant="subtitle2" fontWeight={700}>
+                    {item.title}
+                  </Typography>
+                  <Stack direction="row" spacing={0.75} useFlexGap flexWrap="wrap" alignItems="center">
                     <RiskLevelBadge level={item.riskLevel} />
-                  </TableCell>
-                  <TableCell>
                     {canEdit ? (
-                      <FormControl size="small" sx={{ minWidth: 140 }}>
+                      <FormControl size="small" sx={{ minWidth: 130 }}>
                         <InputLabel>Durum</InputLabel>
                         <Select
                           label="Durum"
                           value={item.status}
-                          onChange={(e) => void handleStatusChange(item, e.target.value as RiskStatus)}
+                          onChange={(e) =>
+                            void handleStatusChange(item, e.target.value as RiskStatus)
+                          }
+                          aria-label={`${item.title} durumu`}
                         >
                           <MenuItem value="OPEN">Açık</MenuItem>
                           <MenuItem value="IN_PROGRESS">Devam Ediyor</MenuItem>
@@ -179,30 +200,44 @@ export function RiskIssueList({ reportId, canEdit }: RiskIssueListProps) {
                     ) : (
                       <RiskStatusBadge status={item.status} />
                     )}
-                  </TableCell>
-                  <TableCell>{item.impact || '—'}</TableCell>
-                  {canEdit && (
-                    <TableCell align="right">
-                      <IconButton
-                        size="small"
-                        aria-label="Düzenle"
-                        onClick={() => {
-                          setEditing(item)
-                          setDialogOpen(true)
-                        }}
-                      >
-                        <EditOutlinedIcon fontSize="small" />
-                      </IconButton>
-                      <IconButton size="small" aria-label="Sil" onClick={() => setDeleting(item)}>
-                        <DeleteOutlineIcon fontSize="small" />
-                      </IconButton>
-                    </TableCell>
-                  )}
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
+                    {canEdit && (
+                      <>
+                        <IconButton
+                          size="small"
+                          aria-label="Düzenle"
+                          onClick={() => {
+                            setEditing(item)
+                            setDialogOpen(true)
+                          }}
+                        >
+                          <EditOutlinedIcon fontSize="small" />
+                        </IconButton>
+                        <IconButton size="small" aria-label="Sil" onClick={() => setDeleting(item)}>
+                          <DeleteOutlineIcon fontSize="small" />
+                        </IconButton>
+                      </>
+                    )}
+                  </Stack>
+                </Stack>
+                {item.description?.trim() && (
+                  <Typography variant="body2" color="text.secondary" mb={0.75}>
+                    {item.description}
+                  </Typography>
+                )}
+                {item.impact?.trim() && (
+                  <Typography variant="caption" color="text.secondary" display="block" mb={0.35}>
+                    Etki: {item.impact}
+                  </Typography>
+                )}
+                {item.actionPlan?.trim() && (
+                  <Typography variant="caption" color="text.secondary" display="block">
+                    Aksiyon: {item.actionPlan}
+                  </Typography>
+                )}
+              </Box>
+            )
+          })}
+        </Stack>
       )}
 
       <RiskIssueFormDialog

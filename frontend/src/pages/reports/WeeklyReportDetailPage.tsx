@@ -1,16 +1,37 @@
-import { Box, Button, Stack, Typography } from '@mui/material'
+import { Box, Button, Skeleton, Stack } from '@mui/material'
 import { useEffect } from 'react'
 import { Navigate, useNavigate, useParams } from 'react-router-dom'
 import { AppErrorState } from '@/components/common/AppErrorState'
-import { LoadingState } from '@/components/common/LoadingState'
-import { PageHeader } from '@/components/common/PageHeader'
 import { RiskIssueList } from '@/components/reports/RiskIssueList'
+import { WeeklyReportHero } from '@/components/reports/WeeklyReportHero'
 import { WeeklyReportSummary } from '@/components/reports/WeeklyReportSummary'
 import { WorkItemList } from '@/components/reports/WorkItemList'
 import { useAuth } from '@/contexts/AuthContext'
 import { useWeeklyReport } from '@/hooks/useApiQueries'
+import { DASH, surfaceSx } from '@/theme/dashboardTokens'
 import { getHttpStatus } from '@/utils/errorUtils'
 import { rememberProjectId } from '@/utils/projectCache'
+
+function WeeklyReportDetailSkeleton() {
+  return (
+    <Box aria-busy="true" aria-label="Rapor detayı yükleniyor" className="fade-in">
+      <Box sx={{ ...surfaceSx, p: DASH.space3, mb: DASH.space3 }}>
+        <Skeleton width={200} height={16} sx={{ mb: 2 }} />
+        <Skeleton width="40%" height={36} />
+        <Skeleton width="55%" height={22} sx={{ mt: 1 }} />
+        <Skeleton variant="rounded" height={100} sx={{ mt: 2, maxWidth: 480 }} />
+      </Box>
+      <Box sx={{ ...surfaceSx, maxWidth: 880, mx: 'auto', p: DASH.space3 }}>
+        <Stack spacing={2}>
+          <Skeleton height={80} />
+          <Skeleton height={120} />
+          <Skeleton height={160} />
+          <Skeleton height={160} />
+        </Stack>
+      </Box>
+    </Box>
+  )
+}
 
 export function WeeklyReportDetailPage() {
   const { id } = useParams()
@@ -32,7 +53,7 @@ export function WeeklyReportDetailPage() {
   }
 
   if (reportQuery.isLoading) {
-    return <LoadingState label="Rapor detayı yükleniyor…" />
+    return <WeeklyReportDetailSkeleton />
   }
 
   if (reportQuery.isError || !reportQuery.data) {
@@ -42,6 +63,7 @@ export function WeeklyReportDetailPage() {
       return (
         <AppErrorState
           kind="notFound"
+          title="Rapor bulunamadı."
           onRetry={() => void reportQuery.refetch()}
           secondaryAction={
             <Button variant="outlined" onClick={() => navigate('/reports')}>
@@ -54,74 +76,58 @@ export function WeeklyReportDetailPage() {
     if (status === 401) {
       return <AppErrorState kind="unauthorized" onRetry={() => void reportQuery.refetch()} />
     }
-    return <AppErrorState kind="network" onRetry={() => void reportQuery.refetch()} />
+    return (
+      <AppErrorState
+        kind="network"
+        title="Rapor bilgileri alınamadı."
+        onRetry={() => void reportQuery.refetch()}
+      />
+    )
   }
 
   const report = reportQuery.data
 
   return (
     <Box>
-      <PageHeader
-        title="Haftalık Rapor"
-        subtitle={`${report.projectCode} · ${report.year} / Hafta ${report.weekNumber}`}
-        meta={
-          <Typography variant="caption" color="text.secondary">
-            Notion tarzı okuma görünümü · salt içerik odaklı
-          </Typography>
-        }
-        actions={
-          <>
-            <Button variant="outlined" onClick={() => navigate('/reports')} aria-label="Rapor listesine dön">
-              Listeye Dön
-            </Button>
-            {canEdit && (
-              <Button
-                variant="contained"
-                onClick={() => navigate(`/reports/${reportId}/edit`)}
-                aria-label="Raporu düzenle"
-              >
-                Düzenle
-              </Button>
-            )}
-          </>
-        }
+      <WeeklyReportHero
+        report={report}
+        canEdit={canEdit}
+        onEdit={() => navigate(`/reports/${reportId}/edit`)}
       />
 
       <Box
         sx={{
           maxWidth: 880,
           mx: 'auto',
-          border: '1px solid',
-          borderColor: 'divider',
-          borderRadius: 1.5,
-          bgcolor: 'background.paper',
-          px: { xs: 2, md: 4 },
-          py: { xs: 2.5, md: 4 },
-          boxShadow: 1,
+          ...surfaceSx,
+          px: { xs: DASH.space2, md: 4 },
+          py: { xs: DASH.space2, md: DASH.space4 },
         }}
         className="fade-in-up"
       >
-        <Stack spacing={2.5}>
-          <WeeklyReportSummary report={report} />
-          <Box>
-            <Typography variant="h5" component="h2" mb={0.5}>
-              Issues & Risk
-            </Typography>
-            <Typography variant="caption" color="text.secondary" display="block" mb={1.25}>
-              Bu haftaya bağlı risk ve engeller
-            </Typography>
-            <RiskIssueList reportId={reportId} canEdit={canEdit} />
-          </Box>
-          <Box>
-            <Typography variant="h5" component="h2" mb={0.5}>
-              Work Items
-            </Typography>
-            <Typography variant="caption" color="text.secondary" display="block" mb={1.25}>
-              Planlanan ve tamamlanan iş kalemleri
-            </Typography>
-            <WorkItemList reportId={reportId} canEdit={canEdit} />
-          </Box>
-        </Stack>
+        <WeeklyReportSummary report={report} />
+
+        <Box
+          component="section"
+          sx={{
+            py: DASH.space3,
+            borderTop: DASH.border,
+            borderColor: 'divider',
+          }}
+        >
+          <RiskIssueList reportId={reportId} canEdit={canEdit} />
+        </Box>
+
+        <Box
+          component="section"
+          sx={{
+            py: DASH.space3,
+            borderTop: DASH.border,
+            borderColor: 'divider',
+          }}
+        >
+          <WorkItemList reportId={reportId} canEdit={canEdit} />
+        </Box>
       </Box>
     </Box>
   )

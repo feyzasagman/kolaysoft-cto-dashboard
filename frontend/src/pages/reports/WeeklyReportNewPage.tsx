@@ -1,4 +1,4 @@
-import { Box, Typography } from '@mui/material'
+import { Box } from '@mui/material'
 import { useEffect, useMemo, useState } from 'react'
 import { Navigate, useNavigate, useSearchParams } from 'react-router-dom'
 import { toast } from 'react-toastify'
@@ -17,6 +17,11 @@ export function WeeklyReportNewPage() {
   const [searchParams] = useSearchParams()
   const projectIdParam = Number(searchParams.get('projectId') || 0) || null
   const [submitError, setSubmitError] = useState<string | null>(null)
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
+  const [duplicateHint, setDuplicateHint] = useState<{
+    projectId: number
+    weekNumber: number
+  } | null>(null)
 
   const canWrite = hasAnyRole('ADMIN', 'PROJECT_MANAGER')
   const isCtoOnly = hasAnyRole('CTO') && !hasAnyRole('ADMIN', 'PROJECT_MANAGER')
@@ -93,21 +98,22 @@ export function WeeklyReportNewPage() {
 
   return (
     <Box>
-      <Typography variant="h1" sx={{ fontSize: { xs: '1.5rem', md: '1.75rem' } }} mb={2}>
-        Yeni Haftalık Rapor
-      </Typography>
       <WeeklyReportForm
         mode="create"
         projects={projects}
         lockedProjectId={projectIdParam}
         submitError={submitError}
+        fieldErrors={fieldErrors}
+        duplicateHint={duplicateHint}
         submitting={createMutation.isPending}
         onCancel={() => navigate(-1)}
         onSubmit={async (payload) => {
           setSubmitError(null)
+          setFieldErrors({})
+          setDuplicateHint(null)
           try {
             const report = await createMutation.mutateAsync(payload as WeeklyReportRequest)
-            toast.success('Haftalık rapor oluşturuldu.')
+            toast.success('Haftalık rapor başarıyla kaydedildi.')
             if (report?.projectId) rememberProjectId(report.projectId)
             navigate(`/reports/${report.id}`, { replace: true })
           } catch (error) {
@@ -117,9 +123,18 @@ export function WeeklyReportNewPage() {
               return
             }
             const fields = getFieldErrors(error)
+            setFieldErrors(fields)
             const fieldMsg = Object.values(fields)[0]
-            setSubmitError(fieldMsg || getErrorMessage(error, 'Rapor oluşturulamadı.'))
-            toast.error(fieldMsg || getErrorMessage(error, 'Rapor oluşturulamadı.'))
+            const message = fieldMsg || getErrorMessage(error, 'Rapor oluşturulamadı.')
+            setSubmitError(message)
+            if (status === 409) {
+              const body = payload as WeeklyReportRequest
+              setDuplicateHint({
+                projectId: body.projectId,
+                weekNumber: body.weekNumber,
+              })
+            }
+            toast.error(message)
           }
         }}
       />

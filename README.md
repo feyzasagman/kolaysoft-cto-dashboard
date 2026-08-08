@@ -119,7 +119,8 @@ Enterprise UI/UX yükseltmesi (frontend-only): [`docs/analysis/Day15_UI_UX_Enhan
 Sprint 1 Dashboard redesign: [`docs/analysis/Day16_Dashboard_Enterprise_Redesign.md`](docs/analysis/Day16_Dashboard_Enterprise_Redesign.md)  
 Sprint 2 Project Detail redesign: [`docs/analysis/Day15_Project_Detail_Enterprise_Redesign.md`](docs/analysis/Day15_Project_Detail_Enterprise_Redesign.md)  
 Sprint 3 Project Portfolio redesign: [`docs/analysis/Day15_Project_Portfolio_Enterprise_Redesign.md`](docs/analysis/Day15_Project_Portfolio_Enterprise_Redesign.md)  
-Sprint 4 Project Detail Command Center: [`docs/analysis/Day15_Project_Detail_Command_Center.md`](docs/analysis/Day15_Project_Detail_Command_Center.md)
+Sprint 4 Project Detail Command Center: [`docs/analysis/Day15_Project_Detail_Command_Center.md`](docs/analysis/Day15_Project_Detail_Command_Center.md)  
+Sprint 5 Weekly Report Enterprise Experience: [`docs/analysis/Day15_Weekly_Report_Enterprise_Experience.md`](docs/analysis/Day15_Weekly_Report_Enterprise_Experience.md)
 
 ### Frontend ortam değişkeni
 

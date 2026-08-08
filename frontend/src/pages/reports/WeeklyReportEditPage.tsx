@@ -1,8 +1,8 @@
-import { Box, Typography } from '@mui/material'
+import { Box, Button } from '@mui/material'
 import { useMemo, useState } from 'react'
 import { Navigate, useNavigate, useParams } from 'react-router-dom'
 import { toast } from 'react-toastify'
-import { ErrorState } from '@/components/common/EmptyState'
+import { AppErrorState } from '@/components/common/AppErrorState'
 import { LoadingState } from '@/components/common/LoadingState'
 import { WeeklyReportForm } from '@/components/reports/WeeklyReportForm'
 import { useAuth } from '@/contexts/AuthContext'
@@ -16,6 +16,7 @@ export function WeeklyReportEditPage() {
   const { hasAnyRole } = useAuth()
   const navigate = useNavigate()
   const [submitError, setSubmitError] = useState<string | null>(null)
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
 
   const canWrite = hasAnyRole('ADMIN', 'PROJECT_MANAGER')
   const reportQuery = useWeeklyReport(Number.isFinite(reportId) ? reportId : null)
@@ -47,7 +48,7 @@ export function WeeklyReportEditPage() {
   }
 
   if (!Number.isFinite(reportId)) {
-    return <ErrorState title="Geçersiz rapor kimliği." />
+    return <AppErrorState kind="notFound" title="Geçersiz rapor kimliği." />
   }
 
   if (reportQuery.isLoading) {
@@ -57,26 +58,36 @@ export function WeeklyReportEditPage() {
   if (reportQuery.isError || !reportQuery.data) {
     const status = getHttpStatus(reportQuery.error)
     if (status === 403) return <Navigate to="/unauthorized" replace />
-    return <ErrorState onRetry={() => void reportQuery.refetch()} />
+    return (
+      <AppErrorState
+        kind="network"
+        title="Rapor bilgileri alınamadı."
+        onRetry={() => void reportQuery.refetch()}
+        secondaryAction={
+          <Button variant="outlined" onClick={() => navigate('/reports')}>
+            Listeye Dön
+          </Button>
+        }
+      />
+    )
   }
 
   return (
     <Box>
-      <Typography variant="h1" sx={{ fontSize: { xs: '1.5rem', md: '1.75rem' } }} mb={2}>
-        Raporu Düzenle
-      </Typography>
       <WeeklyReportForm
         mode="edit"
         projects={projects}
         initial={reportQuery.data}
         submitError={submitError}
+        fieldErrors={fieldErrors}
         submitting={updateMutation.isPending}
         onCancel={() => navigate(`/reports/${reportId}`)}
         onSubmit={async (payload) => {
           setSubmitError(null)
+          setFieldErrors({})
           try {
             await updateMutation.mutateAsync(payload as WeeklyReportUpdateRequest)
-            toast.success('Rapor güncellendi.')
+            toast.success('Haftalık rapor başarıyla kaydedildi.')
             navigate(`/reports/${reportId}`, { replace: true })
           } catch (error) {
             const status = getHttpStatus(error)
@@ -85,9 +96,11 @@ export function WeeklyReportEditPage() {
               return
             }
             const fields = getFieldErrors(error)
+            setFieldErrors(fields)
             const fieldMsg = Object.values(fields)[0]
-            setSubmitError(fieldMsg || getErrorMessage(error, 'Rapor güncellenemedi.'))
-            toast.error(fieldMsg || getErrorMessage(error, 'Rapor güncellenemedi.'))
+            const message = fieldMsg || getErrorMessage(error, 'Rapor güncellenemedi.')
+            setSubmitError(message)
+            toast.error(message)
           }
         }}
       />

@@ -3,6 +3,7 @@ import {
   healthLabel,
   riskLevelLabel,
   riskStatusLabel,
+  scheduleStatusLabel,
   statusLabel,
   workItemStatusLabel,
 } from '@/utils/labels'
@@ -126,6 +127,26 @@ export function RiskStatusBadge({ status }: { status: string | null | undefined 
 
 /** Project status alias — Day 13 naming. */
 export const ProjectStatusBadge = StatusBadge
+
+const scheduleSx: Record<string, BadgeTone> = {
+  ON_TRACK: { bgcolor: '#DAFBE1', color: '#116329', borderColor: '#B4EFC4' },
+  AT_RISK: { bgcolor: '#FFF8C5', color: '#7D4E00', borderColor: '#F0E09A' },
+  DELAYED: { bgcolor: '#FFEBE9', color: '#A40E26', borderColor: '#FFC1C0' },
+  DELAY: { bgcolor: '#FFEBE9', color: '#A40E26', borderColor: '#FFC1C0' },
+  AHEAD: { bgcolor: '#DDF4FF', color: '#0550AE', borderColor: '#B6E3FF' },
+}
+
+export function ScheduleStatusBadge({ status }: { status: string | null | undefined }) {
+  const key = (status ?? '').trim().toUpperCase()
+  const tone = scheduleSx[key] ?? { bgcolor: '#F6F8FA', color: '#656D76', borderColor: '#D0D7DE' }
+  return (
+    <EnterpriseBadge
+      label={scheduleStatusLabel(status)}
+      tone={tone}
+      ariaLabel={`Takvim durumu: ${scheduleStatusLabel(status)}`}
+    />
+  )
+}
 
 export function ReportAvailabilityBadge({ available }: { available: boolean }) {
   const tone = available

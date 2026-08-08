@@ -1,4 +1,10 @@
 import AddIcon from '@mui/icons-material/Add'
+import BlockIcon from '@mui/icons-material/Block'
+import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline'
+import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline'
+import EditOutlinedIcon from '@mui/icons-material/EditOutlined'
+import RadioButtonUncheckedIcon from '@mui/icons-material/RadioButtonUnchecked'
+import TimelapseIcon from '@mui/icons-material/Timelapse'
 import {
   Box,
   Button,
@@ -7,22 +13,15 @@ import {
   InputLabel,
   MenuItem,
   Select,
+  Skeleton,
   Stack,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
   Typography,
 } from '@mui/material'
-import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline'
-import EditOutlinedIcon from '@mui/icons-material/EditOutlined'
 import { useState } from 'react'
 import { toast } from 'react-toastify'
 import { ConfirmDialog } from '@/components/common/ConfirmDialog'
 import { EmptyState, ErrorState } from '@/components/common/EmptyState'
-import { LoadingState } from '@/components/common/LoadingState'
+import { UserAvatar } from '@/components/common/UserAvatar'
 import { WorkItemStatusBadge } from '@/components/common/StatusBadges'
 import { WorkItemFormDialog } from '@/components/reports/WorkItemFormDialog'
 import {
@@ -31,6 +30,7 @@ import {
   useUpdateWorkItem,
   useWorkItems,
 } from '@/hooks/useApiQueries'
+import { DASH, surfaceSx } from '@/theme/dashboardTokens'
 import type { WorkItem, WorkItemRequest, WorkItemStatus, WorkItemUpdateRequest } from '@/types/api'
 import { formatShortDate } from '@/utils/labels'
 import { getErrorMessage } from '@/utils/errorUtils'
@@ -38,6 +38,13 @@ import { getErrorMessage } from '@/utils/errorUtils'
 interface WorkItemListProps {
   reportId: number
   canEdit: boolean
+}
+
+function StatusIcon({ status }: { status: string }) {
+  if (status === 'DONE') return <CheckCircleOutlineIcon fontSize="small" color="success" />
+  if (status === 'IN_PROGRESS') return <TimelapseIcon fontSize="small" color="primary" />
+  if (status === 'BLOCKED') return <BlockIcon fontSize="small" color="error" />
+  return <RadioButtonUncheckedIcon fontSize="small" color="disabled" />
 }
 
 export function WorkItemList({ reportId, canEdit }: WorkItemListProps) {
@@ -111,29 +118,40 @@ export function WorkItemList({ reportId, canEdit }: WorkItemListProps) {
   }
 
   return (
-    <Box
-      sx={{
-        border: '1px solid',
-        borderColor: 'divider',
-        borderRadius: 1.5,
-        bgcolor: 'background.paper',
-        p: 2,
-      }}
-    >
-      <Stack direction="row" justifyContent="space-between" alignItems="center" mb={1.5} gap={1}>
-        <Typography variant="h5">İş Kalemleri</Typography>
+    <Box>
+      <Stack direction="row" justifyContent="space-between" alignItems="center" mb={DASH.space2} gap={1}>
+        <Box>
+          <Typography variant="h5" component="h2">
+            İş Kalemleri
+          </Typography>
+          <Typography variant="caption" color="text.secondary">
+            Bu haftaya bağlı görevler
+          </Typography>
+        </Box>
         {canEdit && (
-          <Button startIcon={<AddIcon />} size="small" variant="contained" onClick={openCreate} aria-label="İş kalemi ekle">
+          <Button
+            startIcon={<AddIcon />}
+            size="small"
+            variant="contained"
+            onClick={openCreate}
+            aria-label="İş kalemi ekle"
+          >
             Ekle
           </Button>
         )}
       </Stack>
 
-      {query.isLoading && <LoadingState label="İş kalemleri yükleniyor…" />}
+      {query.isLoading && (
+        <Stack spacing={1} aria-busy="true" aria-label="İş kalemleri yükleniyor">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <Skeleton key={i} variant="rounded" height={64} />
+          ))}
+        </Stack>
+      )}
       {query.isError && <ErrorState onRetry={() => void query.refetch()} />}
       {!query.isLoading && !query.isError && items.length === 0 && (
         <EmptyState
-          title="İş kalemi bulunmuyor"
+          title="Aktif iş kalemi bulunmuyor."
           description="Bu haftalık rapora henüz iş kalemi eklenmemiş."
           actionLabel={canEdit ? 'İş kalemi ekle' : undefined}
           onAction={canEdit ? openCreate : undefined}
@@ -141,69 +159,90 @@ export function WorkItemList({ reportId, canEdit }: WorkItemListProps) {
       )}
 
       {items.length > 0 && (
-        <TableContainer sx={{ overflowX: 'auto' }}>
-          <Table size="small" aria-label="İş kalemleri tablosu">
-            <TableHead>
-              <TableRow>
-                <TableCell>Başlık</TableCell>
-                <TableCell>Atanan</TableCell>
-                <TableCell>Durum</TableCell>
-                <TableCell>Plan</TableCell>
-                <TableCell>Tamamlanma</TableCell>
-                {canEdit && <TableCell align="right">İşlem</TableCell>}
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {items.map((item) => (
-                <TableRow key={item.id} hover>
-                  <TableCell>
-                    <Typography variant="body2" fontWeight={650}>
-                      {item.title}
-                    </Typography>
-                    {item.description && (
-                      <Typography variant="caption" color="text.secondary" display="block">
-                        {item.description}
-                      </Typography>
-                    )}
-                  </TableCell>
-                  <TableCell>{item.assignee || '—'}</TableCell>
-                  <TableCell>
-                    {canEdit ? (
-                      <FormControl size="small" sx={{ minWidth: 140 }}>
-                        <InputLabel>Durum</InputLabel>
-                        <Select
-                          label="Durum"
-                          value={item.status}
-                          onChange={(e) => void handleStatusChange(item, e.target.value as WorkItemStatus)}
-                          aria-label={`${item.title} durumu`}
-                        >
-                          <MenuItem value="TODO">Yapılacak</MenuItem>
-                          <MenuItem value="IN_PROGRESS">Devam Ediyor</MenuItem>
-                          <MenuItem value="DONE">Tamamlandı</MenuItem>
-                          <MenuItem value="BLOCKED">Engelli</MenuItem>
-                        </Select>
-                      </FormControl>
-                    ) : (
-                      <WorkItemStatusBadge status={item.status} />
-                    )}
-                  </TableCell>
-                  <TableCell>{formatShortDate(item.plannedDate)}</TableCell>
-                  <TableCell>{formatShortDate(item.completedDate)}</TableCell>
-                  {canEdit && (
-                    <TableCell align="right">
-                      <IconButton size="small" aria-label="Düzenle" onClick={() => openEdit(item)}>
-                        <EditOutlinedIcon fontSize="small" />
-                      </IconButton>
-                      <IconButton size="small" aria-label="Sil" onClick={() => setDeleting(item)}>
-                        <DeleteOutlineIcon fontSize="small" />
-                      </IconButton>
-                    </TableCell>
+        <Stack spacing={DASH.space1} role="list" aria-label="İş kalemleri">
+          {items.map((item) => (
+            <Box
+              key={item.id}
+              role="listitem"
+              sx={{
+                ...surfaceSx,
+                px: DASH.space2,
+                py: 1.25,
+                display: 'grid',
+                gridTemplateColumns: { xs: '24px 1fr', md: '24px 1fr auto' },
+                gap: DASH.space2,
+                alignItems: 'flex-start',
+                transition: 'background-color 140ms ease',
+                '&:hover': { bgcolor: 'action.hover' },
+              }}
+            >
+              <Box sx={{ mt: 0.25 }} aria-hidden>
+                <StatusIcon status={String(item.status)} />
+              </Box>
+              <Box sx={{ minWidth: 0 }}>
+                <Stack
+                  direction={{ xs: 'column', sm: 'row' }}
+                  spacing={1}
+                  useFlexGap
+                  flexWrap="wrap"
+                  alignItems={{ sm: 'center' }}
+                  mb={0.5}
+                >
+                  <Typography variant="body2" fontWeight={700}>
+                    {item.title}
+                  </Typography>
+                  {canEdit ? (
+                    <FormControl size="small" sx={{ minWidth: 140 }}>
+                      <InputLabel>Durum</InputLabel>
+                      <Select
+                        label="Durum"
+                        value={item.status}
+                        onChange={(e) => void handleStatusChange(item, e.target.value as WorkItemStatus)}
+                        aria-label={`${item.title} durumu`}
+                      >
+                        <MenuItem value="TODO">Yapılacak</MenuItem>
+                        <MenuItem value="IN_PROGRESS">Devam Ediyor</MenuItem>
+                        <MenuItem value="DONE">Tamamlandı</MenuItem>
+                        <MenuItem value="BLOCKED">Engelli</MenuItem>
+                      </Select>
+                    </FormControl>
+                  ) : (
+                    <WorkItemStatusBadge status={item.status} />
                   )}
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
+                </Stack>
+                <Stack direction="row" spacing={DASH.space2} useFlexGap flexWrap="wrap" alignItems="center">
+                  <Stack direction="row" spacing={0.75} alignItems="center">
+                    <UserAvatar name={item.assignee || '—'} size={22} />
+                    <Typography variant="caption" color="text.secondary">
+                      {item.assignee || 'Atanmamış'}
+                    </Typography>
+                  </Stack>
+                  <Typography variant="caption" color="text.secondary">
+                    Plan: {formatShortDate(item.plannedDate)}
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    Bitti: {formatShortDate(item.completedDate)}
+                  </Typography>
+                </Stack>
+                {item.note?.trim() && (
+                  <Typography variant="caption" color="text.secondary" display="block" mt={0.5} noWrap>
+                    {item.note}
+                  </Typography>
+                )}
+              </Box>
+              {canEdit && (
+                <Stack direction="row" spacing={0.25} sx={{ justifySelf: { md: 'end' } }}>
+                  <IconButton size="small" aria-label="Düzenle" onClick={() => openEdit(item)}>
+                    <EditOutlinedIcon fontSize="small" />
+                  </IconButton>
+                  <IconButton size="small" aria-label="Sil" onClick={() => setDeleting(item)}>
+                    <DeleteOutlineIcon fontSize="small" />
+                  </IconButton>
+                </Stack>
+              )}
+            </Box>
+          ))}
+        </Stack>
       )}
 
       <WorkItemFormDialog

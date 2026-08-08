@@ -1,6 +1,11 @@
-import { Box, Divider, Stack, Typography } from '@mui/material'
+import { Box, Stack, Typography } from '@mui/material'
+import type { ReactNode } from 'react'
 import { ProgressComparison } from '@/components/common/ProgressComparison'
-import { SurfaceCard } from '@/components/common/SurfaceCard'
+import {
+  ProjectStatusBadge,
+  ScheduleStatusBadge,
+} from '@/components/common/StatusBadges'
+import { DASH } from '@/theme/dashboardTokens'
 import type { WeeklyReport } from '@/types/api'
 import { formatShortDate } from '@/utils/labels'
 
@@ -8,68 +13,99 @@ interface WeeklyReportSummaryProps {
   report: WeeklyReport
 }
 
-function NoteBlock({ title, body }: { title: string; body?: string | null }) {
+function DocumentSection({
+  title,
+  children,
+  id,
+}: {
+  title: string
+  children: ReactNode
+  id?: string
+}) {
   return (
     <Box
+      component="section"
+      id={id}
       sx={{
-        border: '1px solid',
+        py: DASH.space3,
+        borderBottom: DASH.border,
         borderColor: 'divider',
-        borderRadius: 1.25,
-        bgcolor: '#FBFCFD',
-        p: 2,
+        '&:last-of-type': { borderBottom: 0 },
       }}
     >
-      <Typography variant="overline" display="block" mb={1}>
+      <Typography
+        variant="h5"
+        component="h2"
+        sx={{ mb: DASH.space2, fontWeight: 700, letterSpacing: '-0.01em' }}
+      >
         {title}
       </Typography>
-      <Typography
-        variant="body1"
-        color="text.primary"
-        whiteSpace="pre-wrap"
-        sx={{ lineHeight: 1.7 }}
-      >
-        {body?.trim() || '—'}
-      </Typography>
+      {children}
     </Box>
+  )
+}
+
+function Prose({ text }: { text?: string | null }) {
+  const value = text?.trim()
+  if (!value) {
+    return (
+      <Typography variant="body1" color="text.secondary" fontStyle="italic">
+        Bu bölüm için kayıtlı metin bulunmuyor.
+      </Typography>
+    )
+  }
+  return (
+    <Typography
+      variant="body1"
+      color="text.primary"
+      whiteSpace="pre-wrap"
+      sx={{
+        lineHeight: 1.75,
+        maxWidth: '68ch',
+        fontSize: '1.0125rem',
+      }}
+    >
+      {value}
+    </Typography>
   )
 }
 
 export function WeeklyReportSummary({ report }: WeeklyReportSummaryProps) {
   return (
-    <Stack spacing={2} className="fade-in-up">
-      <SurfaceCard title="Summary" subtitle={`${report.projectCode} — ${report.projectName}`}>
+    <Stack className="fade-in-up">
+      <DocumentSection title="Özet" id="report-summary">
         <Stack spacing={1}>
+          <Typography variant="body2" color="text.secondary">
+            {report.projectCode} — {report.projectName}
+          </Typography>
           <Typography variant="body2" color="text.secondary">
             {report.year} / Hafta {report.weekNumber} · {formatShortDate(report.reportDate)}
           </Typography>
-          <Divider />
-          <Stack spacing={0.75} mt={0.5}>
-            <Typography variant="body2">
-              <strong>Proje durumu:</strong> {report.projectStatus || '—'}
-            </Typography>
-            <Typography variant="body2">
-              <strong>Takvim durumu:</strong> {report.scheduleStatus || '—'}
-            </Typography>
+          <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap" mt={0.5}>
+            {report.projectStatus && <ProjectStatusBadge status={report.projectStatus} />}
+            {report.scheduleStatus && <ScheduleStatusBadge status={report.scheduleStatus} />}
           </Stack>
         </Stack>
-      </SurfaceCard>
+      </DocumentSection>
 
-      <SurfaceCard title="Progress" subtitle="Hedeflenen ve gerçekleşen ilerleme">
-        <ProgressComparison planned={report.plannedProgress} actual={report.actualProgress} />
-      </SurfaceCard>
+      <DocumentSection title="İlerleme" id="report-progress">
+        <ProgressComparison
+          planned={report.plannedProgress}
+          actual={report.actualProgress}
+        />
+      </DocumentSection>
 
-      <Box
-        sx={{
-          display: 'grid',
-          gap: 2,
-          gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' },
-        }}
-      >
-        <NoteBlock title="Completed" body={report.completedWork} />
-        <NoteBlock title="Next Week" body={report.plannedWork} />
-      </Box>
+      <DocumentSection title="✓ Bu Hafta Yapılanlar" id="report-completed">
+        <Prose text={report.completedWork} />
+      </DocumentSection>
 
-      <NoteBlock title="Notes" body={report.overallNote} />
+      <DocumentSection title="→ Gelecek Hafta" id="report-planned">
+        <Prose text={report.plannedWork} />
+      </DocumentSection>
+
+      <DocumentSection title="Genel Not" id="report-notes">
+        <Prose text={report.overallNote} />
+      </DocumentSection>
     </Stack>
   )
 }
