@@ -100,7 +100,7 @@ export function WeeklyReportEditPage() {
             const fieldMsg = Object.values(fields)[0]
             const message = fieldMsg || getErrorMessage(error, 'Rapor güncellenemedi.')
             setSubmitError(message)
-            toast.error(message)
+            // Form üstünde inline alert var; toast ile çift bildirim yok.
           }
         }}
       />

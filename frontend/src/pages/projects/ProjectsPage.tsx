@@ -46,7 +46,7 @@ function ManagerProjectsView({ canCreateReport }: { canCreateReport: boolean }) 
   return (
     <Box>
       <PageHeader
-        title="Projects"
+        title="Projeler"
         subtitle="Size atanmış projeler. Haftalık rapor oluşturabilir ve detaya gidebilirsiniz."
       />
 

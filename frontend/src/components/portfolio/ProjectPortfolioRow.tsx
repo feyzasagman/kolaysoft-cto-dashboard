@@ -209,19 +209,19 @@ export const ProjectPortfolioRow = memo(function ProjectPortfolioRow({
           transition: 'opacity 120ms ease',
         }}
       >
-        <Tooltip title="View">
+        <Tooltip title="Görüntüle">
           <IconButton size="small" aria-label={`${row.name} görüntüle`} onClick={openDetail}>
             <VisibilityOutlinedIcon fontSize="small" />
           </IconButton>
         </Tooltip>
-        <Tooltip title="Edit (yakında)">
+        <Tooltip title="Düzenle (yakında)">
           <span>
             <IconButton size="small" aria-label="Düzenle" disabled>
               <EditOutlinedIcon fontSize="small" />
             </IconButton>
           </span>
         </Tooltip>
-        <Tooltip title="Reports">
+        <Tooltip title="Raporlar">
           <IconButton
             size="small"
             aria-label={`${row.name} raporları`}
@@ -233,7 +233,7 @@ export const ProjectPortfolioRow = memo(function ProjectPortfolioRow({
             <AssessmentOutlinedIcon fontSize="small" />
           </IconButton>
         </Tooltip>
-        <Tooltip title="More">
+        <Tooltip title="Daha fazla">
           <IconButton
             size="small"
             aria-label={`${row.name} daha fazla`}

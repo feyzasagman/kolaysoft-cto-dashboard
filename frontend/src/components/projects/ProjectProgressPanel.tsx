@@ -21,7 +21,7 @@ export function ProjectProgressPanel({ model, scheduleStatus }: ProjectProgressP
   return (
     <Box sx={{ ...surfaceSx, p: DASH.cardPadding }} aria-label="İlerleme paneli">
       <Typography variant="h5" component="h3" mb={0.35}>
-        Project Progress
+        Proje İlerlemesi
       </Typography>
       <Typography variant="caption" color="text.secondary" display="block" mb={DASH.space2}>
         Gerçekleşen ile hedef karşılaştırması
@@ -90,14 +90,14 @@ export function ProjectProgressPanel({ model, scheduleStatus }: ProjectProgressP
       <Stack direction="row" spacing={DASH.space2} useFlexGap flexWrap="wrap" alignItems="center">
         <Box>
           <Typography variant="caption" color="text.secondary" display="block">
-            Project health
+            Proje sağlığı
           </Typography>
           <HealthBadge health={model.health} />
         </Box>
         {scheduleStatus && (
           <Box>
             <Typography variant="caption" color="text.secondary" display="block">
-              Schedule
+              Takvim
             </Typography>
             <Typography variant="body2" fontWeight={650}>
               {scheduleStatus}

@@ -23,7 +23,7 @@ export function CriticalRisksPanel({ risks, loading = false }: CriticalRisksPane
       aria-label="Kritik risk önizlemesi"
     >
       <Typography variant="h5" component="h2">
-        Recent Risks
+        Son Riskler
       </Typography>
       <Typography variant="caption" color="text.secondary" display="block" mt={0.5} mb={DASH.space2}>
         Yüksek öncelikli açık riskler

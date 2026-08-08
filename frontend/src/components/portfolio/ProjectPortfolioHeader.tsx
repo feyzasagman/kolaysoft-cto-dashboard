@@ -45,7 +45,7 @@ export function ProjectPortfolioHeader({
       >
         <Box sx={{ minWidth: 0 }}>
           <Typography variant="h1" component="h1">
-            Projects
+            Projeler
           </Typography>
           <Typography color="text.secondary" mt={0.75} maxWidth={640}>
             Kurumsal proje portföyü — sağlık, ilerleme ve haftalık rapor durumu.

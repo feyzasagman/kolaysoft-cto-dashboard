@@ -30,8 +30,8 @@ export function DashboardHeader({
 }: DashboardHeaderProps) {
   const model = mapDashboardHeader(role, fullName)
   const updatedText = lastRefreshedAt
-    ? `Last updated ${formatRelativeTime(lastRefreshedAt, new Date(), 'en')}`
-    : 'Last updated —'
+    ? `Son güncelleme ${formatRelativeTime(lastRefreshedAt)}`
+    : 'Son güncelleme —'
 
   return (
     <Box
@@ -44,7 +44,7 @@ export function DashboardHeader({
         mb: DASH.sectionGap,
       }}
     >
-      <Breadcrumbs aria-label="breadcrumb" sx={{ mb: DASH.space2 }}>
+      <Breadcrumbs aria-label="Sayfa konumu" sx={{ mb: DASH.space2 }}>
         <Link
           component={RouterLink}
           to="/dashboard"
@@ -53,10 +53,10 @@ export function DashboardHeader({
           variant="caption"
           fontWeight={600}
         >
-          Ana Sayfa
+          Kontrol Paneli
         </Link>
         <Typography variant="caption" color="text.primary" fontWeight={650}>
-          Dashboard
+          Özet
         </Typography>
       </Breadcrumbs>
 
@@ -97,10 +97,10 @@ export function DashboardHeader({
           startIcon={<RefreshIcon />}
           onClick={onRefresh}
           disabled={refreshing}
-          aria-label="Dashboard verilerini yenile"
-          sx={{ alignSelf: { xs: 'stretch', md: 'flex-start' }, minHeight: 36 }}
+          aria-label="Kontrol paneli verilerini yenile"
+          sx={{ alignSelf: { xs: 'stretch', md: 'flex-start' }, minHeight: DASH.controlHeight }}
         >
-          {refreshing ? 'Refreshing…' : 'Refresh'}
+          {refreshing ? 'Yenileniyor…' : 'Yenile'}
         </Button>
       </Stack>
     </Box>

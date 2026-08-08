@@ -8,7 +8,7 @@ import { CONTENT_MAX_WIDTH, SIDEBAR_COLLAPSED_WIDTH, SIDEBAR_WIDTH } from '@/the
 const COLLAPSE_KEY = 'cto.sidebar.collapsed'
 
 const titleMap: Record<string, string> = {
-  '/dashboard': 'Dashboard',
+  '/dashboard': 'Kontrol Paneli',
   '/projects': 'Projeler',
   '/reports': 'Haftalık Raporlar',
   '/users': 'Kullanıcılar',
@@ -21,7 +21,7 @@ function usePageMeta(pathname: string) {
       return {
         title: 'Proje Detayı',
         breadcrumbs: [
-          { label: 'Ana Sayfa', to: '/projects' },
+          { label: 'Kontrol Paneli', to: '/dashboard' },
           { label: 'Projeler', to: '/projects' },
           { label: 'Detay' },
         ],
@@ -31,8 +31,8 @@ function usePageMeta(pathname: string) {
       return {
         title: 'Yeni Rapor',
         breadcrumbs: [
-          { label: 'Ana Sayfa', to: '/reports' },
-          { label: 'Raporlar', to: '/reports' },
+          { label: 'Kontrol Paneli', to: '/dashboard' },
+          { label: 'Haftalık Raporlar', to: '/reports' },
           { label: 'Yeni' },
         ],
       }
@@ -41,8 +41,8 @@ function usePageMeta(pathname: string) {
       return {
         title: 'Rapor Düzenle',
         breadcrumbs: [
-          { label: 'Ana Sayfa', to: '/reports' },
-          { label: 'Raporlar', to: '/reports' },
+          { label: 'Kontrol Paneli', to: '/dashboard' },
+          { label: 'Haftalık Raporlar', to: '/reports' },
           { label: 'Düzenle' },
         ],
       }
@@ -51,8 +51,8 @@ function usePageMeta(pathname: string) {
       return {
         title: 'Rapor Detayı',
         breadcrumbs: [
-          { label: 'Ana Sayfa', to: '/reports' },
-          { label: 'Raporlar', to: '/reports' },
+          { label: 'Kontrol Paneli', to: '/dashboard' },
+          { label: 'Haftalık Raporlar', to: '/reports' },
           { label: 'Detay' },
         ],
       }
@@ -62,7 +62,7 @@ function usePageMeta(pathname: string) {
     return {
       title,
       breadcrumbs: [
-        { label: 'Ana Sayfa', to: match === '/dashboard' ? '/dashboard' : '/projects' },
+        { label: 'Kontrol Paneli', to: '/dashboard' },
         { label: title },
       ],
     }

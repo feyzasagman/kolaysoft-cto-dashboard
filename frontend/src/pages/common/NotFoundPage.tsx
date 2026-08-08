@@ -6,11 +6,11 @@ export function NotFoundPage() {
   return (
     <AppErrorState
       kind="notFound"
-      title="Page Not Found"
-      description="Aradığınız sayfa bulunamadı."
+      title="Sayfa bulunamadı."
+      description="Aradığınız sayfa mevcut değil veya taşınmış olabilir."
       secondaryAction={
         <Button component={RouterLink} to="/dashboard" variant="contained">
-          Dashboard&apos;a dön
+          Kontrol Paneline Dön
         </Button>
       }
     />

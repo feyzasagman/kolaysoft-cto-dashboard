@@ -81,7 +81,7 @@ export function ProjectPortfolioFilterBar({
           disabled={!active}
           aria-label="Filtreleri temizle"
         >
-          Clear Filters
+          Filtreleri Temizle
         </Button>
       </Stack>
 
@@ -94,7 +94,7 @@ export function ProjectPortfolioFilterBar({
         mb={active ? DASH.space2 : 0}
       >
         <TextField
-          placeholder="Search projects…"
+          placeholder="Proje ara…"
           value={value.search}
           onChange={(e) => patch({ search: e.target.value })}
           sx={{ minWidth: { xs: '100%', lg: 220 }, flex: { lg: '1 1 200px' } }}
@@ -108,10 +108,10 @@ export function ProjectPortfolioFilterBar({
           }}
         />
         <FormControl sx={{ minWidth: 130 }}>
-          <InputLabel id="pf-status">Status</InputLabel>
+          <InputLabel id="pf-status">Durum</InputLabel>
           <Select
             labelId="pf-status"
-            label="Status"
+            label="Durum"
             value={value.projectStatus}
             onChange={(e) => patch({ projectStatus: e.target.value as ProjectStatus | '' })}
           >
@@ -124,10 +124,10 @@ export function ProjectPortfolioFilterBar({
           </Select>
         </FormControl>
         <FormControl sx={{ minWidth: 130 }}>
-          <InputLabel id="pf-health">Health</InputLabel>
+          <InputLabel id="pf-health">Sağlık</InputLabel>
           <Select
             labelId="pf-health"
-            label="Health"
+            label="Sağlık"
             value={value.health}
             onChange={(e) => patch({ health: e.target.value as ReportHealth | '' })}
           >
@@ -138,10 +138,10 @@ export function ProjectPortfolioFilterBar({
           </Select>
         </FormControl>
         <FormControl sx={{ minWidth: 150 }}>
-          <InputLabel id="pf-manager">Manager</InputLabel>
+          <InputLabel id="pf-manager">Yönetici</InputLabel>
           <Select
             labelId="pf-manager"
-            label="Manager"
+            label="Yönetici"
             value={value.managerId}
             onChange={(e) => patch({ managerId: String(e.target.value) })}
           >
@@ -154,10 +154,10 @@ export function ProjectPortfolioFilterBar({
           </Select>
         </FormControl>
         <FormControl sx={{ minWidth: 140 }}>
-          <InputLabel id="pf-week">Week</InputLabel>
+          <InputLabel id="pf-week">Hafta</InputLabel>
           <Select
             labelId="pf-week"
-            label="Week"
+            label="Hafta"
             value={value.hasCurrentWeekReport}
             onChange={(e) =>
               patch({ hasCurrentWeekReport: e.target.value as '' | 'true' | 'false' })
@@ -169,10 +169,10 @@ export function ProjectPortfolioFilterBar({
           </Select>
         </FormControl>
         <FormControl sx={{ minWidth: 170 }}>
-          <InputLabel id="pf-sort">Sort</InputLabel>
+          <InputLabel id="pf-sort">Sırala</InputLabel>
           <Select
             labelId="pf-sort"
-            label="Sort"
+            label="Sırala"
             value={value.sort}
             onChange={(e) => patch({ sort: e.target.value })}
           >

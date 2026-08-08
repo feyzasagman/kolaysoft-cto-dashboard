@@ -8,6 +8,7 @@ import {
 } from '@mui/icons-material'
 import { Box, Button, Stack, Typography } from '@mui/material'
 import type { ReactNode } from 'react'
+import { DASH } from '@/theme/dashboardTokens'
 
 export type AppErrorKind =
   | 'network'
@@ -81,12 +82,12 @@ export function AppErrorState({
       role="alert"
       className="fade-in"
       sx={{
-        border: '1px solid',
+        border: DASH.border,
         borderColor: 'divider',
-        borderRadius: 1.5,
+        borderRadius: DASH.radius,
         bgcolor: 'background.paper',
-        px: 3,
-        py: 4,
+        px: DASH.space3,
+        py: DASH.space4,
         textAlign: 'center',
       }}
     >
@@ -94,14 +95,14 @@ export function AppErrorState({
         sx={{
           width: 56,
           height: 56,
-          borderRadius: 1.5,
+          borderRadius: DASH.radius,
           display: 'grid',
           placeItems: 'center',
           mx: 'auto',
-          mb: 1.5,
+          mb: DASH.space2,
           bgcolor: `${preset.tone}14`,
           color: preset.tone,
-          border: '1px solid',
+          border: DASH.border,
           borderColor: 'divider',
         }}
         aria-hidden

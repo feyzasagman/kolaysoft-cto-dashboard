@@ -1,5 +1,6 @@
 import { Box, type BoxProps, Typography } from '@mui/material'
 import type { ReactNode } from 'react'
+import { DASH, surfaceSx } from '@/theme/dashboardTokens'
 
 interface SurfaceCardProps extends Omit<BoxProps, 'title'> {
   title?: string
@@ -10,7 +11,7 @@ interface SurfaceCardProps extends Omit<BoxProps, 'title'> {
   hoverable?: boolean
 }
 
-/** Tutarlı yüzey kartı — ince border, hafif hover. */
+/** Tutarlı yüzey kartı — DASH / surfaceSx. */
 export function SurfaceCard({
   title,
   subtitle,
@@ -25,10 +26,7 @@ export function SurfaceCard({
     <Box
       {...rest}
       sx={{
-        bgcolor: 'background.paper',
-        border: '1px solid',
-        borderColor: 'divider',
-        borderRadius: 1.5,
+        ...surfaceSx,
         height: '100%',
         transition: 'border-color 160ms ease, box-shadow 160ms ease',
         ...(hoverable
@@ -48,10 +46,10 @@ export function SurfaceCard({
             display: 'flex',
             alignItems: 'flex-start',
             justifyContent: 'space-between',
-            gap: 1.5,
-            px: padded ? 2 : 0,
-            pt: padded ? 2 : 0,
-            pb: subtitle || children ? 1 : padded ? 2 : 0,
+            gap: DASH.space2,
+            px: padded ? DASH.space2 : 0,
+            pt: padded ? DASH.space2 : 0,
+            pb: subtitle || children ? 1 : padded ? DASH.space2 : 0,
           }}
         >
           <Box sx={{ minWidth: 0 }}>
@@ -69,7 +67,13 @@ export function SurfaceCard({
           {action}
         </Box>
       )}
-      <Box sx={{ px: padded ? 2 : 0, pb: padded ? 2 : 0, pt: title ? 0 : padded ? 2 : 0 }}>
+      <Box
+        sx={{
+          px: padded ? DASH.space2 : 0,
+          pb: padded ? DASH.space2 : 0,
+          pt: title ? 0 : padded ? DASH.space2 : 0,
+        }}
+      >
         {children}
       </Box>
     </Box>

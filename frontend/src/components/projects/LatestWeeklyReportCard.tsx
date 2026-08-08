@@ -87,7 +87,7 @@ export function LatestWeeklyReportCard({
       >
         <Box>
           <Typography variant="h5" component="h3">
-            Latest Weekly Report
+            Son Haftalık Rapor
           </Typography>
           <Typography variant="caption" color="text.secondary">
             {model.year} · Hafta {model.weekNumber} · {model.reportDateLabel}
@@ -123,23 +123,23 @@ export function LatestWeeklyReportCard({
 
       <Stack direction="row" spacing={DASH.space3} useFlexGap flexWrap="wrap" mb={DASH.space2}>
         <Typography variant="body2">
-          <strong>Planned:</strong> {model.progressTarget}%
+          <strong>Hedef:</strong> {model.progressTarget}%
         </Typography>
         <Typography variant="body2">
-          <strong>Actual:</strong> {model.progressActual}%
+          <strong>Gerçekleşen:</strong> {model.progressActual}%
         </Typography>
         <Typography variant="body2">
-          <strong>Open risks:</strong> {model.openRiskCount}
+          <strong>Açık risk:</strong> {model.openRiskCount}
         </Typography>
         <Typography variant="body2">
-          <strong>Blockers:</strong> {model.openBlockerCount}
+          <strong>Engel:</strong> {model.openBlockerCount}
         </Typography>
       </Stack>
 
       <Stack spacing={DASH.space2}>
-        <TruncatedNote title="Completed Work" text={model.completedWork} />
-        <TruncatedNote title="Planned Work" text={model.plannedWork} />
-        <TruncatedNote title="Overall Note" text={model.overallNote} />
+        <TruncatedNote title="Bu Hafta Yapılanlar" text={model.completedWork} />
+        <TruncatedNote title="Gelecek Hafta" text={model.plannedWork} />
+        <TruncatedNote title="Genel Not" text={model.overallNote} />
       </Stack>
     </Box>
   )

@@ -8,11 +8,11 @@ import {
   ProjectDetailErrorState,
   ProjectDetailSkeleton,
 } from '@/components/projects/ProjectDetailSkeleton'
+import { ProjectDetailTabs } from '@/components/projects/ProjectDetailTabs'
 import {
   isProjectDetailTab,
-  ProjectDetailTabs,
   type ProjectDetailTabId,
-} from '@/components/projects/ProjectDetailTabs'
+} from '@/components/projects/projectDetailTabConfig'
 import { ProjectHeroHeader } from '@/components/projects/ProjectHeroHeader'
 import { ProjectMetricGrid } from '@/components/projects/ProjectMetricGrid'
 import { ProjectOverviewTab } from '@/components/projects/ProjectOverviewTab'

@@ -161,3 +161,27 @@ export function ReportAvailabilityBadge({ available }: { available: boolean }) {
     />
   )
 }
+
+const roleSx: Record<string, BadgeTone> = {
+  ADMIN: { bgcolor: '#DDF4FF', color: '#0550AE', borderColor: '#B6E3FF' },
+  CTO: { bgcolor: '#DAFBE1', color: '#116329', borderColor: '#B4EFC4' },
+  PROJECT_MANAGER: { bgcolor: '#FFF8C5', color: '#7D4E00', borderColor: '#F0E09A' },
+}
+
+const ROLE_LABELS: Record<string, string> = {
+  ADMIN: 'Admin',
+  CTO: 'CTO',
+  PROJECT_MANAGER: 'Proje Yöneticisi',
+}
+
+export function RoleBadge({ role }: { role: string | null | undefined }) {
+  const key = role ?? ''
+  const label = ROLE_LABELS[key] ?? role ?? '—'
+  return (
+    <EnterpriseBadge
+      label={label}
+      tone={roleSx[key] ?? { bgcolor: '#F6F8FA', color: '#656D76', borderColor: '#D0D7DE' }}
+      ariaLabel={`Rol: ${label}`}
+    />
+  )
+}

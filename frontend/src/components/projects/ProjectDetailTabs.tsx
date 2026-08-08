@@ -1,21 +1,10 @@
 import { Box, Tab, Tabs } from '@mui/material'
 import type { SyntheticEvent } from 'react'
+import {
+  PROJECT_DETAIL_TABS,
+  type ProjectDetailTabId,
+} from '@/components/projects/projectDetailTabConfig'
 import { DASH, surfaceSx } from '@/theme/dashboardTokens'
-
-export type ProjectDetailTabId =
-  | 'overview'
-  | 'reports'
-  | 'risks'
-  | 'workItems'
-  | 'history'
-
-export const PROJECT_DETAIL_TABS: Array<{ id: ProjectDetailTabId; label: string }> = [
-  { id: 'overview', label: 'Genel Bakış' },
-  { id: 'reports', label: 'Raporlar' },
-  { id: 'risks', label: 'Riskler' },
-  { id: 'workItems', label: 'İş Kalemleri' },
-  { id: 'history', label: 'Geçmiş' },
-]
 
 interface ProjectDetailTabsProps {
   value: ProjectDetailTabId
@@ -65,8 +54,4 @@ export function ProjectDetailTabs({ value, onChange }: ProjectDetailTabsProps) {
       </Tabs>
     </Box>
   )
-}
-
-export function isProjectDetailTab(value: string | null): value is ProjectDetailTabId {
-  return PROJECT_DETAIL_TABS.some((t) => t.id === value)
 }

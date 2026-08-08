@@ -134,7 +134,7 @@ export function WeeklyReportNewPage() {
                 weekNumber: body.weekNumber,
               })
             }
-            toast.error(message)
+            // Form üstünde inline alert var; toast ile çift bildirim yok.
           }
         }}
       />

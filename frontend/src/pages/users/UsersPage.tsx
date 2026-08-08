@@ -1,21 +1,28 @@
 import {
-  Alert,
   Box,
   TextField,
 } from '@mui/material'
 import { DataGrid, type GridColDef, type GridPaginationModel, type GridSortModel } from '@mui/x-data-grid'
 import { useEffect, useMemo, useState } from 'react'
+import { AppErrorState } from '@/components/common/AppErrorState'
+import { EmptyState } from '@/components/common/EmptyState'
 import { LoadingState } from '@/components/common/LoadingState'
 import { PageHeader } from '@/components/common/PageHeader'
 import { useUsers } from '@/hooks/useApiQueries'
-import { getErrorMessage } from '@/utils/errorUtils'
+import { DASH, surfaceSx } from '@/theme/dashboardTokens'
+import { formatShortDate } from '@/utils/labels'
 
 const columns: GridColDef[] = [
-  { field: 'fullName', headerName: 'Full Name', flex: 1, minWidth: 180 },
-  { field: 'email', headerName: 'Email', flex: 1, minWidth: 220 },
-  { field: 'role', headerName: 'Role', width: 160 },
-  { field: 'active', headerName: 'Active', width: 100, type: 'boolean' },
-  { field: 'createdAt', headerName: 'Created At', width: 200 },
+  { field: 'fullName', headerName: 'Ad Soyad', flex: 1, minWidth: 180 },
+  { field: 'email', headerName: 'E-posta', flex: 1, minWidth: 220 },
+  { field: 'role', headerName: 'Rol', width: 160 },
+  { field: 'active', headerName: 'Aktif', width: 100, type: 'boolean' },
+  {
+    field: 'createdAt',
+    headerName: 'Oluşturulma',
+    width: 160,
+    valueGetter: (_value, row) => formatShortDate(row.createdAt),
+  },
 ]
 
 export function UsersPage() {
@@ -53,7 +60,7 @@ export function UsersPage() {
     return `${field},${first.sort ?? 'asc'}`
   }, [sortModel])
 
-  const { data, isLoading, isFetching, isError, error } = useUsers({
+  const { data, isLoading, isFetching, isError, refetch } = useUsers({
     page: paginationModel.page,
     size: paginationModel.pageSize,
     sort,
@@ -68,25 +75,43 @@ export function UsersPage() {
   return (
     <Box>
       <PageHeader
-        title="Users"
-        subtitle="Kullanıcı listesi — arama ve sayfalama. CRUD sonraki günde."
+        title="Kullanıcılar"
+        subtitle="Sistem kullanıcılarını arayın ve listeleyin."
       />
 
       <TextField
         size="small"
-        label="Search"
+        label="Ara"
         placeholder="E-posta / ad / soyad"
         value={search}
         onChange={(event) => setSearch(event.target.value)}
-        sx={{ mb: 2, minWidth: 260 }}
+        sx={{ mb: DASH.space2, minWidth: 260 }}
+        inputProps={{ 'aria-label': 'Kullanıcı ara' }}
       />
 
-      {isError && <Alert severity="error" sx={{ mb: 2 }}>{getErrorMessage(error)}</Alert>}
+      {isError && (
+        <Box mb={DASH.space2}>
+          <AppErrorState
+            kind="network"
+            title="Kullanıcılar alınamadı."
+            onRetry={() => void refetch()}
+          />
+        </Box>
+      )}
 
       {isLoading && !data ? (
-        <LoadingState label="Kullanıcılar yükleniyor..." />
+        <LoadingState label="Kullanıcılar yükleniyor…" />
+      ) : !isError && (data?.totalElements ?? 0) === 0 ? (
+        <EmptyState
+          title={debouncedSearch ? 'Filtrelere uygun kullanıcı bulunamadı.' : 'Henüz kullanıcı bulunmuyor.'}
+          description={
+            debouncedSearch
+              ? 'Arama kriterlerini değiştirerek yeniden deneyin.'
+              : 'Kullanıcı kayıtları burada listelenir.'
+          }
+        />
       ) : (
-        <Box sx={{ height: 560, bgcolor: 'background.paper', borderRadius: 2, border: '1px solid', borderColor: 'divider' }}>
+        <Box sx={{ ...surfaceSx, height: 560, overflow: 'hidden' }}>
           <DataGrid
             rows={rows}
             columns={columns}
@@ -103,6 +128,7 @@ export function UsersPage() {
             }}
             pageSizeOptions={[10, 20, 50]}
             disableRowSelectionOnClick
+            aria-label="Kullanıcı listesi"
           />
         </Box>
       )}

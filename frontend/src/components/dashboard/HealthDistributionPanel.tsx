@@ -22,7 +22,7 @@ export function HealthDistributionPanel({ data, loading = false }: HealthDistrib
       aria-label="Sağlık dağılımı paneli"
     >
       <Typography variant="h5" component="h2">
-        Health Distribution
+        Sağlık Dağılımı
       </Typography>
       <Typography variant="caption" color="text.secondary" display="block" mt={0.5} mb={DASH.space3}>
         Aktif projelerin son rapor sağlığı

@@ -37,7 +37,7 @@ export function RecentReportsPanel({
       aria-label="Son raporlar"
     >
       <Typography variant="h5" component="h2">
-        Recent Reports
+        Son Raporlar
       </Typography>
       <Typography variant="caption" color="text.secondary" display="block" mt={0.5} mb={DASH.space2}>
         Portföydeki en güncel haftalık raporlar

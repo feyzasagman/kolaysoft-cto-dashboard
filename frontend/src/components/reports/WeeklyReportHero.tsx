@@ -47,7 +47,7 @@ export function WeeklyReportHero({
           variant="caption"
           fontWeight={600}
         >
-          Dashboard
+          Kontrol Paneli
         </Link>
         <Link
           component={RouterLink}

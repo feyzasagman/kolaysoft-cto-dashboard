@@ -67,7 +67,7 @@ export function ProjectHeroHeader({
           variant="caption"
           fontWeight={600}
         >
-          Dashboard
+          Kontrol Paneli
         </Link>
         <Link
           component={RouterLink}
@@ -127,7 +127,7 @@ export function ProjectHeroHeader({
               <UserAvatar name={model.managerName} size={28} />
               <Box>
                 <Typography variant="caption" color="text.secondary" display="block">
-                  Project Manager
+                  Proje Yöneticisi
                 </Typography>
                 <Typography variant="body2" fontWeight={650}>
                   {model.managerName}
@@ -136,17 +136,17 @@ export function ProjectHeroHeader({
             </Stack>
             <Box>
               <Typography variant="caption" color="text.secondary" display="block">
-                Last Updated
+                Son Güncelleme
               </Typography>
               <Typography variant="body2" fontWeight={650}>
                 {model.lastUpdateRaw
-                  ? formatRelativeTime(model.lastUpdateRaw, new Date(), 'en')
+                  ? formatRelativeTime(model.lastUpdateRaw)
                   : model.lastUpdateLabel}
               </Typography>
             </Box>
             <Box>
               <Typography variant="caption" color="text.secondary" display="block">
-                Start
+                Başlangıç
               </Typography>
               <Typography variant="body2" fontWeight={650}>
                 {model.startDateLabel}
@@ -154,7 +154,7 @@ export function ProjectHeroHeader({
             </Box>
             <Box>
               <Typography variant="caption" color="text.secondary" display="block">
-                Target End
+                Hedef Bitiş
               </Typography>
               <Typography variant="body2" fontWeight={650}>
                 {model.targetEndDateLabel}

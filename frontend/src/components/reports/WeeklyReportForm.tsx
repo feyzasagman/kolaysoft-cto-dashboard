@@ -238,7 +238,7 @@ export function WeeklyReportForm({
       >
         <Breadcrumbs aria-label="Sayfa konumu" sx={{ mb: DASH.space2 }}>
           <Link component={RouterLink} to="/dashboard" underline="hover" color="text.secondary" variant="caption" fontWeight={600}>
-            Dashboard
+            Kontrol Paneli
           </Link>
           <Link component={RouterLink} to="/reports" underline="hover" color="text.secondary" variant="caption" fontWeight={600}>
             Haftalık Raporlar

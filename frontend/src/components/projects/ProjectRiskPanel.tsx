@@ -42,17 +42,17 @@ export function ProjectRiskPanel({
   return (
     <Box>
       <Typography variant="h5" component="h3" mb={0.35}>
-        Risks & Blockers
+        Riskler ve Engeller
       </Typography>
       <Stack direction="row" spacing={DASH.space2} useFlexGap flexWrap="wrap" mb={DASH.space2}>
         <Typography variant="caption" color="text.secondary">
-          Open Risks <strong>{openRiskCount}</strong>
+          Açık risk <strong>{openRiskCount}</strong>
         </Typography>
         <Typography variant="caption" color="text.secondary">
-          Critical <strong>{counts.critical}</strong>
+          Kritik <strong>{counts.critical}</strong>
         </Typography>
         <Typography variant="caption" color="text.secondary">
-          Resolved <strong>{counts.resolvedTotal}</strong>
+          Çözülen <strong>{counts.resolvedTotal}</strong>
         </Typography>
       </Stack>
 
@@ -112,7 +112,7 @@ export function ProjectRiskPanel({
                   variant="caption"
                   fontWeight={650}
                 >
-                  Related report
+                  İlgili rapor
                 </Link>
               </Box>
             )

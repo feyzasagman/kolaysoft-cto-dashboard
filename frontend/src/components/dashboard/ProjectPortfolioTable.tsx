@@ -166,7 +166,7 @@ export function ProjectPortfolioTable({
       >
         <Box>
           <Typography variant="h5" component="h2">
-            Project Portfolio
+            Proje Portföyü
           </Typography>
           <Typography variant="caption" color="text.secondary">
             {totalElements} proje
@@ -194,16 +194,16 @@ export function ProjectPortfolioTable({
         <Table size="small" stickyHeader aria-label="Proje portföy tablosu" aria-busy={loading}>
           <TableHead>
             <TableRow>
-              <TableCell>Project Name</TableCell>
-              <TableCell sx={{ display: { xs: 'none', sm: 'table-cell' } }}>Code</TableCell>
-              <TableCell>Manager</TableCell>
-              <TableCell>Health</TableCell>
-              <TableCell>Status</TableCell>
-              <TableCell>Progress</TableCell>
-              <TableCell sx={{ display: { xs: 'none', md: 'table-cell' } }}>Last Report</TableCell>
-              <TableCell sx={{ display: { xs: 'none', lg: 'table-cell' } }}>Updated</TableCell>
+              <TableCell>Proje Adı</TableCell>
+              <TableCell sx={{ display: { xs: 'none', sm: 'table-cell' } }}>Kod</TableCell>
+              <TableCell>Yönetici</TableCell>
+              <TableCell>Sağlık</TableCell>
+              <TableCell>Durum</TableCell>
+              <TableCell>İlerleme</TableCell>
+              <TableCell sx={{ display: { xs: 'none', md: 'table-cell' } }}>Son Rapor</TableCell>
+              <TableCell sx={{ display: { xs: 'none', lg: 'table-cell' } }}>Güncelleme</TableCell>
               <TableCell align="right" width={52}>
-                Actions
+                İşlem
               </TableCell>
             </TableRow>
           </TableHead>

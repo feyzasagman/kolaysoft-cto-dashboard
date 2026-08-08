@@ -56,7 +56,7 @@ export function ProjectWorkItemsPanel({
   return (
     <Box>
       <Typography variant="h5" component="h3" mb={0.35}>
-        Work Items
+        İş Kalemleri
       </Typography>
       <Typography variant="caption" color="text.secondary" display="block" mb={DASH.space2}>
         Son rapordaki iş kalemleri · öncelik alanı backend’de yok
@@ -124,7 +124,7 @@ export function ProjectWorkItemsPanel({
               fontWeight={650}
               sx={{ justifySelf: { md: 'end' } }}
             >
-              Report
+              Rapor
             </Link>
           </Box>
         ))}

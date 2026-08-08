@@ -60,8 +60,8 @@ export function LoginPage() {
       navigate(redirectTo, { replace: true })
     } catch (error) {
       const message = getErrorMessage(error, 'Giriş başarısız.')
+      // Inline alert yeterli — toast ile çift bildirim yok.
       setFormError(message)
-      toast.error(message)
     }
   })
 

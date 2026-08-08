@@ -50,16 +50,16 @@ export function ProjectInfoRail({ model }: ProjectInfoRailProps) {
       }}
     >
       <Typography variant="h5" component="h3" mb={0.35}>
-        Project Information
+        Proje Bilgileri
       </Typography>
       <Typography variant="caption" color="text.secondary" display="block" mb={DASH.space2}>
         Temel proje meta verisi
       </Typography>
 
       <Stack>
-        <Row label="Code">{model.code}</Row>
-        <Row label="Customer">{model.customer}</Row>
-        <Row label="Manager">
+        <Row label="Kod">{model.code}</Row>
+        <Row label="Müşteri">{model.customer}</Row>
+        <Row label="Yönetici">
           <Stack direction="row" spacing={1} alignItems="center">
             <UserAvatar name={model.managerName} size={24} />
             <Box sx={{ minWidth: 0 }}>
@@ -72,25 +72,25 @@ export function ProjectInfoRail({ model }: ProjectInfoRailProps) {
             </Box>
           </Stack>
         </Row>
-        <Row label="Status">
+        <Row label="Durum">
           <ProjectStatusBadge status={model.projectStatus} />
         </Row>
-        <Row label="Health">
+        <Row label="Sağlık">
           <HealthBadge health={model.health} />
         </Row>
-        <Row label="Start">{model.startDateLabel}</Row>
-        <Row label="Target End">{model.targetEndDateLabel}</Row>
-        <Row label="Latest Report">{model.lastUpdateLabel}</Row>
-        <Row label="Current Week">
+        <Row label="Başlangıç">{model.startDateLabel}</Row>
+        <Row label="Hedef Bitiş">{model.targetEndDateLabel}</Row>
+        <Row label="Son Rapor">{model.lastUpdateLabel}</Row>
+        <Row label="Bu Hafta">
           <ReportAvailabilityBadge available={model.hasCurrentWeekReport} />
         </Row>
-        <Row label="Week label">{model.currentWeekLabel}</Row>
+        <Row label="Hafta">{model.currentWeekLabel}</Row>
       </Stack>
 
       {model.description !== '—' && (
         <Box mt={DASH.space2}>
           <Typography variant="caption" color="text.secondary" fontWeight={650} display="block" mb={0.5}>
-            Description
+            Açıklama
           </Typography>
           <Typography variant="body2" color="text.secondary" whiteSpace="pre-wrap">
             {model.description}

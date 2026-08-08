@@ -1,5 +1,6 @@
 import { Box, Stack, Typography } from '@mui/material'
 import type { ReactNode } from 'react'
+import { DASH } from '@/theme/dashboardTokens'
 
 interface PageHeaderProps {
   title: string
@@ -8,15 +9,15 @@ interface PageHeaderProps {
   actions?: ReactNode
 }
 
-/** Sayfa başlığı — tüm ekranlarda aynı tipografi hiyerarşisi. */
+/** Sayfa başlığı — tüm ekranlarda aynı tipografi / spacing. */
 export function PageHeader({ title, subtitle, meta, actions }: PageHeaderProps) {
   return (
     <Stack
       direction={{ xs: 'column', md: 'row' }}
       justifyContent="space-between"
       alignItems={{ md: 'flex-start' }}
-      spacing={1.5}
-      mb={3}
+      spacing={DASH.space2}
+      mb={DASH.space3}
       className="fade-in"
     >
       <Box sx={{ minWidth: 0 }}>
@@ -24,7 +25,7 @@ export function PageHeader({ title, subtitle, meta, actions }: PageHeaderProps) 
           {title}
         </Typography>
         {subtitle && (
-          <Typography color="text.secondary" mt={0.5} maxWidth={720}>
+          <Typography color="text.secondary" mt={0.75} maxWidth={720}>
             {subtitle}
           </Typography>
         )}

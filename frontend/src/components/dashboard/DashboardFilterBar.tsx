@@ -141,10 +141,10 @@ export function DashboardFilterBar({
         />
 
         <FormControl sx={{ minWidth: 140 }}>
-          <InputLabel id="filter-status-label">Status</InputLabel>
+          <InputLabel id="filter-status-label">Durum</InputLabel>
           <Select
             labelId="filter-status-label"
-            label="Status"
+            label="Durum"
             value={value.projectStatus}
             onChange={(e) => patch({ projectStatus: e.target.value as ProjectStatus | '' })}
           >
@@ -158,10 +158,10 @@ export function DashboardFilterBar({
         </FormControl>
 
         <FormControl sx={{ minWidth: 140 }}>
-          <InputLabel id="filter-health-label">Health</InputLabel>
+          <InputLabel id="filter-health-label">Sağlık</InputLabel>
           <Select
             labelId="filter-health-label"
-            label="Health"
+            label="Sağlık"
             value={value.health}
             onChange={(e) => patch({ health: e.target.value as ReportHealth | '' })}
           >
@@ -173,10 +173,10 @@ export function DashboardFilterBar({
         </FormControl>
 
         <FormControl sx={{ minWidth: 160 }}>
-          <InputLabel id="filter-manager-label">Manager</InputLabel>
+          <InputLabel id="filter-manager-label">Yönetici</InputLabel>
           <Select
             labelId="filter-manager-label"
-            label="Manager"
+            label="Yönetici"
             value={value.managerId}
             onChange={(e) => patch({ managerId: String(e.target.value) })}
           >
@@ -190,10 +190,10 @@ export function DashboardFilterBar({
         </FormControl>
 
         <FormControl sx={{ minWidth: 150 }}>
-          <InputLabel id="filter-week-label">Report</InputLabel>
+          <InputLabel id="filter-week-label">Rapor</InputLabel>
           <Select
             labelId="filter-week-label"
-            label="Report"
+            label="Rapor"
             value={value.hasCurrentWeekReport}
             onChange={(e) =>
               patch({ hasCurrentWeekReport: e.target.value as '' | 'true' | 'false' })

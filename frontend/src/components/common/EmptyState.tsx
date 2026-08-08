@@ -1,6 +1,8 @@
 import InboxOutlinedIcon from '@mui/icons-material/InboxOutlined'
 import { Box, Button, Typography } from '@mui/material'
 import type { ReactNode } from 'react'
+import { AppErrorState } from '@/components/common/AppErrorState'
+import { DASH } from '@/theme/dashboardTokens'
 
 interface EmptyStateProps {
   title: string
@@ -25,9 +27,9 @@ export function EmptyState({
       sx={{
         border: '1px dashed',
         borderColor: 'divider',
-        borderRadius: 1.5,
+        borderRadius: DASH.radius,
         bgcolor: 'background.paper',
-        px: 3,
+        px: DASH.space3,
         py: 5,
         textAlign: 'center',
       }}
@@ -36,14 +38,14 @@ export function EmptyState({
         sx={{
           width: 52,
           height: 52,
-          borderRadius: 1.5,
+          borderRadius: DASH.radius,
           display: 'grid',
           placeItems: 'center',
           mx: 'auto',
-          mb: 1.5,
+          mb: DASH.space2,
           bgcolor: 'action.hover',
           color: 'text.secondary',
-          border: '1px solid',
+          border: DASH.border,
           borderColor: 'divider',
         }}
         aria-hidden
@@ -55,7 +57,7 @@ export function EmptyState({
       </Typography>
       <Typography
         color="text.secondary"
-        mb={action || actionLabel ? 2.25 : 0}
+        mb={action || actionLabel ? DASH.space2 : 0}
         maxWidth={440}
         mx="auto"
       >
@@ -76,35 +78,17 @@ interface ErrorStateProps {
   onRetry?: () => void
 }
 
-/** Geriye uyumlu basit hata durumu. */
+/** Legacy wrapper → AppErrorState (tek hata dili). */
 export function ErrorState({
   title = 'Veriler alınamadı.',
   onRetry,
 }: ErrorStateProps) {
   return (
-    <Box
-      role="alert"
-      sx={{
-        border: '1px solid',
-        borderColor: 'divider',
-        bgcolor: 'background.paper',
-        borderRadius: 1.5,
-        px: 3,
-        py: 3.5,
-        textAlign: 'center',
-      }}
-    >
-      <Typography variant="h5" mb={1}>
-        {title}
-      </Typography>
-      <Typography color="text.secondary" mb={onRetry ? 2 : 0} maxWidth={400} mx="auto">
-        Lütfen bağlantınızı kontrol edip yeniden deneyin.
-      </Typography>
-      {onRetry && (
-        <Button variant="contained" onClick={onRetry} aria-label="Tekrar dene">
-          Tekrar Dene
-        </Button>
-      )}
-    </Box>
+    <AppErrorState
+      kind="network"
+      title={title}
+      description="Lütfen bağlantınızı kontrol edip yeniden deneyin."
+      onRetry={onRetry}
+    />
   )
 }

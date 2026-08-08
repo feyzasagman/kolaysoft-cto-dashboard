@@ -53,7 +53,7 @@ export function ProjectPortfolioList({
       >
         <Box>
           <Typography variant="h5" component="h2">
-            Project Portfolio
+            Proje Portföyü
           </Typography>
           <Typography variant="caption" color="text.secondary">
             {totalElements} proje
@@ -92,7 +92,7 @@ export function ProjectPortfolioList({
           bgcolor: '#F6F8FA',
         }}
       >
-        {['Project', 'Manager', 'Status', 'Health', 'Progress', 'Last Report', 'Updated', 'Actions'].map(
+        {['Proje', 'Yönetici', 'Durum', 'Sağlık', 'İlerleme', 'Son Rapor', 'Güncelleme', 'İşlem'].map(
           (label) => (
             <Typography key={label} variant="caption" fontWeight={700} color="text.secondary">
               {label}

@@ -9,12 +9,12 @@ export function UnauthorizedPage() {
   return (
     <AppErrorState
       kind="forbidden"
-      title="Unauthorized"
-      description="Bu sayfayı görüntülemek için yetkiniz yok."
+      title="Bu sayfayı görüntüleme yetkiniz bulunmamaktadır."
+      description="Yetkili olduğunuz sayfalara dönün veya farklı bir hesapla giriş yapın."
       secondaryAction={
         <>
           <Button component={RouterLink} to="/dashboard" variant="contained">
-            Dashboard
+            Kontrol Paneli
           </Button>
           <Button
             variant="outlined"
@@ -23,7 +23,7 @@ export function UnauthorizedPage() {
               window.location.assign('/login')
             }}
           >
-            Logout
+            Çıkış Yap
           </Button>
         </>
       }

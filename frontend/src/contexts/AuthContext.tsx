@@ -1,23 +1,13 @@
 import {
-  createContext,
   useCallback,
-  useContext,
   useMemo,
   useState,
   type ReactNode,
 } from 'react'
+import { AuthContext } from '@/contexts/authContextInstance'
+import { useAuth } from '@/hooks/useAuth'
 import type { AuthUser, LoginResponse, RoleType } from '@/types/api'
 import { tokenStorage } from '@/utils/tokenStorage'
-
-interface AuthContextValue {
-  user: AuthUser | null
-  isAuthenticated: boolean
-  login: (response: LoginResponse) => void
-  logout: () => void
-  hasAnyRole: (...roles: RoleType[]) => boolean
-}
-
-const AuthContext = createContext<AuthContextValue | undefined>(undefined)
 
 function readStoredUser(): AuthUser | null {
   const token = tokenStorage.getToken()
@@ -84,10 +74,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }
 
-export function useAuth() {
-  const context = useContext(AuthContext)
-  if (!context) {
-    throw new Error('useAuth must be used within AuthProvider')
-  }
-  return context
-}
+// Uyumluluk re-export — HMR kuralı için bilinçli istisna. Tercihen `@/hooks/useAuth`.
+// eslint-disable-next-line react-refresh/only-export-components -- compatibility barrel
+export { useAuth }

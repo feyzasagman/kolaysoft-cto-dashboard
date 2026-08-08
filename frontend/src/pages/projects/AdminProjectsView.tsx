@@ -162,7 +162,7 @@ export function AdminProjectsView() {
               ? 'Filtreleri temizleyerek yeniden deneyin.'
               : 'İlk projeyi oluşturduğunuzda portföy burada listelenir.'
           }
-          actionLabel={filtersActive ? 'Clear Filters' : undefined}
+          actionLabel={filtersActive ? 'Filtreleri Temizle' : undefined}
           onAction={filtersActive ? clearFilters : undefined}
         />
       ) : (

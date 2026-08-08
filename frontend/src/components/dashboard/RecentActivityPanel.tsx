@@ -53,7 +53,7 @@ export function RecentActivityPanel({
 
   return (
     <SurfaceCard
-      title="Recent Activity"
+      title="Son Aktivite"
       subtitle="Risk ve rapor hareketleri"
       aria-label="Son aktivite"
     >

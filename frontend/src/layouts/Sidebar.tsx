@@ -40,7 +40,7 @@ const navGroups = [
   {
     title: 'Genel',
     items: [
-      { label: 'Dashboard', to: '/dashboard', icon: <DashboardOutlined fontSize="small" />, roles: ['ADMIN', 'CTO'] as const },
+      { label: 'Kontrol Paneli', to: '/dashboard', icon: <DashboardOutlined fontSize="small" />, roles: ['ADMIN', 'CTO'] as const },
       { label: 'Projeler', to: '/projects', icon: <FolderOutlined fontSize="small" />, roles: ['ADMIN', 'CTO', 'PROJECT_MANAGER'] as const },
     ],
   },

@@ -40,12 +40,12 @@ export function clampPercent(value: number | null | undefined): number {
 }
 
 export function mapDashboardHeader(role: RoleType | undefined, fullName?: string | null): DashboardHeaderModel {
-  // Role yalnızca karşılama bağlamında; başlık demo’da tutarlı “Dashboard”.
+  // Role yalnızca karşılama bağlamında.
   void role
   const firstName = fullName?.trim().split(/\s+/)[0]
 
   return {
-    title: 'Dashboard',
+    title: 'Kontrol Paneli',
     description: 'Projelerin genel sağlık durumu ve haftalık ilerleme özeti.',
     welcome: firstName ? `Hoş geldiniz ${firstName}` : fullName ? `Hoş geldiniz ${fullName}` : null,
   }
