@@ -34,9 +34,11 @@ Mesaj: `Bu proje ve hafta için rapor zaten mevcut.`
 
 **Kanıt:** Day15 API matrisi REPORT-02; `WeeklyReportServiceImpl` ConflictException  
 
-**Durum:** OPEN  
+**Durum:** RESOLVED / RETESTED (Day 16)  
 
 **Önerilen düzeltme:** Mesajı sözleşmeye hizala veya API dokümanını mevcut metne güncelle.
+
+**Day 16 notu:** Backend conflict mesajı sözleşmeye hizalandı.
 
 ---
 
@@ -62,9 +64,11 @@ Mesaj: `Bu proje ve hafta için rapor zaten mevcut.`
 
 **Kanıt:** RISK-07; `WeeklyReportServiceImpl` içinde risk zorunluluğu kontrolü yok  
 
-**Durum:** OPEN  
+**Durum:** RESOLVED / RETESTED (Day 16)  
 
 **Önerilen düzeltme:** İş kuralını netleştir; gerekiyorsa create/update’te doğrula. Bugün implement edilmedi.
+
+**Day 16 notu:** Create/update sırasında YELLOW/RED sağlık + açık risk yoksa `BusinessRuleException` (400).
 
 ---
 
@@ -93,9 +97,11 @@ path: `/api/v1/work-items/` veya `/api/v1/risks/`
 
 **Kanıt:** Day15 ek probe (EMPTY path)  
 
-**Durum:** OPEN  
+**Durum:** RESOLVED / RETESTED (Day 16)  
 
 **Önerilen düzeltme:** Path değişkeni bağlama/NumberFormat hatalarını GlobalExceptionHandler’da 400/404’e map et.
+
+**Day 16 notu:** `NoResourceFoundException` / `HttpRequestMethodNotSupportedException` map edildi; boş path PUT → 404 (500 değil).
 
 ---
 
@@ -109,4 +115,5 @@ path: `/api/v1/work-items/` veya `/api/v1/risks/`
 
 ---
 
-**Özet:** Bu test turunda **3 OPEN** uygulama hatası kaydedildi (1 Low, 2 Medium). Critical açık bug yok.
+**Özet:** Day 15’te **3 OPEN** uygulama hatası kaydedildi (1 Low, 2 Medium). Critical açık bug yok.  
+**Day 16:** Üç bug da **RESOLVED / RETESTED**. Ayrıntı: [`Day16_Bug_Fix_and_Retest_Report.md`](./Day16_Bug_Fix_and_Retest_Report.md)

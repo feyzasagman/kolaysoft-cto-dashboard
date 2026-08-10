@@ -30,6 +30,27 @@ public final class ReportHealthCalculator {
         return worst(fromSchedule, fromProgress, fromRisks);
     }
 
+    /**
+     * BUG-002: Sarı/kırmızı sağlık için en az bir açık risk belgelenmiş olmalı.
+     */
+    public static boolean isUnhealthyWithoutOpenRisks(
+            WeeklyReport report,
+            Collection<RiskIssue> reportRisks
+    ) {
+        ReportHealth health = calculate(report, reportRisks);
+        if (health != ReportHealth.YELLOW && health != ReportHealth.RED) {
+            return false;
+        }
+        return !hasOpenRisk(reportRisks);
+    }
+
+    public static boolean hasOpenRisk(Collection<RiskIssue> reportRisks) {
+        if (reportRisks == null || reportRisks.isEmpty()) {
+            return false;
+        }
+        return reportRisks.stream().anyMatch(ReportHealthCalculator::isOpen);
+    }
+
     private static ReportHealth fromScheduleStatus(String scheduleStatus) {
         if (scheduleStatus == null || scheduleStatus.isBlank()) {
             return null;

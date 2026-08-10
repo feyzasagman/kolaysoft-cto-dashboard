@@ -300,7 +300,8 @@ cd backend/cto-dashboard-api
 ```
 
 MVP test turu raporu: [`docs/testing/Day15_MVP_Test_Report.md`](docs/testing/Day15_MVP_Test_Report.md)  
-Açık hatalar: [`docs/testing/Day15_Bug_List.md`](docs/testing/Day15_Bug_List.md)
+Açık hatalar: [`docs/testing/Day15_Bug_List.md`](docs/testing/Day15_Bug_List.md)  
+Day 16 bug fix / retest: [`docs/testing/Day16_Bug_Fix_and_Retest_Report.md`](docs/testing/Day16_Bug_Fix_and_Retest_Report.md)
 
 ### Swagger
 

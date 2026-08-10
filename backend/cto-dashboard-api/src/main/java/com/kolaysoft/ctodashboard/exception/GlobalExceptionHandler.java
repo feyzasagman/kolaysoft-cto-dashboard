@@ -16,11 +16,14 @@ import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.authentication.LockedException;
 import org.springframework.security.authorization.AuthorizationDeniedException;
 import org.springframework.validation.FieldError;
+import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingPathVariableException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -34,6 +37,8 @@ public class GlobalExceptionHandler {
     private static final String INACTIVE_USER_MESSAGE = "Kullanıcı hesabı aktif değildir.";
     private static final String ACCESS_DENIED_MESSAGE = "Bu işlem için yetkiniz bulunmamaktadır.";
     private static final String VALIDATION_MESSAGE = "Doğrulama hatası.";
+    private static final String METHOD_NOT_ALLOWED_MESSAGE = "Bu HTTP metodu bu yol için desteklenmiyor.";
+    private static final String RESOURCE_NOT_FOUND_MESSAGE = "İstenen kaynak bulunamadı.";
 
     @ExceptionHandler(ResourceNotFoundException.class)
     public ResponseEntity<ApiResponse<ErrorDetail>> handleResourceNotFound(
@@ -126,6 +131,18 @@ public class GlobalExceptionHandler {
         return build(HttpStatus.BAD_REQUEST, VALIDATION_MESSAGE, "TYPE_MISMATCH", request, fields);
     }
 
+    @ExceptionHandler(MissingPathVariableException.class)
+    public ResponseEntity<ApiResponse<ErrorDetail>> handleMissingPathVariable(
+            MissingPathVariableException exception,
+            HttpServletRequest request
+    ) {
+        Map<String, String> fields = Map.of(
+                exception.getVariableName(),
+                "Zorunlu yol parametresi eksik."
+        );
+        return build(HttpStatus.BAD_REQUEST, VALIDATION_MESSAGE, "MISSING_PATH_VARIABLE", request, fields);
+    }
+
     @ExceptionHandler(MissingServletRequestParameterException.class)
     public ResponseEntity<ApiResponse<ErrorDetail>> handleMissingParameter(
             MissingServletRequestParameterException exception,
@@ -151,6 +168,32 @@ public class GlobalExceptionHandler {
                 request,
                 null
         );
+    }
+
+    /**
+     * BUG-003: PUT /work-items/ veya /risks/ (id yok) → daha önce yakalanmayan
+     * method-not-supported / no-resource istisnaları generic 500'e düşüyordu.
+     */
+    @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
+    public ResponseEntity<ApiResponse<ErrorDetail>> handleMethodNotSupported(
+            HttpRequestMethodNotSupportedException exception,
+            HttpServletRequest request
+    ) {
+        LOGGER.warn(
+                "Desteklenmeyen HTTP metodu: method={} path={}",
+                exception.getMethod(),
+                request.getRequestURI()
+        );
+        return build(HttpStatus.METHOD_NOT_ALLOWED, METHOD_NOT_ALLOWED_MESSAGE, "METHOD_NOT_ALLOWED", request, null);
+    }
+
+    @ExceptionHandler(NoResourceFoundException.class)
+    public ResponseEntity<ApiResponse<ErrorDetail>> handleNoResourceFound(
+            NoResourceFoundException exception,
+            HttpServletRequest request
+    ) {
+        LOGGER.warn("Kaynak bulunamadı: path={}", request.getRequestURI());
+        return build(HttpStatus.NOT_FOUND, RESOURCE_NOT_FOUND_MESSAGE, "NOT_FOUND", request, null);
     }
 
     @ExceptionHandler(Exception.class)

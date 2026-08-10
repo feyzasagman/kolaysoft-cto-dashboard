@@ -108,7 +108,7 @@ class WeeklyReportControllerTest {
     @WithMockUser(roles = "PROJECT_MANAGER")
     void shouldReturnConflictForDuplicateReport() throws Exception {
         when(weeklyReportService.createReport(any())).thenThrow(
-                new ConflictException("Bu proje ve hafta için rapor zaten mevcut.")
+                new ConflictException("Bu proje için seçilen haftaya ait bir rapor zaten bulunmaktadır.")
         );
 
         mockMvc.perform(post("/api/v1/reports")
@@ -124,7 +124,34 @@ class WeeklyReportControllerTest {
                                 """))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.message").value("Bu proje ve hafta için rapor zaten mevcut."));
+                .andExpect(jsonPath("$.message")
+                        .value("Bu proje için seçilen haftaya ait bir rapor zaten bulunmaktadır."));
+    }
+
+    @Test
+    @WithMockUser(roles = "PROJECT_MANAGER")
+    void shouldReturnBadRequestWhenUnhealthyWithoutOpenRisk() throws Exception {
+        when(weeklyReportService.createReport(any())).thenThrow(
+                new com.kolaysoft.ctodashboard.exception.BusinessRuleException(
+                        "Sarı veya kırmızı sağlık durumundaki haftalık raporlarda en az bir açık risk tanımlanmalıdır."
+                )
+        );
+
+        mockMvc.perform(post("/api/v1/reports")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "projectId": 10,
+                                  "weekNumber": 32,
+                                  "reportDate": "2026-08-07",
+                                  "plannedProgress": 50,
+                                  "actualProgress": 50,
+                                  "scheduleStatus": "DELAYED"
+                                }
+                                """))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.data.code").value("BUSINESS_RULE"));
     }
 
     @Test

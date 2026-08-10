@@ -31,6 +31,7 @@ import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -112,5 +113,27 @@ class WorkItemControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.content[0].title").value("API entegrasyonu"))
                 .andExpect(jsonPath("$.data.totalElements").value(1));
+    }
+
+    @Test
+    @WithMockUser(roles = "PROJECT_MANAGER")
+    void shouldNotReturn500WhenPutWithoutId() throws Exception {
+        // BUG-003 regression: empty path must be a client error, never INTERNAL_ERROR.
+        mockMvc.perform(put("/api/v1/work-items/")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "title": "X",
+                                  "status": "TODO"
+                                }
+                                """))
+                .andExpect(result -> {
+                    int status = result.getResponse().getStatus();
+                    assert status != 500 : "Empty path PUT must not return 500";
+                    assert status == 404 || status == 405 || status == 400
+                            : "Expected 404/405/400 but was " + status;
+                })
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.data.code").value(org.hamcrest.Matchers.not("INTERNAL_ERROR")));
     }
 }

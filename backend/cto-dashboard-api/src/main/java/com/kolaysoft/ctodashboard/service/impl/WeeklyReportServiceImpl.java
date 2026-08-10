@@ -5,10 +5,13 @@ import com.kolaysoft.ctodashboard.dto.request.UpdateWeeklyReportRequest;
 import com.kolaysoft.ctodashboard.dto.response.PageResponse;
 import com.kolaysoft.ctodashboard.dto.response.WeeklyReportResponse;
 import com.kolaysoft.ctodashboard.entity.Project;
+import com.kolaysoft.ctodashboard.entity.RiskIssue;
 import com.kolaysoft.ctodashboard.entity.WeeklyReport;
+import com.kolaysoft.ctodashboard.exception.BusinessRuleException;
 import com.kolaysoft.ctodashboard.exception.ConflictException;
 import com.kolaysoft.ctodashboard.exception.ResourceNotFoundException;
 import com.kolaysoft.ctodashboard.mapper.WeeklyReportMapper;
+import com.kolaysoft.ctodashboard.repository.RiskIssueRepository;
 import com.kolaysoft.ctodashboard.repository.WeeklyReportRepository;
 import com.kolaysoft.ctodashboard.security.CustomUserDetails;
 import com.kolaysoft.ctodashboard.security.SecurityUtils;
@@ -16,6 +19,7 @@ import com.kolaysoft.ctodashboard.service.ProjectAccessService;
 import com.kolaysoft.ctodashboard.service.WeeklyReportService;
 import com.kolaysoft.ctodashboard.specification.WeeklyReportSpecifications;
 import com.kolaysoft.ctodashboard.util.PageableUtils;
+import com.kolaysoft.ctodashboard.util.ReportHealthCalculator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
@@ -38,15 +42,22 @@ public class WeeklyReportServiceImpl implements WeeklyReportService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(WeeklyReportServiceImpl.class);
     private static final Set<String> ALLOWED_SORT = Set.of("id", "year", "weekNumber", "reportDate");
+    private static final String DUPLICATE_WEEK_MESSAGE =
+            "Bu proje için seçilen haftaya ait bir rapor zaten bulunmaktadır.";
+    private static final String UNHEALTHY_WITHOUT_RISK_MESSAGE =
+            "Sarı veya kırmızı sağlık durumundaki haftalık raporlarda en az bir açık risk tanımlanmalıdır.";
 
     private final WeeklyReportRepository weeklyReportRepository;
+    private final RiskIssueRepository riskIssueRepository;
     private final ProjectAccessService projectAccessService;
 
     public WeeklyReportServiceImpl(
             WeeklyReportRepository weeklyReportRepository,
+            RiskIssueRepository riskIssueRepository,
             ProjectAccessService projectAccessService
     ) {
         this.weeklyReportRepository = weeklyReportRepository;
+        this.riskIssueRepository = riskIssueRepository;
         this.projectAccessService = projectAccessService;
     }
 
@@ -109,6 +120,9 @@ public class WeeklyReportServiceImpl implements WeeklyReportService {
                 request.actualProgress(), request.projectStatus(), request.scheduleStatus(),
                 request.completedWork(), request.plannedWork(), request.overallNote());
 
+        // Create anında risk henüz bağlanamaz; YELLOW/RED → açık risk zorunlu (BUG-002).
+        ensureOpenRisksWhenUnhealthy(report, List.of());
+
         WeeklyReport saved = weeklyReportRepository.save(report);
         return WeeklyReportMapper.toResponse(findReportOrThrow(saved.getId()));
     }
@@ -124,6 +138,9 @@ public class WeeklyReportServiceImpl implements WeeklyReportService {
         applyFields(report, request.weekNumber(), request.reportDate(), request.plannedProgress(),
                 request.actualProgress(), request.projectStatus(), request.scheduleStatus(),
                 request.completedWork(), request.plannedWork(), request.overallNote());
+
+        List<RiskIssue> risks = riskIssueRepository.findByWeeklyReportId(id);
+        ensureOpenRisksWhenUnhealthy(report, risks);
 
         weeklyReportRepository.save(report);
         return WeeklyReportMapper.toResponse(findReportOrThrow(id));
@@ -153,7 +170,13 @@ public class WeeklyReportServiceImpl implements WeeklyReportService {
                 : weeklyReportRepository.existsByProjectIdAndWeekNumberAndIdNot(projectId, weekNumber, currentReportId);
 
         if (exists) {
-            throw new ConflictException("Bu proje ve hafta için rapor zaten mevcut.");
+            throw new ConflictException(DUPLICATE_WEEK_MESSAGE);
+        }
+    }
+
+    private void ensureOpenRisksWhenUnhealthy(WeeklyReport report, List<RiskIssue> risks) {
+        if (ReportHealthCalculator.isUnhealthyWithoutOpenRisks(report, risks)) {
+            throw new BusinessRuleException(UNHEALTHY_WITHOUT_RISK_MESSAGE);
         }
     }
 

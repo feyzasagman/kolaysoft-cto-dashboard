@@ -45,4 +45,38 @@ class ReportHealthCalculatorTest {
 
         assertThat(ReportHealthCalculator.calculate(report, List.of())).isEqualTo(ReportHealth.YELLOW);
     }
+
+    @Test
+    void shouldFlagUnhealthyWithoutOpenRisksForDelayedSchedule() {
+        WeeklyReport report = new WeeklyReport();
+        report.setScheduleStatus("DELAYED");
+        report.setPlannedProgress(50);
+        report.setActualProgress(50);
+
+        assertThat(ReportHealthCalculator.isUnhealthyWithoutOpenRisks(report, List.of())).isTrue();
+    }
+
+    @Test
+    void shouldNotFlagUnhealthyWhenOpenRiskDocumentsRedHealth() {
+        WeeklyReport report = new WeeklyReport();
+        report.setScheduleStatus("DELAYED");
+        report.setPlannedProgress(50);
+        report.setActualProgress(50);
+
+        RiskIssue risk = new RiskIssue();
+        risk.setRiskLevel(RiskLevel.HIGH);
+        risk.setStatus(RiskStatus.OPEN);
+
+        assertThat(ReportHealthCalculator.isUnhealthyWithoutOpenRisks(report, List.of(risk))).isFalse();
+    }
+
+    @Test
+    void shouldNotFlagHealthyReportWithoutRisks() {
+        WeeklyReport report = new WeeklyReport();
+        report.setScheduleStatus("ON_TRACK");
+        report.setPlannedProgress(50);
+        report.setActualProgress(50);
+
+        assertThat(ReportHealthCalculator.isUnhealthyWithoutOpenRisks(report, List.of())).isFalse();
+    }
 }
