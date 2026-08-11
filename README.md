@@ -301,7 +301,9 @@ cd backend/cto-dashboard-api
 
 MVP test turu raporu: [`docs/testing/Day15_MVP_Test_Report.md`](docs/testing/Day15_MVP_Test_Report.md)  
 Açık hatalar: [`docs/testing/Day15_Bug_List.md`](docs/testing/Day15_Bug_List.md)  
-Day 16 bug fix / retest: [`docs/testing/Day16_Bug_Fix_and_Retest_Report.md`](docs/testing/Day16_Bug_Fix_and_Retest_Report.md)
+Day 16 bug fix / retest: [`docs/testing/Day16_Bug_Fix_and_Retest_Report.md`](docs/testing/Day16_Bug_Fix_and_Retest_Report.md)  
+Day 17 full-stack MVP regression: [`docs/testing/Day17_Full_Stack_MVP_Regression_Report.md`](docs/testing/Day17_Full_Stack_MVP_Regression_Report.md)  
+Day 17 admin/assignment gap completion: [`docs/analysis/Day17_Admin_Project_Assignment_Gaps_Completion.md`](docs/analysis/Day17_Admin_Project_Assignment_Gaps_Completion.md)
 
 ### Swagger
 
