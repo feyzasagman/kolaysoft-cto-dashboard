@@ -10,6 +10,7 @@ import { DashboardHeader } from '@/components/dashboard/DashboardHeader'
 import { DashboardSkeleton } from '@/components/dashboard/DashboardSkeleton'
 import { DashboardSummaryCards } from '@/components/dashboard/DashboardSummary'
 import { HealthDistributionPanel } from '@/components/dashboard/HealthDistributionPanel'
+import { PortfolioAttentionCenter } from '@/components/dashboard/PortfolioAttentionCenter'
 import {
   ProjectPortfolioTable,
   ProjectTableSkeleton,
@@ -170,6 +171,12 @@ export function DashboardPage() {
         ) : (
           <DashboardSummaryCards summary={summaryQuery.data} />
         )}
+
+        <PortfolioAttentionCenter
+          rows={portfolioRows}
+          detailQuerySuffix={detailQuery}
+          loading={projectsQuery.isLoading && !projectsQuery.data}
+        />
 
         {/* Health + Recent Reports */}
         <Box sx={twoColGridSx}>

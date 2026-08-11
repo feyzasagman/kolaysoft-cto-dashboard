@@ -20,6 +20,7 @@ import {
 } from '@/components/projects/ProjectFormDialog'
 import { ProjectHeroHeader } from '@/components/projects/ProjectHeroHeader'
 import { ProjectMetricGrid } from '@/components/projects/ProjectMetricGrid'
+import { ExecutiveProjectInsight } from '@/components/projects/ExecutiveProjectInsight'
 import { ProjectOverviewTab } from '@/components/projects/ProjectOverviewTab'
 import { ProjectReportTimeline } from '@/components/projects/ProjectReportTimeline'
 import { ProjectRiskPanel } from '@/components/projects/ProjectRiskPanel'
@@ -43,6 +44,7 @@ import {
   countRisksByLevel,
   mapProjectDetail,
 } from '@/utils/projectDetailMapper'
+import { isCurrentWeekReport } from '@/utils/executiveInsight'
 import type { ProjectStatus } from '@/types/api'
 
 /**
@@ -103,6 +105,12 @@ export function ProjectDetailPage() {
     () => countOpenWorkItems(workItemsQuery.data?.content),
     [workItemsQuery.data?.content],
   )
+
+  const hasCurrentWeekReport = useMemo(() => {
+    const latest = detailQuery.data?.latestReport
+    if (!latest) return false
+    return isCurrentWeekReport(latest.year, latest.weekNumber)
+  }, [detailQuery.data?.latestReport])
 
   const setTab = (next: ProjectDetailTabId) => {
     const params = new URLSearchParams(searchParams)
@@ -224,6 +232,17 @@ export function ProjectDetailPage() {
         criticalRisks={riskCounts.critical}
         openWorkItems={openWorkItems}
         reportCount={model.reportHistoryCount}
+      />
+
+      <ExecutiveProjectInsight
+        progressTarget={model.progressTarget}
+        progressActual={model.progressActual}
+        health={model.health}
+        openRiskCount={riskCounts.openTotal > 0 ? riskCounts.openTotal : model.openRisks}
+        criticalRiskCount={riskCounts.critical}
+        openWorkItems={openWorkItems}
+        hasCurrentWeekReport={hasCurrentWeekReport}
+        hasAnyReport={Boolean(detailQuery.data.latestReport)}
       />
 
       <ProjectDetailTabs value={tab} onChange={setTab} />

@@ -249,3 +249,104 @@ Dialog/panel Paper: viewport margin, `maxHeight`, content scroll, sticky actions
 | Day16 BUG-001/002/003 | suite içinde yeşil |
 
 **MVP final kararı:** **A) MVP STABLE**
+
+---
+
+## Executive Intelligence & Attention Center
+
+### Amaç
+
+Yeni backend endpointi, AI/LLM, DB/entity değişikliği veya sahte veri olmadan; mevcut gerçek proje, rapor, risk ve work item alanlarından deterministik yönetici içgörüsü üretmek. CTO’nun 5 saniyede hangi projeye neden bakması gerektiğini görmesi.
+
+Bu özellik “AI özeti” değildir; saf mapper mantığıdır.
+
+### Kullanılan gerçek veri alanları
+
+| Alan | Kaynak |
+|---|---|
+| `progressTarget` / `progressActual` | Project detail / dashboard row |
+| `health` / `latestHealth` | Latest report health |
+| `openRiskCount` / `criticalRiskCount` | Risk listesi veya dashboard row |
+| `openWorkItems` | Work items listesi (açık sayım) |
+| `hasCurrentWeekReport` | Dashboard: API alanı; Detail: `latestReport.year` + `weekNumber` vs `currentIsoWeek` |
+| `latestReport` varlığı | `hasAnyReport` (ilerleme “veri yok” sinyali) |
+
+### Insight logic (`buildExecutiveProjectInsight`)
+
+Çıktı: `{ severity, headline, summary, signals[] }`
+
+- `actual < target` → “Hedefin X puan gerisinde”; `>=` → uyumlu / üzerinde
+- `criticalRiskCount > 0` → kritik risk sinyali
+- `openRiskCount > 0` → açık risk sinyali
+- `hasCurrentWeekReport == false` → rapor eksik
+- `health` GREEN / YELLOW / RED → sağlık metni + severity
+- Özet: 2–3 cümle, yalnızca gözlenen facts (+ veriye bağlı öncelik cümlesi); uydurma tavsiye yok
+- Signal kartları: Hedef Farkı, Risk Durumu, Rapor Durumu, Sağlık
+
+UI: `ExecutiveProjectInsight` — Project Detail’de Hero + MetricGrid altında, tab’lardan önce.
+
+### Attention logic (`buildPortfolioAttentionItems`)
+
+Bir proje Attention Center’a girer (en az biri):
+
+- `health == RED` veya `YELLOW`
+- `criticalRiskCount > 0`
+- `hasCurrentWeekReport == false`
+- `target − actual >= PROGRESS_GAP_ATTENTION_THRESHOLD` (10, frontend constant)
+
+UI: `PortfolioAttentionCenter` — Dashboard’da KPI’ların altında; mevcut `portfolioRows` ile (`useMemo` sıralama). Yeni fetch yok.
+
+Empty state gizlenmez: “Şu anda öncelikli müdahale gerektiren proje bulunmuyor.”
+
+### Attention score (UI-only)
+
+Backend’e yazılmaz; yalnızca sıralama:
+
+| Kural | Puan |
+|---|---|
+| critical risk | +4 |
+| RED health | +3 |
+| YELLOW health | +2 |
+| missing current report | +2 |
+| progress gap ≥ 10 | +1 |
+
+Hesap: `computeAttentionScore` (util); component içinde değil.
+
+### UI-only karar
+
+- Attention score / threshold / reason metinleri yalnızca frontend.
+- Backend business rule gibi davranılmaz.
+- Yeni API yok; entity/DB değişmedi.
+
+### Veri yok davranışı
+
+- İlerleme 0/0 ve rapor yok → “Veri yok” + özet açıkça belirtir.
+- Sağlık yok → “Rapor yok”.
+- Attention boş → olumlu empty state (gizlenmez).
+
+### Rol davranışı
+
+| Rol | Insight (Project Detail) | Attention Center (Dashboard) |
+|---|---|---|
+| CTO | Read-only (detail erişimi varsa) | Görür (dashboard ADMIN/CTO) |
+| ADMIN | Görüntüler | Görür |
+| PROJECT_MANAGER | Kendi projesinde insight görür | Dashboard route’u kapalı → Attention Center görünmez |
+
+### Responsive
+
+- Attention: desktop grid/liste; tablet/mobile stack; tek kolon; horizontal overflow yok.
+- Insight signals: md 4 kolon, sm 2×2, xs tek kolon.
+
+### Accessibility
+
+- Severity metin etiketi + renk (yalnızca renkle değil).
+- Signal / gap / reason `aria-label`.
+- “Projeyi Gör” accessible name (`${name} projesini gör`).
+- Keyboard: Button navigation.
+
+### Dosyalar
+
+- `frontend/src/utils/executiveInsight.ts`
+- `frontend/src/components/projects/ExecutiveProjectInsight.tsx`
+- `frontend/src/components/dashboard/PortfolioAttentionCenter.tsx`
+- `ProjectDetailPage` / `DashboardPage` entegrasyonu
