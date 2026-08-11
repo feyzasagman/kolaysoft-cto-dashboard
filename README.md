@@ -138,6 +138,23 @@ VITE_API_BASE_URL=http://localhost:8080/api/v1
 3. Frontend: `cd frontend` → `npm run dev`
 4. Aç: http://localhost:5173
 
+### Automated E2E Tests
+
+Kritik Full Stack yolculuğu Playwright ile otomatikleştirilir:
+
+`ADMIN → kullanıcı → proje → assignment → PM rapor → CTO dashboard/detail`
+
+```powershell
+# Backend + Postgres ayakta olmalı
+cd frontend
+copy .env.e2e.example .env.e2e
+# .env.e2e içinde E2E_ADMIN_PASSWORD doldurun
+npm run test:e2e
+npm run test:e2e:headed
+```
+
+Ayrıntılar: [`docs/testing/Automated_E2E_Test_Strategy.md`](docs/testing/Automated_E2E_Test_Strategy.md)
+
 ### Demo kullanıcıları (yalnızca geliştirme)
 
 | Rol | E-posta | Şifre |
