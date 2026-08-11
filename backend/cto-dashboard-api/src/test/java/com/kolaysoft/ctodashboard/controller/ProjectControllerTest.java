@@ -28,10 +28,12 @@ import java.util.List;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -185,5 +187,42 @@ class ProjectControllerTest {
                                 """))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.message").value("Doğrulama hatası."));
+    }
+
+    @Test
+    @WithMockUser(roles = "ADMIN")
+    void shouldUpdateProjectAsAdmin() throws Exception {
+        when(projectService.updateProject(eq(1L), any())).thenReturn(
+                new ProjectResponse(
+                        1L,
+                        "PRJ-001",
+                        "Updated",
+                        "Desc",
+                        2L,
+                        "Ali Veli",
+                        "ali.veli@kolaysoft.com.tr",
+                        "ACTIVE",
+                        LocalDate.of(2026, 8, 1),
+                        LocalDate.of(2026, 12, 31),
+                        LocalDateTime.of(2026, 7, 31, 10, 0)
+                )
+        );
+
+        mockMvc.perform(put("/api/v1/projects/1")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "code": "PRJ-001",
+                                  "name": "Updated",
+                                  "description": "Desc",
+                                  "managerId": 2,
+                                  "status": "ACTIVE",
+                                  "startDate": "2026-08-01",
+                                  "targetEndDate": "2026-12-31"
+                                }
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.name").value("Updated"))
+                .andExpect(jsonPath("$.data.status").value("ACTIVE"));
     }
 }

@@ -8,13 +8,19 @@ import { ProjectPortfolioFilterBar } from '@/components/portfolio/ProjectPortfol
 import { ProjectPortfolioHeader } from '@/components/portfolio/ProjectPortfolioHeader'
 import { ProjectPortfolioList } from '@/components/portfolio/ProjectPortfolioList'
 import { ProjectPortfolioSkeleton } from '@/components/portfolio/ProjectPortfolioSkeleton'
+import {
+  ProjectFormDialog,
+  type ProjectFormPayload,
+} from '@/components/projects/ProjectFormDialog'
 import { useAuth } from '@/contexts/AuthContext'
 import {
+  useCreateProject,
   useDashboardProjects,
   useDashboardSummary,
   useUsers,
 } from '@/hooks/useApiQueries'
 import { mapPortfolioRows } from '@/utils/dashboardMapper'
+import { getErrorMessage } from '@/utils/errorUtils'
 import {
   DEFAULT_PORTFOLIO_FILTERS,
   type PortfolioFilterState,
@@ -22,7 +28,7 @@ import {
 
 /**
  * Sprint 3 — Project Portfolio Enterprise Redesign (ADMIN / CTO).
- * Mevcut dashboard projects endpoint’i; DataGrid yerine GitHub-tarzı liste.
+ * Day17: ADMIN create project dialog wired.
  */
 export function AdminProjectsView() {
   const { hasAnyRole } = useAuth()
@@ -34,6 +40,9 @@ export function AdminProjectsView() {
   const [page, setPage] = useState(0)
   const [size, setSize] = useState(20)
   const [lastRefreshedAt, setLastRefreshedAt] = useState<Date | null>(null)
+  const [createOpen, setCreateOpen] = useState(false)
+
+  const createMutation = useCreateProject()
 
   useEffect(() => {
     setSearchInput(filters.search)
@@ -98,10 +107,20 @@ export function AdminProjectsView() {
     setSearchInput(next.search)
     setFilters({
       ...next,
-      // Arama debounce ile API’ye gider; diğer filtreler anında.
       search: filters.search,
     })
     setPage(0)
+  }
+
+  const handleCreate = async (payload: ProjectFormPayload) => {
+    try {
+      await createMutation.mutateAsync(payload)
+      toast.success('Proje başarıyla oluşturuldu.')
+      setCreateOpen(false)
+      refreshAll()
+    } catch (error) {
+      toast.error(getErrorMessage(error, 'Proje oluşturulamadı.'))
+    }
   }
 
   if (projectsQuery.isLoading && !projectsQuery.data) {
@@ -130,6 +149,7 @@ export function AdminProjectsView() {
       filters.hasCurrentWeekReport,
   )
   const refreshing = projectsQuery.isFetching || summaryQuery.isFetching
+  const managers = managersQuery.data?.content ?? []
 
   return (
     <Box>
@@ -140,15 +160,19 @@ export function AdminProjectsView() {
         refreshing={refreshing}
         canCreateProject={canCreateProject}
         onRefresh={refreshAll}
-        onCreateProject={() =>
-          toast.info('Yeni proje ekranı henüz eklenmedi. Backend create akışı sonraki sprint.')
-        }
+        onCreateProject={() => {
+          if (managers.length === 0) {
+            toast.warning('Atanabilecek aktif proje yöneticisi bulunamadı.')
+            return
+          }
+          setCreateOpen(true)
+        }}
         onExport={() => toast.info('Export yakında eklenecek.')}
       />
 
       <ProjectPortfolioFilterBar
         value={filterValue}
-        managers={managersQuery.data?.content ?? []}
+        managers={managers}
         onChange={updateFilters}
         onClear={clearFilters}
       />
@@ -156,14 +180,20 @@ export function AdminProjectsView() {
       {totalElements === 0 ? (
         <EmptyState
           icon={<FolderOffOutlinedIcon />}
-          title={filtersActive ? 'Filtrelere uygun proje yok' : 'Henüz proje bulunmuyor'}
+          title={filtersActive ? 'Aramanızla eşleşen sonuç bulunamadı.' : 'Henüz proje oluşturulmamış.'}
           description={
             filtersActive
               ? 'Filtreleri temizleyerek yeniden deneyin.'
               : 'İlk projeyi oluşturduğunuzda portföy burada listelenir.'
           }
-          actionLabel={filtersActive ? 'Filtreleri Temizle' : undefined}
-          onAction={filtersActive ? clearFilters : undefined}
+          actionLabel={filtersActive ? 'Filtreleri Temizle' : canCreateProject ? 'Yeni Proje' : undefined}
+          onAction={
+            filtersActive
+              ? clearFilters
+              : canCreateProject
+                ? () => setCreateOpen(true)
+                : undefined
+          }
         />
       ) : (
         <ProjectPortfolioList
@@ -179,6 +209,19 @@ export function AdminProjectsView() {
             setSize(next)
             setPage(0)
           }}
+        />
+      )}
+
+      {canCreateProject && (
+        <ProjectFormDialog
+          open={createOpen}
+          managers={managers}
+          submitting={createMutation.isPending}
+          onClose={() => {
+            if (createMutation.isPending) return
+            setCreateOpen(false)
+          }}
+          onSubmit={handleCreate}
         />
       )}
     </Box>
