@@ -27,10 +27,13 @@ import java.util.List;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -180,5 +183,69 @@ class UserControllerTest {
         mockMvc.perform(get("/api/v1/users"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true));
+    }
+
+    @Test
+    @WithMockUser(roles = "ADMIN")
+    void shouldUpdateUserAsAdmin() throws Exception {
+        when(userService.updateUser(eq(1L), any())).thenReturn(
+                new UserResponse(
+                        1L,
+                        "Updated Name",
+                        "updated@kolaysoft.com.tr",
+                        "CTO",
+                        true,
+                        LocalDateTime.of(2026, 7, 31, 10, 0)
+                )
+        );
+
+        mockMvc.perform(put("/api/v1/users/1")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "fullName": "Updated Name",
+                                  "email": "updated@kolaysoft.com.tr",
+                                  "role": "CTO"
+                                }
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.fullName").value("Updated Name"))
+                .andExpect(jsonPath("$.data.role").value("CTO"));
+    }
+
+    @Test
+    @WithMockUser(roles = "CTO")
+    void shouldForbidCtoFromUpdatingUser() throws Exception {
+        mockMvc.perform(put("/api/v1/users/1")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "fullName": "X",
+                                  "email": "x@kolaysoft.com.tr",
+                                  "role": "CTO"
+                                }
+                                """))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @WithMockUser(roles = "ADMIN")
+    void shouldUpdateUserStatusAsAdmin() throws Exception {
+        when(userService.updateUserStatus(eq(1L), any())).thenReturn(
+                new UserResponse(
+                        1L,
+                        "System Admin",
+                        "admin@kolaysoft.com.tr",
+                        "ADMIN",
+                        false,
+                        LocalDateTime.of(2026, 7, 31, 10, 0)
+                )
+        );
+
+        mockMvc.perform(patch("/api/v1/users/1/status")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{ \"active\": false }"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.active").value(false));
     }
 }
