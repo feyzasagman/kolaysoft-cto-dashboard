@@ -7,6 +7,7 @@ import com.kolaysoft.ctodashboard.dto.request.UpdateProjectStatusRequest;
 import com.kolaysoft.ctodashboard.dto.response.PageResponse;
 import com.kolaysoft.ctodashboard.dto.response.ProjectResponse;
 import com.kolaysoft.ctodashboard.entity.Project;
+import com.kolaysoft.ctodashboard.entity.ProjectAssignment;
 import com.kolaysoft.ctodashboard.entity.User;
 import com.kolaysoft.ctodashboard.enums.ProjectStatus;
 import com.kolaysoft.ctodashboard.enums.RoleType;
@@ -14,6 +15,7 @@ import com.kolaysoft.ctodashboard.exception.BusinessRuleException;
 import com.kolaysoft.ctodashboard.exception.ConflictException;
 import com.kolaysoft.ctodashboard.exception.ResourceNotFoundException;
 import com.kolaysoft.ctodashboard.mapper.ProjectMapper;
+import com.kolaysoft.ctodashboard.repository.ProjectAssignmentRepository;
 import com.kolaysoft.ctodashboard.repository.ProjectRepository;
 import com.kolaysoft.ctodashboard.repository.UserRepository;
 import com.kolaysoft.ctodashboard.service.ProjectService;
@@ -44,10 +46,16 @@ public class ProjectServiceImpl implements ProjectService {
 
     private final ProjectRepository projectRepository;
     private final UserRepository userRepository;
+    private final ProjectAssignmentRepository projectAssignmentRepository;
 
-    public ProjectServiceImpl(ProjectRepository projectRepository, UserRepository userRepository) {
+    public ProjectServiceImpl(
+            ProjectRepository projectRepository,
+            UserRepository userRepository,
+            ProjectAssignmentRepository projectAssignmentRepository
+    ) {
         this.projectRepository = projectRepository;
         this.userRepository = userRepository;
+        this.projectAssignmentRepository = projectAssignmentRepository;
     }
 
     @Override
@@ -104,6 +112,7 @@ public class ProjectServiceImpl implements ProjectService {
         project.setEndDate(request.targetEndDate());
 
         Project saved = projectRepository.save(project);
+        ensureManagerAssignment(saved, manager);
         return ProjectMapper.toResponse(findProjectOrThrow(saved.getId()));
     }
 
@@ -124,6 +133,7 @@ public class ProjectServiceImpl implements ProjectService {
         project.setEndDate(request.targetEndDate());
 
         projectRepository.save(project);
+        ensureManagerAssignment(project, manager);
         return ProjectMapper.toResponse(findProjectOrThrow(id));
     }
 
@@ -131,8 +141,10 @@ public class ProjectServiceImpl implements ProjectService {
     @Transactional
     public ProjectResponse updateProjectManager(Long id, UpdateProjectManagerRequest request) {
         Project project = findProjectOrThrow(id);
-        project.setManager(resolveProjectManager(request.managerId()));
+        User manager = resolveProjectManager(request.managerId());
+        project.setManager(manager);
         projectRepository.save(project);
+        ensureManagerAssignment(project, manager);
         return ProjectMapper.toResponse(findProjectOrThrow(id));
     }
 
@@ -184,5 +196,24 @@ public class ProjectServiceImpl implements ProjectService {
 
     private String normalizeCode(String code) {
         return code.trim().toUpperCase();
+    }
+
+    /**
+     * Ana PM için assignment satırı yoksa oluşturur (Model A: manager FK + assignment senkron).
+     */
+    private void ensureManagerAssignment(Project project, User manager) {
+        if (projectAssignmentRepository.existsByProjectIdAndUserId(project.getId(), manager.getId())) {
+            return;
+        }
+        ProjectAssignment assignment = new ProjectAssignment();
+        assignment.setProject(project);
+        assignment.setUser(manager);
+        assignment.setAssignmentRole(RoleType.PROJECT_MANAGER.name());
+        projectAssignmentRepository.save(assignment);
+        LOGGER.info(
+                "assignment.synced projectId={} managerId={}",
+                project.getId(),
+                manager.getId()
+        );
     }
 }
