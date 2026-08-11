@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   authApi,
   dashboardApi,
+  projectAssignmentsApi,
   projectsApi,
   reportsApi,
   riskIssuesApi,
@@ -392,6 +393,155 @@ export function useUsers(params: PageQuery & { role?: RoleType | ''; active?: bo
         active: params.active === '' || params.active === undefined ? undefined : params.active,
       })
       return data.data
+    },
+  })
+}
+
+export function useCreateUser() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async (payload: {
+      fullName: string
+      email: string
+      password: string
+      role: RoleType
+    }) => {
+      const { data } = await usersApi.createUser(payload)
+      if (!data.success || !data.data) throw new Error(data.message || 'Kullanıcı oluşturulamadı.')
+      return data.data
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['users'] })
+    },
+  })
+}
+
+export function useUpdateUser() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async ({
+      id,
+      payload,
+    }: {
+      id: number
+      payload: { fullName: string; email: string; password?: string; role: RoleType }
+    }) => {
+      const { data } = await usersApi.updateUser(id, payload)
+      if (!data.success || !data.data) throw new Error(data.message || 'Kullanıcı güncellenemedi.')
+      return data.data
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['users'] })
+    },
+  })
+}
+
+export function useUpdateUserStatus() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ id, active }: { id: number; active: boolean }) => {
+      const { data } = await usersApi.updateUserStatus(id, active)
+      if (!data.success || !data.data) throw new Error(data.message || 'Durum güncellenemedi.')
+      return data.data
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['users'] })
+    },
+  })
+}
+
+export function useCreateProject() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async (payload: {
+      code: string
+      name: string
+      description?: string | null
+      managerId: number
+      status?: ProjectStatus
+      startDate?: string | null
+      targetEndDate?: string | null
+    }) => {
+      const { data } = await projectsApi.createProject(payload)
+      if (!data.success || !data.data) throw new Error(data.message || 'Proje oluşturulamadı.')
+      return data.data
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['dashboard', 'projects'] })
+      void queryClient.invalidateQueries({ queryKey: ['dashboard', 'summary'] })
+      void queryClient.invalidateQueries({ queryKey: ['projects'] })
+    },
+  })
+}
+
+export function useUpdateProject() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async ({
+      id,
+      payload,
+    }: {
+      id: number
+      payload: {
+        code: string
+        name: string
+        description?: string | null
+        managerId: number
+        status: ProjectStatus
+        startDate?: string | null
+        targetEndDate?: string | null
+      }
+    }) => {
+      const { data } = await projectsApi.updateProject(id, payload)
+      if (!data.success || !data.data) throw new Error(data.message || 'Proje güncellenemedi.')
+      return data.data
+    },
+    onSuccess: (_data, variables) => {
+      void queryClient.invalidateQueries({ queryKey: ['dashboard', 'projects'] })
+      void queryClient.invalidateQueries({ queryKey: ['dashboard', 'summary'] })
+      void queryClient.invalidateQueries({ queryKey: ['dashboard', 'project', variables.id] })
+      void queryClient.invalidateQueries({ queryKey: ['projects'] })
+      void queryClient.invalidateQueries({ queryKey: ['project-assignments', variables.id] })
+    },
+  })
+}
+
+export function useProjectAssignments(projectId: number | null, enabled = true) {
+  return useQuery({
+    queryKey: ['project-assignments', projectId],
+    enabled: enabled && projectId != null && projectId > 0,
+    queryFn: async () => {
+      const { data } = await projectAssignmentsApi.list(projectId as number)
+      return data.data ?? []
+    },
+  })
+}
+
+export function useAssignProjectUser(projectId: number) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async (payload: { userId: number; assignmentRole?: string | null }) => {
+      const { data } = await projectAssignmentsApi.assign(projectId, payload)
+      if (!data.success || !data.data) throw new Error(data.message || 'Atama yapılamadı.')
+      return data.data
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['project-assignments', projectId] })
+      void queryClient.invalidateQueries({ queryKey: ['projects', 'assigned'] })
+    },
+  })
+}
+
+export function useRemoveProjectAssignment(projectId: number) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async (userId: number) => {
+      const { data } = await projectAssignmentsApi.remove(projectId, userId)
+      if (!data.success) throw new Error(data.message || 'Atama kaldırılamadı.')
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['project-assignments', projectId] })
+      void queryClient.invalidateQueries({ queryKey: ['projects', 'assigned'] })
     },
   })
 }

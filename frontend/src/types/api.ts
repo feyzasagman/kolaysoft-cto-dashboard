@@ -179,6 +179,19 @@ export interface ProjectResponse {
   createdAt: string
 }
 
+/** ProjectAssignmentResponse */
+export interface ProjectAssignment {
+  id: number
+  projectId: number
+  userId: number
+  userFullName: string
+  userEmail: string
+  userRole: string
+  userActive: boolean
+  assignmentRole: string
+  assignedAt: string
+}
+
 export interface WeeklyReport {
   id: number
   projectId: number

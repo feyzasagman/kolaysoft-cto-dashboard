@@ -8,6 +8,7 @@ import type {
   LoginResponse,
   PageQuery,
   PageResponse,
+  ProjectAssignment,
   ProjectDashboardDetail,
   ProjectDashboardRow,
   ProjectResponse,
@@ -88,6 +89,32 @@ export const projectsApi = {
     targetEndDate?: string | null
   }) {
     return apiClient.post<ApiResponse<ProjectResponse>>('/projects', payload)
+  },
+
+  updateProject(id: number, payload: {
+    code: string
+    name: string
+    description?: string | null
+    managerId: number
+    status: ProjectStatus
+    startDate?: string | null
+    targetEndDate?: string | null
+  }) {
+    return apiClient.put<ApiResponse<ProjectResponse>>(`/projects/${id}`, payload)
+  },
+}
+
+export const projectAssignmentsApi = {
+  list(projectId: number) {
+    return apiClient.get<ApiResponse<ProjectAssignment[]>>(`/projects/${projectId}/assignments`)
+  },
+
+  assign(projectId: number, payload: { userId: number; assignmentRole?: string | null }) {
+    return apiClient.post<ApiResponse<ProjectAssignment>>(`/projects/${projectId}/assignments`, payload)
+  },
+
+  remove(projectId: number, userId: number) {
+    return apiClient.delete<ApiResponse<null>>(`/projects/${projectId}/assignments/${userId}`)
   },
 }
 
@@ -181,5 +208,18 @@ export const usersApi = {
     role: RoleType
   }) {
     return apiClient.post<ApiResponse<UserRow>>('/users', payload)
+  },
+
+  updateUser(id: number, payload: {
+    fullName: string
+    email: string
+    password?: string
+    role: RoleType
+  }) {
+    return apiClient.put<ApiResponse<UserRow>>(`/users/${id}`, payload)
+  },
+
+  updateUserStatus(id: number, active: boolean) {
+    return apiClient.patch<ApiResponse<UserRow>>(`/users/${id}/status`, { active })
   },
 }

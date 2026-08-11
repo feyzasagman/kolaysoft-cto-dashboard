@@ -28,10 +28,11 @@ interface ProjectHeroHeaderProps {
   dashboardQuery?: string
   canCreateReport?: boolean
   canViewLatestReport?: boolean
-  /** Proje edit route yok — false bırakın. */
+  /** ADMIN proje düzenleme. */
   canEditProject?: boolean
   refreshing?: boolean
   onRefresh: () => void
+  onEditProject?: () => void
 }
 
 export function ProjectHeroHeader({
@@ -43,6 +44,7 @@ export function ProjectHeroHeader({
   canEditProject = false,
   refreshing = false,
   onRefresh,
+  onEditProject,
 }: ProjectHeroHeaderProps) {
   const projectsTo = fromDashboard ? `/dashboard${dashboardQuery}` : '/projects'
   const behind = model.progressActual < model.progressTarget
@@ -197,7 +199,12 @@ export function ProjectHeroHeader({
           sx={{ flexShrink: 0 }}
         >
           {canEditProject && (
-            <Button variant="outlined" disabled aria-label="Düzenle">
+            <Button
+              variant="outlined"
+              onClick={onEditProject}
+              disabled={!onEditProject}
+              aria-label="Düzenle"
+            >
               Düzenle
             </Button>
           )}

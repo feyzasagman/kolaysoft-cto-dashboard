@@ -1,7 +1,8 @@
 import HistoryOutlinedIcon from '@mui/icons-material/HistoryOutlined'
 import { Box, Button, Fade, Stack, Typography } from '@mui/material'
-import { useEffect, useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
+import { toast } from 'react-toastify'
 import { AppErrorState } from '@/components/common/AppErrorState'
 import { EmptyState } from '@/components/common/EmptyState'
 import {
@@ -13,44 +14,61 @@ import {
   isProjectDetailTab,
   type ProjectDetailTabId,
 } from '@/components/projects/projectDetailTabConfig'
+import {
+  ProjectFormDialog,
+  type ProjectFormPayload,
+} from '@/components/projects/ProjectFormDialog'
 import { ProjectHeroHeader } from '@/components/projects/ProjectHeroHeader'
 import { ProjectMetricGrid } from '@/components/projects/ProjectMetricGrid'
 import { ProjectOverviewTab } from '@/components/projects/ProjectOverviewTab'
 import { ProjectReportTimeline } from '@/components/projects/ProjectReportTimeline'
 import { ProjectRiskPanel } from '@/components/projects/ProjectRiskPanel'
+import { ProjectTeamPanel } from '@/components/projects/ProjectTeamPanel'
 import { ProjectWorkItemsPanel } from '@/components/projects/ProjectWorkItemsPanel'
 import { useAuth } from '@/contexts/AuthContext'
 import {
   useProjectDetail,
   useProjectReports,
   useRiskIssues,
+  useUpdateProject,
+  useUsers,
   useWeeklyReport,
   useWorkItems,
 } from '@/hooks/useApiQueries'
 import { DASH, surfaceSx } from '@/theme/dashboardTokens'
-import { getHttpStatus } from '@/utils/errorUtils'
+import { getErrorMessage, getHttpStatus } from '@/utils/errorUtils'
 import { rememberProjectId } from '@/utils/projectCache'
 import {
   countOpenWorkItems,
   countRisksByLevel,
   mapProjectDetail,
 } from '@/utils/projectDetailMapper'
+import type { ProjectStatus } from '@/types/api'
 
 /**
  * Sprint 4 — Project Detail Command Center.
- * Mevcut endpoint’ler; sahte activity yok; tab URL state.
+ * Day17: team tab + ADMIN edit project.
  */
 export function ProjectDetailPage() {
   const { projectId } = useParams()
   const [searchParams, setSearchParams] = useSearchParams()
   const navigate = useNavigate()
-  const { user, hasAnyRole } = useAuth()
+  const { hasAnyRole } = useAuth()
 
   const id = Number(projectId)
   const validId = Number.isFinite(id) && id > 0
   const fromDashboard = searchParams.get('from') === 'dashboard'
   const tabParam = searchParams.get('tab')
   const tab: ProjectDetailTabId = isProjectDetailTab(tabParam) ? tabParam : 'overview'
+
+  const [editOpen, setEditOpen] = useState(false)
+  const updateMutation = useUpdateProject()
+  const managersQuery = useUsers({
+    page: 0,
+    size: 100,
+    role: 'PROJECT_MANAGER',
+    active: true,
+  })
 
   const dashboardQuery = useMemo(() => {
     const params = new URLSearchParams(searchParams)
@@ -118,45 +136,22 @@ export function ProjectDetailPage() {
         secondaryAction={
           <Button
             variant="outlined"
-            onClick={() =>
-              navigate(fromDashboard ? `/dashboard${dashboardQuery}` : '/projects')
-            }
+            onClick={() => navigate(fromDashboard ? `/dashboard${dashboardQuery}` : '/projects')}
           >
-            Geri Dön
-          </Button>
-        }
-      />
-    )
-  }
-  if (status === 404) {
-    return (
-      <AppErrorState
-        kind="notFound"
-        title="Proje bulunamadı."
-        description="Aradığınız proje mevcut değil veya silinmiş olabilir."
-        onRetry={() => void detailQuery.refetch()}
-        secondaryAction={
-          <Button
-            variant="outlined"
-            onClick={() =>
-              navigate(fromDashboard ? `/dashboard${dashboardQuery}` : '/projects')
-            }
-          >
-            Geri Dön
+            Geri
           </Button>
         }
       />
     )
   }
 
-  if (detailQuery.isLoading) {
+  if (detailQuery.isLoading && !detailQuery.data) {
     return <ProjectDetailSkeleton />
   }
 
   if (detailQuery.isError || !detailQuery.data || !model) {
     return (
       <ProjectDetailErrorState
-        title="Proje bilgileri alınamadı."
         onRetry={() => void detailQuery.refetch()}
         onBack={() => navigate(fromDashboard ? `/dashboard${dashboardQuery}` : '/projects')}
       />
@@ -166,10 +161,11 @@ export function ProjectDetailPage() {
   const isCto = hasAnyRole('CTO') && !hasAnyRole('ADMIN')
   const isAdmin = hasAnyRole('ADMIN')
   const isPm = hasAnyRole('PROJECT_MANAGER')
-  const isOwnProject =
-    user?.userId != null && detailQuery.data.managerId === user.userId
-  const canCreateReport = isAdmin || (isPm && isOwnProject)
+  // Detail 200 ise backend ProjectAccess okumaya izin vermiştir (manager veya assignment).
+  const canCreateReport = isAdmin || isPm
   const canViewLatestReport = Boolean(latestReportId)
+  const canEditProject = isAdmin
+  const canManageTeam = isAdmin
 
   const refreshing =
     detailQuery.isFetching ||
@@ -188,6 +184,25 @@ export function ProjectDetailPage() {
     ])
   }
 
+  const handleUpdate = async (payload: ProjectFormPayload) => {
+    try {
+      await updateMutation.mutateAsync({
+        id,
+        payload: {
+          ...payload,
+          status: payload.status as ProjectStatus,
+        },
+      })
+      toast.success('Proje başarıyla güncellendi.')
+      setEditOpen(false)
+      void detailQuery.refetch()
+    } catch (error) {
+      toast.error(getErrorMessage(error, 'Proje güncellenemedi.'))
+    }
+  }
+
+  const managers = managersQuery.data?.content ?? []
+
   return (
     <Box>
       <ProjectHeroHeader
@@ -196,9 +211,10 @@ export function ProjectDetailPage() {
         dashboardQuery={dashboardQuery}
         canCreateReport={canCreateReport && !isCto}
         canViewLatestReport={canViewLatestReport}
-        canEditProject={false}
+        canEditProject={canEditProject}
         refreshing={refreshing}
         onRefresh={refreshAll}
+        onEditProject={() => setEditOpen(true)}
       />
 
       <ProjectMetricGrid
@@ -265,6 +281,16 @@ export function ProjectDetailPage() {
               />
             )}
 
+            {tab === 'team' && (
+              <ProjectTeamPanel
+                projectId={id}
+                managerId={detailQuery.data.managerId}
+                managerName={detailQuery.data.managerName}
+                managerEmail={detailQuery.data.managerEmail}
+                canManage={canManageTeam}
+              />
+            )}
+
             {tab === 'history' && (
               <Stack spacing={DASH.space3}>
                 <EmptyState
@@ -298,6 +324,29 @@ export function ProjectDetailPage() {
           </Box>
         </Fade>
       </Box>
+
+      {canEditProject && (
+        <ProjectFormDialog
+          open={editOpen}
+          initialFromDashboard={{
+            projectId: id,
+            code: detailQuery.data.code,
+            name: detailQuery.data.name,
+            description: detailQuery.data.description,
+            managerId: detailQuery.data.managerId,
+            projectStatus: detailQuery.data.projectStatus,
+            startDate: detailQuery.data.startDate,
+            targetEndDate: detailQuery.data.targetEndDate,
+          }}
+          managers={managers}
+          submitting={updateMutation.isPending}
+          onClose={() => {
+            if (updateMutation.isPending) return
+            setEditOpen(false)
+          }}
+          onSubmit={handleUpdate}
+        />
+      )}
     </Box>
   )
 }
