@@ -41,6 +41,32 @@ export function statusLabel(status: string | null | undefined): string {
   return STATUS_LABELS[status] ?? status
 }
 
+const ROLE_LABELS: Record<string, string> = {
+  ADMIN: 'Yönetici',
+  CTO: 'CTO',
+  PROJECT_MANAGER: 'Proje Yöneticisi',
+  MEMBER: 'Üye',
+}
+
+export function roleLabel(role: string | null | undefined): string {
+  if (!role) return '—'
+  return ROLE_LABELS[role] ?? role
+}
+
+export const PROJECT_STATUS_OPTIONS: Array<{ value: ProjectStatus; label: string }> = [
+  { value: 'PLANNED', label: STATUS_LABELS.PLANNED },
+  { value: 'ACTIVE', label: STATUS_LABELS.ACTIVE },
+  { value: 'ON_HOLD', label: STATUS_LABELS.ON_HOLD },
+  { value: 'COMPLETED', label: STATUS_LABELS.COMPLETED },
+  { value: 'CANCELLED', label: STATUS_LABELS.CANCELLED },
+]
+
+export const ROLE_OPTIONS: Array<{ value: 'ADMIN' | 'CTO' | 'PROJECT_MANAGER'; label: string }> = [
+  { value: 'PROJECT_MANAGER', label: ROLE_LABELS.PROJECT_MANAGER },
+  { value: 'CTO', label: ROLE_LABELS.CTO },
+  { value: 'ADMIN', label: ROLE_LABELS.ADMIN },
+]
+
 export function healthLabel(health: string | null | undefined): string {
   if (!health) return HEALTH_LABELS.NO_REPORT
   return HEALTH_LABELS[health] ?? health

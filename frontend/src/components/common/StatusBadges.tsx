@@ -3,6 +3,7 @@ import {
   healthLabel,
   riskLevelLabel,
   riskStatusLabel,
+  roleLabel,
   scheduleStatusLabel,
   statusLabel,
   workItemStatusLabel,
@@ -168,15 +169,9 @@ const roleSx: Record<string, BadgeTone> = {
   PROJECT_MANAGER: { bgcolor: '#FFF8C5', color: '#7D4E00', borderColor: '#F0E09A' },
 }
 
-const ROLE_LABELS: Record<string, string> = {
-  ADMIN: 'Admin',
-  CTO: 'CTO',
-  PROJECT_MANAGER: 'Proje Yöneticisi',
-}
-
 export function RoleBadge({ role }: { role: string | null | undefined }) {
   const key = role ?? ''
-  const label = ROLE_LABELS[key] ?? role ?? '—'
+  const label = roleLabel(key)
   return (
     <EnterpriseBadge
       label={label}

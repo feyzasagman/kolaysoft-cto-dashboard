@@ -15,6 +15,12 @@ export function getErrorMessage(error: unknown, fallback = 'Beklenmeyen bir hata
     if (lower.includes('hafta') || lower.includes('rapor')) {
       return 'Bu proje için seçilen haftaya ait bir rapor zaten bulunmaktadır.'
     }
+    if (lower.includes('e-posta') || lower.includes('email')) {
+      return 'Bu e-posta adresiyle kayıtlı bir kullanıcı bulunmaktadır.'
+    }
+    if (lower.includes('proje kodu') || lower.includes('kod')) {
+      return 'Bu proje kodu zaten kullanılmaktadır.'
+    }
     return message || 'Kayıt çakışması oluştu.'
   }
 
