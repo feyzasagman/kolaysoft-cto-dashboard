@@ -138,6 +138,22 @@ VITE_API_BASE_URL=http://localhost:8080/api/v1
 3. Frontend: `cd frontend` → `npm run dev`
 4. Aç: http://localhost:5173
 
+### Docker ile Hızlı Başlangıç
+
+Tek komutla PostgreSQL + backend + frontend (DEMO / LOCAL):
+
+```bash
+docker compose --env-file .env.docker.example up --build
+```
+
+- Uygulama: http://localhost:3000  
+- API / Swagger: http://localhost:8080 — http://localhost:8080/swagger-ui/index.html  
+- Seed ADMIN: `admin@kolaysoft.com.tr` / `Admin123!`
+
+`docker compose down` veriyi korur. `docker compose down -v` volume’u **siler**.
+
+Ayrıntılar: [`docs/deployment/Docker_Compose_Local_Setup.md`](docs/deployment/Docker_Compose_Local_Setup.md)
+
 ### Automated E2E Tests
 
 Kritik Full Stack yolculuğu Playwright ile otomatikleştirilir:

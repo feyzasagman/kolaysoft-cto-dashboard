@@ -1,0 +1,86 @@
+# Kolaysoft CTO Dashboard — local / demo Full Stack
+# DEMO credentials only. Production secrets kullanmayın.
+#
+#   docker compose --env-file .env.docker.example up --build
+#
+# Frontend (browser): http://localhost:3000
+# Backend API:        http://localhost:8080
+# Swagger:            http://localhost:8080/swagger-ui/index.html
+
+name: kolaysoft-cto-dashboard
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: cto-compose-postgres
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-cto_dashboard}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+    ports:
+      - '5432:5432'
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB']
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 10s
+    networks:
+      - cto-net
+
+  backend:
+    build:
+      context: ./backend/cto-dashboard-api
+      dockerfile: Dockerfile
+    container_name: cto-compose-backend
+    environment:
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-dev}
+      DB_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-cto_dashboard}
+      DB_USERNAME: ${POSTGRES_USER:-postgres}
+      DB_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      JWT_SECRET: ${JWT_SECRET:-KolaysoftCtoDashboardDockerDemoJwtSecretKeyMustBeLongEnough}
+      JWT_EXPIRATION_MS: ${JWT_EXPIRATION_MS:-3600000}
+      SERVER_PORT: '8080'
+      JPA_SHOW_SQL: 'false'
+    ports:
+      - '8080:8080'
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test:
+        [
+          'CMD-SHELL',
+          'wget -qO- http://127.0.0.1:8080/api/v1/health >/dev/null || exit 1',
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 18
+      start_period: 60s
+    networks:
+      - cto-net
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        # Browser same-origin; nginx proxies /api → backend:8080
+        VITE_API_BASE_URL: /api/v1
+    container_name: cto-compose-frontend
+    ports:
+      - '3000:80'
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - cto-net
+
+volumes:
+  postgres_data:
+
+networks:
+  cto-net:
+    driver: bridge

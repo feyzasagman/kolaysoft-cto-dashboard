@@ -1,0 +1,17 @@
+node_modules/
+dist/
+dist-ssr/
+test-results/
+playwright-report/
+blob-report/
+e2e/.runtime/
+coverage/
+.git/
+.gitignore
+.idea/
+.vscode/
+*.log
+.env
+.env.local
+.env.e2e
+playwright/.cache/

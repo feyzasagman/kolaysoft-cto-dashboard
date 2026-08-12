@@ -1,0 +1,15 @@
+target/
+.idea/
+*.iml
+*.iws
+*.ipr
+.classpath
+.project
+.settings/
+.git/
+*.log
+backend-ci.log
+backend-local.log
+backend-local.err
+backend-local.pid
+HELP.md
