@@ -1,566 +1,369 @@
 # Kolaysoft CTO Dashboard
 
-## Weekly Project Status Reporting and CTO Tracking System
+Haftalık proje durum raporlama ve CTO portföy izleme sistemi  
+Kolaysoft Yaz Stajı 2026 — Full Stack MVP
 
-Kolaysoft Yaz Stajı 2026 kapsamında geliştirilen proje.
+---
 
-## Technologies
+## Proje Özeti
 
-- React 18 + Vite + TypeScript
-- Spring Boot
-- PostgreSQL
-- REST API
-- Swagger
-- Material UI
-- TanStack Query
-- Axios
+Kolaysoft’ta farklı proje yöneticileri tarafından yürütülen projelerin **haftalık durum bilgileri** merkezi biçimde toplanır; **CTO** tüm proje portföyünü tek dashboard üzerinden izler.
 
-## Frontend
+İş değeri:
 
-### Gereksinimler
+- Dağınık haftalık raporlamayı standartlaştırma
+- Proje yöneticisinin kendi projesini raporlaması (ilerleme, iş kalemi, risk)
+- CTO’nun hedef/gerçekleşen ilerleme, sağlık ve risk görünürlüğü
+- Admin’in kullanıcı, proje ve ekip ataması yönetimi
 
-- Node.js 20+
-- npm
+---
 
-### Çalıştırma
+## Problem ve Amaç
 
-```powershell
-cd frontend
-copy .env.example .env
-npm install
-npm run dev
+**Problem:** Proje durumu e-posta / dosya / bireysel formatlarda dağılır; CTO tek bakışta portföy sağlığını göremez.
+
+**Amaç:** JWT güvenliği, rol bazlı yetki, haftalık rapor + risk + iş kalemi ve CTO dashboard ile yönetilebilir bir MVP sunmak.
+
+---
+
+## Hedef Kullanıcılar ve Roller
+
+| Rol | Yetki özeti |
+|-----|-------------|
+| **ADMIN** | Kullanıcı CRUD, proje oluşturma/düzenleme, ana yönetici + ekip ataması |
+| **PROJECT_MANAGER** | Atandığı projeler; haftalık rapor, work item, risk yazma |
+| **CTO** | Tüm portföy, dashboard, proje detay, rapor/risk/WI **salt okuma** |
+
+**Not:** UI’da gizlenen butonlar tek güvenlik katmanı değildir; yetki **backend**’de de uygulanır. UI visibility + API authorization birlikte çalışır.
+
+---
+
+## Temel Özellikler
+
+- JWT authentication, role-based authorization
+- Kullanıcı / proje yönetimi, project assignment (ekip)
+- Haftalık rapor, work item, risk/issue
+- CTO dashboard (KPI, sağlık dağılımı, filtreli portföy)
+- Project Detail Command Center (sekmeler)
+- Deterministik **Executive Project Insight** ve **Portfolio Attention Center** (UI-only; AI yok)
+- Loading / empty / error state’ler, responsive enterprise UI
+- Flyway migration (`ddl-auto=validate`)
+- Backend automated tests, Playwright E2E, GitHub Actions CI
+- Docker Compose yerel Full Stack ortamı
+
+---
+
+## Sistem Mimarisi
+
+```text
+Browser
+   │
+   ├─ Local dev: Vite :5173  ──HTTP──►  Spring Boot :8080  ──►  PostgreSQL
+   │
+   └─ Docker:    nginx :3000
+                    ├─ /          → static SPA
+                    └─ /api/...   → proxy → backend:8080  →  postgres
 ```
 
-Uygulama: http://localhost:5173
-
-Varsayılan API adresi: `http://localhost:8080/api/v1` (`VITE_API_BASE_URL`)
-
-### Day 12 kapsamı
-
-- Login (`POST /api/v1/auth/login`) + JWT localStorage
-- Dashboard layout (Sidebar / Topbar)
-- Protected routes + rol koruması
-- Dashboard summary kartları
-- Projects / Reports / Users listeleri
-- Axios interceptors + global error handling
-- Refresh token placeholder
-- Project Manager haftalık rapor / iş kalemi / risk akışı
-
-Ayrıntılar:
-- `docs/analysis/Day12_React_Frontend_Setup.md`
-- `docs/analysis/Day12_Weekly_Report_WorkItem_Risk_Frontend.md`
-
-### Day 13 — CTO Dashboard MVP
-
-- Rol bazlı başlık: CTO / Yönetim / Proje Genel Bakış
-- 6 KPI kartı: toplam, aktif, tamamlanan, açık risk, kritik risk, eksik haftalık rapor
-- Sağlık dağılımı (`health-distribution`)
-- Proje portföy tablosu (`dashboard/projects`)
-- Kritik risk önizlemesi (`critical-risks`)
-- `dashboardMapper` ile null-güvenli dönüşüm
-- ADMIN/CTO genel dashboard; PROJECT_MANAGER genel dashboard’a erişmez
-
-Endpointler:
-
-- `GET /api/v1/dashboard/summary`
-- `GET /api/v1/dashboard/health-distribution`
-- `GET /api/v1/dashboard/critical-risks`
-- `GET /api/v1/dashboard/projects`
-
-Demo adımları:
-
-1. ADMIN veya CTO ile giriş
-2. `/dashboard` → KPI, sağlık, portföy tablosu
-3. Yenile butonu ile refetch
-4. Satırdan **Detayı Gör** → `/projects/:id`
-
-Ayrıntılar: `docs/analysis/Day13_CTO_Dashboard_MVP.md`
-
-### Day 14 — Dashboard filtreleri ve proje detayı
-
-- Dashboard filtreleri (URL query senkron): search, projectStatus, health, managerId, hasCurrentWeekReport, riskLevel, sort, page, size
-- Proje detay ekranı: `/projects/:projectId` (`GET /dashboard/projects/{id}` + rapor/risk/iş kalemi zenginleştirme)
-- Detay alanları: temel bilgi, ilerleme özeti, son haftalık rapor, risk/engel, aktif iş kalemleri, son 5 rapor
-- Rol bazlı erişim: ADMIN/CTO tüm detay; PM yalnızca atanmış proje; CTO salt okunur
-- Dashboard → detay → geri dönüşte filtre/pagination URL’de korunur
-
-Endpointler:
-
-- `GET /api/v1/dashboard/projects` (filtre + sayfalama)
-- `GET /api/v1/dashboard/projects/{projectId}`
-- `GET /api/v1/reports/{id}`, `GET /api/v1/reports/project/{projectId}`
-- `GET /api/v1/work-items?reportId=`, risk listesi (`reportId`)
-
-Demo adımları:
-
-1. ADMIN/CTO ile giriş → `/dashboard`
-2. Durum / sağlık / arama filtrelerini uygula; URL’de parametreleri kontrol et
-3. Sayfa boyutu 10/20/50 ve sıralama değiştir
-4. **Detayı Gör** → proje bilgisi, son rapor, risk, iş kalemi, geçmiş
-5. **Geri Dön** → filtrelerin korunduğunu doğrula
-6. PM: kendi proje detayı + rapor oluştur; başka proje URL → 403
-
-Filtre örneği:
-
-```
-/dashboard?projectStatus=ACTIVE&health=GREEN&hasCurrentWeekReport=false&page=0&size=20&sort=name,asc
+```mermaid
+flowchart LR
+  B[Browser] --> FE[React / nginx]
+  FE -->|REST /api/v1| API[Spring Boot]
+  API --> DB[(PostgreSQL)]
+  API --> FW[Flyway]
+  API --> JWT[JWT Security]
+  CI[GitHub Actions] --> API
+  CI --> FE
+  E2E[Playwright] --> FE
+  E2E --> API
 ```
 
-Bilinen eksikler (Day 14):
+Yan bileşenler: Flyway, JWT, Playwright, GitHub Actions, Docker Compose.
 
-- Sort allowlist: `name`, `code`, `status`, `createdAt`, `id` (ilerleme/risk/son rapor tarihi yok)
-- `customer` DTO’da yok → UI `—`
-- Rapor geçmişi DTO’da `reportId` yok → yıl+hafta eşlemesi
-- Proje düzenleme route’u yok → “Projeyi Düzenle” butonu yok
+---
 
-Ayrıntılar: `docs/analysis/Day14_Dashboard_Project_Detail_and_Filters.md`
+## Teknolojiler
 
-Enterprise UI/UX yükseltmesi (frontend-only): [`docs/analysis/Day15_UI_UX_Enhancement.md`](docs/analysis/Day15_UI_UX_Enhancement.md)  
-Sprint 1 Dashboard redesign: [`docs/analysis/Day16_Dashboard_Enterprise_Redesign.md`](docs/analysis/Day16_Dashboard_Enterprise_Redesign.md)  
-Sprint 2 Project Detail redesign: [`docs/analysis/Day15_Project_Detail_Enterprise_Redesign.md`](docs/analysis/Day15_Project_Detail_Enterprise_Redesign.md)  
-Sprint 3 Project Portfolio redesign: [`docs/analysis/Day15_Project_Portfolio_Enterprise_Redesign.md`](docs/analysis/Day15_Project_Portfolio_Enterprise_Redesign.md)  
-Sprint 4 Project Detail Command Center: [`docs/analysis/Day15_Project_Detail_Command_Center.md`](docs/analysis/Day15_Project_Detail_Command_Center.md)  
-Sprint 5 Weekly Report Enterprise Experience: [`docs/analysis/Day15_Weekly_Report_Enterprise_Experience.md`](docs/analysis/Day15_Weekly_Report_Enterprise_Experience.md)  
-Global Product Polish & Regression: [`docs/analysis/Day15_Global_Product_Polish_and_Regression.md`](docs/analysis/Day15_Global_Product_Polish_and_Regression.md)
+Kaynak: `pom.xml`, `package.json`
 
-### Frontend ortam değişkeni
+| Katman | Teknoloji |
+|--------|-----------|
+| Backend | Java **21**, Spring Boot **3.5.16**, Spring Security, Spring Data JPA, Flyway, PostgreSQL, Maven Wrapper, springdoc OpenAPI **2.8.17**, JJWT **0.12.6** |
+| Frontend | React **18.3**, TypeScript **5.8**, Vite **6.3**, MUI **7**, TanStack Query **5**, Axios, React Router **6**, React Hook Form, Zod |
+| Quality | JUnit / Spring Boot Test, Playwright **1.55**, ESLint, GitHub Actions, Docker / Compose |
 
-`frontend/.env` (örnek: `.env.example`):
+---
 
-```env
-VITE_API_BASE_URL=http://localhost:8080/api/v1
+## Proje Yapısı
+
+```text
+Kolaysoft-CTO-Dashboard/
+├── backend/cto-dashboard-api/     # Spring Boot API
+├── frontend/                      # React (Vite)
+├── docs/                          # Analiz, test, deployment
+├── database/                      # Referans SQL (şema Flyway’de)
+├── docker-compose.yml
+├── .env.docker.example
+└── .github/workflows/ci.yml
 ```
 
-### Çalıştırma sırası
+---
 
-1. PostgreSQL (Docker) ayakta olsun
-2. Backend: `backend/cto-dashboard-api` → `./mvnw spring-boot:run -Dspring-boot.run.profiles=dev`
-3. Frontend: `cd frontend` → `npm run dev`
-4. Aç: http://localhost:5173
+## Hızlı Başlangıç — Docker Compose
 
-### Docker ile Hızlı Başlangıç
-
-Tek komutla PostgreSQL + backend + frontend (DEMO / LOCAL):
+**DEVELOPMENT / DEMO ONLY** — production secret değildir.
 
 ```bash
 docker compose --env-file .env.docker.example up --build
 ```
 
-- Uygulama: http://localhost:3000  
-- API / Swagger: http://localhost:8080 — http://localhost:8080/swagger-ui/index.html  
-- Seed ADMIN: `admin@kolaysoft.com.tr` / `Admin123!`
+| Servis | URL |
+|--------|-----|
+| Uygulama | http://localhost:3000 |
+| API | http://localhost:8080 |
+| Health | http://localhost:8080/api/v1/health |
+| Swagger | http://localhost:8080/swagger-ui/index.html |
 
-`docker compose down` veriyi korur. `docker compose down -v` volume’u **siler**.
+**Demo ADMIN (dev seed):** `admin@kolaysoft.com.tr` / `Admin123!`
 
-Ayrıntılar: [`docs/deployment/Docker_Compose_Local_Setup.md`](docs/deployment/Docker_Compose_Local_Setup.md)
+### Servis başlatma sırası (Compose)
 
-### Automated E2E Tests
+1. **PostgreSQL** (health: `pg_isready`)
+2. **Flyway** migration (backend startup)
+3. **Spring Boot** (`dev` profil + seed)
+4. **nginx frontend** (backend healthy sonrası)
+5. Browser → `:3000` (API same-origin `/api/v1`)
 
-Kritik Full Stack yolculuğu Playwright ile otomatikleştirilir:
-
-`ADMIN → kullanıcı → proje → assignment → PM rapor → CTO dashboard/detail`
-
-```powershell
-# Backend + Postgres ayakta olmalı
-cd frontend
-copy .env.e2e.example .env.e2e
-# .env.e2e içinde E2E_ADMIN_PASSWORD doldurun
-npm run test:e2e
-npm run test:e2e:headed
+```bash
+docker compose down          # volume korunur
+docker compose down -v       # DİKKAT: DB volume SİLİNİR
 ```
 
-Ayrıntılar: [`docs/testing/Automated_E2E_Test_Strategy.md`](docs/testing/Automated_E2E_Test_Strategy.md)
+Ayrıntı: [`docs/deployment/Docker_Compose_Local_Setup.md`](docs/deployment/Docker_Compose_Local_Setup.md)
 
-### Continuous Integration
+---
 
-Workflow: [`.github/workflows/ci.yml`](.github/workflows/ci.yml) — **CI Quality Gate**
-
-`push` / `pull_request` (`main`) ve `workflow_dispatch` ile çalışır:
-
-1. **Backend Quality** — `./mvnw test` + `clean package`
-2. **Frontend Quality** — `npm ci` + lint + production build
-3. **Full Stack E2E** — PostgreSQL service + Flyway clean DB + backend + Playwright (önceki job’lar PASS olmalı)
-
-Başarısız E2E’de Playwright report/trace/screenshot ve backend log artifact olarak yüklenir.
-
-Ayrıntılar: [`docs/testing/CI_Quality_Gate.md`](docs/testing/CI_Quality_Gate.md)  
-Branch protection için required check önerisi aynı dokümandadır.
-
-### Demo kullanıcıları (yalnızca geliştirme)
-
-| Rol | E-posta | Şifre |
-|---|---|---|
-| ADMIN (seed) | `admin@kolaysoft.com.tr` | `Admin123!` |
-| PROJECT_MANAGER / CTO | Seed yok; ADMIN ile `POST /users` üzerinden oluşturulur | — |
-
-### Project Manager demo akışı
-
-1. ADMIN ile PM kullanıcı + atanmış proje oluşturun
-2. PM olarak giriş yapın → `/projects`
-3. İlk görünürlük için `/reports/new?projectId={id}` veya proje detayından **Haftalık Rapor Oluştur**
-4. Raporu kaydedin → `/reports/:id`
-5. İş kalemi ve risk ekleyin / durum güncelleyin
-6. CTO ile giriş yapıp aynı raporu salt okunur görüntüleyin (Düzenle gizli)
-
-### Bilinen eksikler
-
-- Backend’de PM için `GET /projects` / `GET /dashboard/projects` listesi yok (403); frontend raporlar + bilinen proje id önbelleği ile telafi eder
-- `customer` alanı entity’de var, response DTO’da yok → UI’da `—`
-- Dashboard sort alanları ilerleme / açık risk / son rapor tarihini kapsamıyor
-- Rapor history DTO’sunda `reportId` yok
-- Frontend unit test kütüphanesi yok (vitest/RTL eklenmedi)
-- Refresh token endpointi yok
-
-## Backend
+## Manuel Kurulum
 
 ### Gereksinimler
 
-- Java 21
-- Maven Wrapper veya Maven
-- PostgreSQL
+- Java 21, Node 20+, npm, PostgreSQL 16 (veya Docker ile yalnız DB)
 
-### Veritabanı Hazırlığı
-
-PostgreSQL üzerinde `cto_dashboard` adında bir veritabanı oluşturun. Gerçek bağlantı bilgilerini
-repository'ye eklemeyin; ortam değişkenleri üzerinden sağlayın.
-
-Şema **Flyway** migration ile yönetilir (`ddl-auto=validate`). Referans SQL (döküman): `database/schema.sql`
-
-Gerekli ortam değişkenleri:
-
-- `DB_URL`
-- `DB_USERNAME`
-- `DB_PASSWORD`
-- `SPRING_PROFILES_ACTIVE` (varsayılan: `dev`)
-
-Örnek Docker ile yerel PostgreSQL:
+### PostgreSQL
 
 ```powershell
 docker run -d --name cto-dashboard-postgres `
   -e POSTGRES_DB=cto_dashboard `
   -e POSTGRES_USER=postgres `
-  -e POSTGRES_PASSWORD=your_password `
+  -e POSTGRES_PASSWORD=postgres `
   -p 5432:5432 postgres:16-alpine
 ```
 
-### Çalıştırma
+### Backend
 
 ```powershell
-cd backend/cto-dashboard-api
-$env:SPRING_PROFILES_ACTIVE="dev"
-$env:DB_URL="jdbc:postgresql://localhost:5432/cto_dashboard"
-$env:DB_USERNAME="postgres"
-$env:DB_PASSWORD="your_password"
-./mvnw spring-boot:run
-```
-
-Üretim profili için `SPRING_PROFILES_ACTIVE=prod` kullanın. Üretimde `ddl-auto=validate` ve Flyway aktiftir;
-şifre ve bağlantı bilgileri zorunlu ortam değişkenlerinden okunur.
-
-### Database Migration
-
-Şema değişiklikleri Flyway ile versiyonlanır. Hibernate tabloları otomatik oluşturmaz/güncellemez (`ddl-auto=validate`).
-
-**Migration klasörü**
-
-`backend/cto-dashboard-api/src/main/resources/db/migration`
-
-| Dosya | Açıklama |
-|---|---|
-| `V1__init_schema.sql` | Entity modeline dayalı ilk şema |
-
-`database/sample_data.sql` boştur; demo/admin kullanıcılar migration’a taşınmaz. Dev seed: `DevDataInitializer` (`dev` profili).
-
-**Yeni migration ekleme**
-
-1. `V{n}__kisa_aciklama.sql` oluşturun (ör. `V2__add_project_index.sql`)
-2. Yalnızca DDL yazın (`CREATE`/`ALTER`); demo veri eklemeyin
-3. Uygulamayı başlatın — Flyway sırayla uygular
-4. Entity ile migration’ı senkron tutun; entity’yi migration’a uydurmak için tersine çevirmeyin
-
-**Temiz kurulum (boş veritabanı)**
-
-```powershell
-# Docker örneği: yeni DB
-docker exec -it cto-dashboard-postgres psql -U postgres -c "CREATE DATABASE cto_dashboard;"
-
 cd backend/cto-dashboard-api
 $env:SPRING_PROFILES_ACTIVE="dev"
 $env:DB_URL="jdbc:postgresql://localhost:5432/cto_dashboard"
 $env:DB_USERNAME="postgres"
 $env:DB_PASSWORD="postgres"
-./mvnw spring-boot:run "-Dspring-boot.run.profiles=dev"
+./mvnw.cmd spring-boot:run
 ```
 
-İlk açılışta V1 çalışır, `flyway_schema_history` oluşur, `DevDataInitializer` roller + admin seed eder.
+(Linux/macOS: `./mvnw spring-boot:run`)
 
-**Mevcut dolu development DB için baseline (tek seferlik)**
-
-Eski `cto_dashboard` Hibernate `ddl-auto=update` ile oluşmuş olabilir ve `flyway_schema_history` yoktur.
-Bu durumda uygulamayı doğrudan başlatmak V1’i yeniden çalıştırmaya çalışır ve **çakışır**.
-
-Kodda `baseline-on-migrate` **yoktur**. Tek seferlik baseline (önerilen):
+### Frontend
 
 ```powershell
-# Flyway Docker image — mevcut tabloları silmeden şemayı V1 olarak işaretler
-docker run --rm `
-  --network host `
-  -v "${PWD}/backend/cto-dashboard-api/src/main/resources/db/migration:/flyway/sql" `
-  flyway/flyway:11 `
-  -url="jdbc:postgresql://localhost:5432/cto_dashboard" `
-  -user="postgres" `
-  -password="postgres" `
-  baseline -baselineVersion="1" -baselineDescription="init schema"
+cd frontend
+copy .env.example .env
+npm ci
+npm run dev
 ```
 
-Windows’ta `--network host` sorun çıkarırsa host IP kullanın:
+Uygulama: http://localhost:5173
 
-```powershell
-docker run --rm `
-  -v "${PWD}/flyway-sql:/flyway/sql" `
-  flyway/flyway:11 `
-  -url="jdbc:postgresql://host.docker.internal:5432/cto_dashboard" `
-  -user="postgres" `
-  -password="postgres" `
-  baseline -baselineVersion="1" -baselineDescription="init schema"
-```
+---
 
-(`flyway-sql` klasörüne migration dosyalarını kopyalayın veya volume yolunu doğrudan `db/migration` yapın.)
+## Environment Variables
 
-CLI kuruluysa:
+Gerçek `.env` / `.env.docker` / `.env.e2e` **commit edilmez**.
 
-```powershell
-flyway -url="jdbc:postgresql://localhost:5432/cto_dashboard" `
-  -user=postgres -password=postgres `
-  -locations="filesystem:backend/cto-dashboard-api/src/main/resources/db/migration" `
-  baseline -baselineVersion=1 -baselineDescription="init schema"
-```
+| Variable | Used by | Purpose | Example | Required |
+|----------|---------|---------|---------|----------|
+| `DB_URL` | Backend | JDBC URL | `jdbc:postgresql://localhost:5432/cto_dashboard` | Prod: evet; Dev: default var |
+| `DB_USERNAME` | Backend | DB user | `postgres` | Aynı |
+| `DB_PASSWORD` | Backend | DB password | *(local only)* | Aynı |
+| `SPRING_PROFILES_ACTIVE` | Backend | Profil | `dev` / `prod` | Hayır (default `dev`) |
+| `JWT_SECRET` | Backend | JWT imza | uzun rastgele string | Prod: evet; Dev: fallback |
+| `JWT_EXPIRATION_MS` | Backend | Token süresi | `3600000` | Hayır |
+| `SERVER_PORT` | Backend | HTTP port | `8080` | Hayır |
+| `VITE_API_BASE_URL` | Frontend build | API base | `http://localhost:8080/api/v1` veya `/api/v1` | Hayır (default localhost) |
+| `E2E_ADMIN_EMAIL` | Playwright | Admin e-posta | `admin@kolaysoft.com.tr` | E2E |
+| `E2E_ADMIN_PASSWORD` | Playwright | Admin şifre | *(env)* | E2E |
+| `E2E_BASE_URL` | Playwright | FE URL | `http://localhost:5173` | Hayır |
 
-Baseline sonrası uygulamayı normal başlatın. Sonraki şema değişiklikleri `V2+` olarak eklenir.
+Örnek dosyalar:
 
-**Not:** `cto_dashboard_flyway_test` gibi boş bir DB ile Flyway’i doğrulamak baseline gerektirmez.
+- [`.env.docker.example`](.env.docker.example)
+- [`frontend/.env.example`](frontend/.env.example)
+- [`frontend/.env.e2e.example`](frontend/.env.e2e.example)
 
-### Test
+---
+
+## Database & Flyway
+
+- Şema: `classpath:db/migration` → `V1__init_schema.sql`
+- Hibernate: `ddl-auto=validate` (otomatik şema üretmez)
+- Clean DB: Flyway V1 + `flyway_schema_history` + `DevDataInitializer` (yalnız `dev`)
+- Docker Compose volume: `postgres_data` (`down` korur, `down -v` siler)
+- **Compose/clean DB’de baseline gerekmez**
+
+Legacy DB (`ddl-auto=update` ile oluşmuş, history yok) için baseline: [`docs/analysis/Day14_Flyway_Migration_Setup.md`](docs/analysis/Day14_Flyway_Migration_Setup.md)
+
+---
+
+## CORS / API URL
+
+### Local Vite (`:5173`)
+
+- Origin allowlist: `http://localhost:5173` (`CorsConfig`)
+- `VITE_API_BASE_URL=http://localhost:8080/api/v1`
+
+### Docker (`:3000`)
+
+- Browser **container hostname `backend` kullanmaz** (yalnız Docker network içi).
+- SPA `VITE_API_BASE_URL=/api/v1` (same-origin) → nginx `/api` → `backend:8080`
+- Bu yolda ekstra CORS gerekmez.
+
+---
+
+## Demo Kullanıcıları
+
+| Rol | Nasıl | Credential |
+|-----|--------|------------|
+| **ADMIN** | `DevDataInitializer` (`dev`) | `admin@kolaysoft.com.tr` / `Admin123!` — **DEMO ONLY** |
+| **CTO** | Seed yok | ADMIN → Kullanıcılar veya API `POST /users` |
+| **PROJECT_MANAGER** | Seed yok | Aynı |
+
+---
+
+## API / Swagger
+
+- Swagger UI: http://localhost:8080/swagger-ui/index.html
+- Health: http://localhost:8080/api/v1/health
+
+Kaynak grupları (katalog Swagger’da): auth, users, projects, project assignments, weekly reports, work items, risks, dashboard.
+
+---
+
+## Testler
+
+### Backend Tests
 
 ```powershell
 cd backend/cto-dashboard-api
-./mvnw test
+./mvnw.cmd test
+./mvnw.cmd clean package
 ```
 
-MVP test turu raporu: [`docs/testing/Day15_MVP_Test_Report.md`](docs/testing/Day15_MVP_Test_Report.md)  
-Açık hatalar: [`docs/testing/Day15_Bug_List.md`](docs/testing/Day15_Bug_List.md)  
-Day 16 bug fix / retest: [`docs/testing/Day16_Bug_Fix_and_Retest_Report.md`](docs/testing/Day16_Bug_Fix_and_Retest_Report.md)  
-Day 17 full-stack MVP regression: [`docs/testing/Day17_Full_Stack_MVP_Regression_Report.md`](docs/testing/Day17_Full_Stack_MVP_Regression_Report.md)  
-Day 17 admin/assignment gap completion: [`docs/analysis/Day17_Admin_Project_Assignment_Gaps_Completion.md`](docs/analysis/Day17_Admin_Project_Assignment_Gaps_Completion.md)
+Doğrulanmış suite: **79/79 PASS** (Day 17+ regression).
 
-### Swagger
-
-Uygulama çalışırken Swagger arayüzü:
-
-http://localhost:8080/swagger-ui/index.html
-
-### Health
-
-Uygulama çalışma durumu:
-
-http://localhost:8080/api/v1/health
-
-### Authentication (Day 7)
-
-JWT tabanlı login endpointi:
-
-`POST /api/v1/auth/login`
-
-JWT ortam değişkenleri (gerçek secret değerini repository'ye eklemeyin):
+### Frontend Quality
 
 ```powershell
-$env:JWT_SECRET="en-az-32-karakter-uzunlugunda-guvenli-bir-secret"
-$env:JWT_EXPIRATION_MS="3600000"
+cd frontend
+npm run lint
+npm run build
 ```
 
-- `JWT_SECRET` — üretimde zorunlu; `dev` profilinde yalnızca local fallback vardır
-- `JWT_EXPIRATION_MS` — varsayılan: `3600000` (1 saat)
-
-Geliştirme ortamında (`dev` profili) otomatik seed admin kullanıcısı oluşturulur.
-Bu hesap yalnızca local geliştirme içindir; üretimde kullanılmamalıdır.
-
-- E-posta: `admin@kolaysoft.com.tr`
-- Şifre: `Admin123!`
-
-Örnek login isteği:
+### Playwright E2E
 
 ```powershell
-curl -X POST http://localhost:8080/api/v1/auth/login `
-  -H "Content-Type: application/json" `
-  -d "{\"email\":\"admin@kolaysoft.com.tr\",\"password\":\"Admin123!\"}"
+# Postgres + backend ayakta
+cd frontend
+copy .env.e2e.example .env.e2e
+# E2E_ADMIN_PASSWORD doldurun (seed ile uyumlu)
+npm run test:e2e
 ```
 
-Başarılı cevap `data.accessToken` alanında JWT döner (`tokenType: Bearer`).
-Korunan endpointlere istek atarken:
+Kapsam (**7** senaryo): Auth · ADMIN (kullanıcı/proje/ekip) · PM (rapor) · CTO (dashboard/insight, read-only).
 
-```text
-Authorization: Bearer <accessToken>
-```
+[`docs/testing/Automated_E2E_Test_Strategy.md`](docs/testing/Automated_E2E_Test_Strategy.md)
 
-#### Swagger Authorize kullanımı
+### CI Quality Gate
 
-1. Login endpointinden `accessToken` alın.
-2. Swagger UI üzerindeki **Authorize** butonuna tıklayın.
-3. Yalnızca token değerini girin (`Bearer` yazmayın).
-4. Korumalı endpointleri test edin.
+[`.github/workflows/ci.yml`](.github/workflows/ci.yml) — `push` / `PR` → `main`:
 
-Hata kodları:
+1. Backend Quality  
+2. Frontend Quality  
+3. Full Stack E2E (temiz Postgres + Flyway + Playwright)
 
-- `401` — e-posta bulunamadı veya şifre hatalı (aynı genel mesaj)
-- `403` — kullanıcı hesabı aktif değil
-- `400` — doğrulama hatası
+Failure artifact: Playwright report/trace + `backend-ci.log`  
+[`docs/testing/CI_Quality_Gate.md`](docs/testing/CI_Quality_Gate.md)
 
-Ayrıntılar: `docs/analysis/Day7_Authentication_and_JWT.md`
+---
 
-### User & Project Management (Day 8)
+## Uçtan Uca Demo Senaryosu
 
-#### Yetkilendirme
+Adım adım (ADMIN → PM → CTO):  
+[`docs/demo/Day18_End_to_End_Demo_Scenario.md`](docs/demo/Day18_End_to_End_Demo_Scenario.md)
 
-| Rol | Users | Projects |
-|---|---|---|
-| `ADMIN` | Tam CRUD | Tam CRUD |
-| `CTO` | Salt okuma | Salt okuma |
-| `PROJECT_MANAGER` | Erişim yok | Erişim yok |
+---
 
-#### User endpointleri
+## Bilinen Eksikler / Sınırlamalar
 
-- `GET /api/v1/users`
-- `GET /api/v1/users/{id}`
-- `POST /api/v1/users`
-- `PUT /api/v1/users/{id}`
-- `PATCH /api/v1/users/{id}/status`
-- `DELETE /api/v1/users/{id}`
+**Bug (MVP):** 0 (Day 16 kritik bug’lar kapatıldı; regression yeşil)
 
-#### Project endpointleri
+**Known limitations**
 
-- `GET /api/v1/projects`
-- `GET /api/v1/projects/{id}`
-- `POST /api/v1/projects`
-- `PUT /api/v1/projects/{id}`
-- `PATCH /api/v1/projects/{id}/manager`
-- `PATCH /api/v1/projects/{id}/status`
-- `DELETE /api/v1/projects/{id}`
+- Production deployment / monitoring / audit log yok
+- Server-side JWT `exp` bekleme E2E’si yok (client `expiresAt` + invalid token test edilir)
+- Attention Center mevcut dashboard portföy sayfası/filtre bağlamıyla sınırlı
+- PM proje listesi backend’de ayrı endpoint yok; FE rapor + id cache kullanır
+- E2E destructive cleanup yok (unique timestamp veri)
+- Frontend unit test (Vitest/RTL) yok
+- Refresh token endpointi yok
 
-İş kuralları:
+**Future improvements:** production secrets yönetimi, gözlemlenebilirlik, PM list API, E2E cleanup, FE unit testleri.
 
-- E-posta ve proje kodu benzersizdir.
-- Şifre BCrypt ile hashlenir; API cevaplarında dönmez.
-- Proje yöneticisi `PROJECT_MANAGER` rolünde ve aktif olmalıdır.
-- Proje durumları: `PLANNED`, `ACTIVE`, `ON_HOLD`, `COMPLETED`, `CANCELLED`
+---
 
-Ayrıntılar: `docs/analysis/Day8_User_Project_Management.md`
+## Troubleshooting
 
-### Weekly Report Module (Day 9)
+| Sorun | Çözüm |
+|-------|--------|
+| `5432` dolu | Eski `cto-dashboard-postgres` veya Compose çakışması; birini durdurun |
+| Docker Desktop kapalı | Docker’ı başlatın |
+| Java sürümü | `java -version` → 21 |
+| Backend health fail | DB env, Flyway log, JWT |
+| CORS (Vite) | Origin `localhost:5173`; CI’da `127.0.0.1` kullanmayın |
+| Eski Docker volume | Bilinçli: `docker compose down -v` — **DB verisi silinir** |
+| Legacy DB + Flyway conflict | Baseline (yukarıdaki Flyway dokümanı) |
 
-#### Yetkilendirme
+---
 
-| Rol | Reports / Work Items / Risks |
-|---|---|
-| `ADMIN` | Tam yönetim |
-| `CTO` | Salt okuma |
-| `PROJECT_MANAGER` | Yalnız kendi projeleri |
+## Teknik Dokümanlar
 
-#### Report endpointleri
+| Konu | Doküman |
+|------|---------|
+| Day 18 teslim | [`docs/analysis/Day18_README_and_Delivery_Documentation.md`](docs/analysis/Day18_README_and_Delivery_Documentation.md) |
+| Teknik kararlar | [`docs/architecture/Technical_Decisions.md`](docs/architecture/Technical_Decisions.md) |
+| Docker Compose | [`docs/deployment/Docker_Compose_Local_Setup.md`](docs/deployment/Docker_Compose_Local_Setup.md) |
+| Flyway | [`docs/analysis/Day14_Flyway_Migration_Setup.md`](docs/analysis/Day14_Flyway_Migration_Setup.md) |
+| E2E | [`docs/testing/Automated_E2E_Test_Strategy.md`](docs/testing/Automated_E2E_Test_Strategy.md) |
+| CI | [`docs/testing/CI_Quality_Gate.md`](docs/testing/CI_Quality_Gate.md) |
+| Day 15 MVP test | [`docs/testing/Day15_MVP_Test_Report.md`](docs/testing/Day15_MVP_Test_Report.md) |
+| Day 16 bug fix | [`docs/testing/Day16_Bug_Fix_and_Retest_Report.md`](docs/testing/Day16_Bug_Fix_and_Retest_Report.md) |
+| Day 17 regression | [`docs/testing/Day17_Full_Stack_MVP_Regression_Report.md`](docs/testing/Day17_Full_Stack_MVP_Regression_Report.md) |
+| Day 17 assignment | [`docs/analysis/Day17_Admin_Project_Assignment_Gaps_Completion.md`](docs/analysis/Day17_Admin_Project_Assignment_Gaps_Completion.md) |
+| Demo senaryosu | [`docs/demo/Day18_End_to_End_Demo_Scenario.md`](docs/demo/Day18_End_to_End_Demo_Scenario.md) |
+| Analiz (Day 6–15) | [`docs/analysis/`](docs/analysis/) |
 
-- `GET /api/v1/reports`
-- `GET /api/v1/reports/{id}`
-- `GET /api/v1/reports/project/{projectId}`
-- `POST /api/v1/reports`
-- `PUT /api/v1/reports/{id}`
-- `DELETE /api/v1/reports/{id}`
+---
 
-#### Work Item endpointleri
+## Git / Commit Yaklaşımı
 
-- `GET /api/v1/work-items`
-- `POST /api/v1/work-items`
-- `PUT /api/v1/work-items/{id}`
-- `DELETE /api/v1/work-items/{id}`
-
-#### Risk endpointleri
-
-- `GET /api/v1/risks`
-- `POST /api/v1/risks`
-- `PUT /api/v1/risks/{id}`
-- `DELETE /api/v1/risks/{id}`
-
-İş kuralları:
-
-- Aynı proje + hafta numarası için tek rapor (`409 Conflict`)
-- `weekNumber` 1–53, progress 0–100
-- WorkItem ve Risk bir Weekly Report’a bağlıdır
-
-Ayrıntılar: `docs/analysis/Day9_Weekly_Report_Module.md`
-
-### CTO Dashboard Backend (Day 10)
-
-#### Yetki matrisi
-
-| Endpoint | ADMIN | CTO | PROJECT_MANAGER |
-|---|---|---|---|
-| `/dashboard/summary` | Evet | Evet | Hayir |
-| `/dashboard/health-distribution` | Evet | Evet | Hayir |
-| `/dashboard/critical-risks` | Evet | Evet | Hayir |
-| `/dashboard/latest-reports` | Evet | Evet | Hayir |
-| `/dashboard/projects` | Evet | Evet | Hayir |
-| `/dashboard/projects/{id}` | Evet | Evet | Yalniz kendi projesi |
-
-#### Endpointler
-
-- `GET /api/v1/dashboard/summary`
-- `GET /api/v1/dashboard/health-distribution`
-- `GET /api/v1/dashboard/critical-risks?level=&status=&projectId=&limit=10`
-- `GET /api/v1/dashboard/latest-reports?projectId=&managerId=&health=&status=&year=&weekNumber=&limit=10`
-- `GET /api/v1/dashboard/projects?search=&managerId=&projectStatus=&health=&page=0&size=20&sort=name,asc`
-- `GET /api/v1/dashboard/projects/{projectId}`
-
-#### Swagger üzerinden test
-
-1. Login ile JWT alın.
-2. Swagger **Authorize** ile token girin.
-3. **Dashboard** tag altındaki endpointleri çalıştırın.
-4. PROJECT_MANAGER token’ı ile summary çağırarak `403` doğrulayın.
-
-Ayrıntılar: `docs/analysis/Day10_CTO_Dashboard_Backend.md`
-
-### API Optimizasyonu (Day 11)
-
-Liste endpointleri `ApiResponse<PageResponse<T>>` döner.
-
-Ortak query parametreleri:
-
-- `page` (default `0`)
-- `size` (default `20`, max `100`)
-- `sort` (`alan,asc|desc`, allow-list)
-- `search` (opsiyonel metin araması)
-
-Ek filtre örnekleri:
-
-- Users: `role`, `active`
-- Projects: `status`, `managerId`
-- Reports: `projectId`, `year`, `weekNumber`
-- Work Items: `reportId`, `status`
-- Risks: `reportId`, `riskLevel`, `status`
-
-Hata yanıtı `data` alanında `ErrorDetail` (`code`, `path`, `timestamp`, `fields`) taşır.
-Her istek `X-Request-Id` alır; loglarda MDC `requestId` ile izlenir.
-
-Ayrıntılar: `docs/analysis/Day11_API_Optimization.md`
-
-### Veri Modeli (Day 6)
-
-JPA entity'ler:
-
-- `Role`
-- `User`
-- `Project`
-- `ProjectAssignment`
-- `WeeklyReport`
-- `WorkItem`
-- `RiskIssue`
-
-Ayrıntılar: `docs/analysis/Day6_Database_Integration.md`
+- Anlamlı, küçük commit’ler; secret / `.env` commit edilmez
+- Örnek önekler: `feat:`, `fix:`, `test:`, `ci:`, `build:`, `docs:`
+- `main` koruması için CI job’ları required check olabilir (manuel branch protection)
