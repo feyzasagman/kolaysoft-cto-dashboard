@@ -62,7 +62,7 @@ export default defineConfig({
   ],
   webServer: {
     command: isCi
-      ? 'npm run preview -- --host 127.0.0.1 --port 5173'
+      ? 'npm run preview -- --host localhost --port 5173'
       : 'npm run dev',
     url: baseURL,
     reuseExistingServer: !isCi,

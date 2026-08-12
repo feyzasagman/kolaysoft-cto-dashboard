@@ -99,11 +99,11 @@ jobs:
       SERVER_PORT: '8080'
       JPA_SHOW_SQL: 'false'
       # E2E — DevDataInitializer ADMIN seed; CTO suite içinde üretilir
-      E2E_BASE_URL: http://127.0.0.1:5173
-      E2E_API_BASE_URL: http://127.0.0.1:8080/api/v1
+      E2E_BASE_URL: http://localhost:5173
+      E2E_API_BASE_URL: http://localhost:8080/api/v1
       E2E_ADMIN_EMAIL: admin@kolaysoft.com.tr
       E2E_ADMIN_PASSWORD: Admin123!
-      VITE_API_BASE_URL: http://127.0.0.1:8080/api/v1
+      VITE_API_BASE_URL: http://localhost:8080/api/v1
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -142,7 +142,7 @@ jobs:
         run: |
           set -e
           for i in $(seq 1 90); do
-            if curl -sf http://127.0.0.1:8080/api/v1/health >/dev/null; then
+            if curl -sf http://localhost:8080/api/v1/health >/dev/null; then
               echo "Backend healthy after ${i} attempt(s)"
               exit 0
             fi

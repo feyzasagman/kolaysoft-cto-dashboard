@@ -31,3 +31,11 @@ build/
 
 ### VS Code ###
 .vscode/
+
+### Local / CI process logs ###
+backend-ci.log
+backend-local.log
+backend-local.err
+backend-local.pid
+*.pid
+

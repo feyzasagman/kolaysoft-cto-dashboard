@@ -14,3 +14,8 @@ frontend/playwright-report/
 frontend/blob-report/
 frontend/e2e/.runtime/
 frontend/.env.e2e
+
+# Local process logs
+backend-local.err
+backend-local.log
+backend-local.pid
