@@ -58,7 +58,7 @@ Day 20 sunumuna da temel olacak doğrulanabilir akış.
 
 | | |
 |--|--|
-| **Aksiyon** | Project assignment / ekip paneli ile en az bir ekip üyesi ekle (gerekirse önce TEAM veya başka kullanıcı oluştur) |
+| **Aksiyon** | Proje detay **Ekip** sekmesi / assignment UI ile en az bir ekip üyesi ekle (gerekirse önce ikinci bir kullanıcı oluştur; roller yalnız `ADMIN` / `PROJECT_MANAGER` / `CTO`) |
 | **Beklenen** | Atama listesinde üye görünür |
 
 ---

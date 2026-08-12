@@ -93,20 +93,22 @@ Yeni özet: `docs/architecture/Technical_Decisions.md` (PDF çoğaltılmadı; g�
 
 ## 15. Bilinen eksikler
 
-Bug: 0 (MVP kritik). Limitations: prod deploy/monitoring/audit yok; JWT exp E2E yok; Attention Center sayfa bağlamı; PM list API gap; E2E cleanup yok. Future improvements ayrı.
+Bilinen açık MVP bug’ı: 0 (Day 16 kayıtları kapatıldı; regression yeşil — sıfır-bug garantisi değildir). Limitations: prod deploy/monitoring/audit yok; JWT exp E2E yok; Attention Center sayfa bağlamı; PM list API gap; E2E cleanup yok. Future improvements ayrı.
 
 ## 16. Doğrulama sonuçları
 
 Day 18 dokümantasyon doğrulaması (ürün kodu değiştirilmeden):
 
 | Kontrol | Sonuç |
-|---------|--------|
+| --- | --- |
 | README path/link (16 hedef) | Hepsi mevcut |
 | `docker compose --env-file .env.docker.example config` | OK |
 | `npm run lint` | PASS |
 | `npm run build` | PASS |
 | `./mvnw test` | **79/79 PASS** |
 | `docker compose down -v` | Bilinçli yapılmadı (volume korunur) |
+
+Final polish: tablo header’ları, security notu, troubleshooting, sürüm kilidi (`package-lock`), env satırları, Day 19 readiness metni güncellendi.
 
 ## 17. Açık noktalar
 
@@ -115,6 +117,6 @@ Day 18 dokümantasyon doğrulaması (ürün kodu değiştirilmeden):
 
 ## 18. Day 19 hazırlığı
 
-- Day 18 demo senaryosu Day 20 sunum iskeleti
-- README + Technical Decisions + Docker dokümanı teslim paketi hazır
-- Sonraki gün: sunum / paketleme / final polish (yönetmeliğe göre)
+README, Docker kurulumu ve uçtan uca demo senaryosu hazır. Bir sonraki adım backend + frontend + PostgreSQL servislerini birlikte çalıştırarak doğrulanmış lokal/Docker demo, CORS/env kontrolü ve smoke test kanıtını tamamlamaktır.
+
+Day 20 sunumu bu demo senaryosuna dayanabilir; Day 19 ile karıştırılmamalıdır.

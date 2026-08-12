@@ -28,8 +28,8 @@ Kolaysoft’ta farklı proje yöneticileri tarafından yürütülen projelerin *
 
 ## Hedef Kullanıcılar ve Roller
 
-| Rol | Yetki özeti |
-|-----|-------------|
+| Rol | Yetki Özeti |
+| --- | --- |
 | **ADMIN** | Kullanıcı CRUD, proje oluşturma/düzenleme, ana yönetici + ekip ataması |
 | **PROJECT_MANAGER** | Atandığı projeler; haftalık rapor, work item, risk yazma |
 | **CTO** | Tüm portföy, dashboard, proje detay, rapor/risk/WI **salt okuma** |
@@ -87,10 +87,10 @@ Yan bileşenler: Flyway, JWT, Playwright, GitHub Actions, Docker Compose.
 Kaynak: `pom.xml`, `package.json`
 
 | Katman | Teknoloji |
-|--------|-----------|
+| --- | --- |
 | Backend | Java **21**, Spring Boot **3.5.16**, Spring Security, Spring Data JPA, Flyway, PostgreSQL, Maven Wrapper, springdoc OpenAPI **2.8.17**, JJWT **0.12.6** |
-| Frontend | React **18.3**, TypeScript **5.8**, Vite **6.3**, MUI **7**, TanStack Query **5**, Axios, React Router **6**, React Hook Form, Zod |
-| Quality | JUnit / Spring Boot Test, Playwright **1.55**, ESLint, GitHub Actions, Docker / Compose |
+| Frontend | React **18.3.1**, TypeScript **5.8.3**, Vite **6.4.3**, MUI **7.3.11**, TanStack Query **5.101.4**, Axios, React Router **6**, React Hook Form, Zod |
+| Quality | JUnit / Spring Boot Test, Playwright **1.55.0**, ESLint, GitHub Actions, Docker / Compose |
 
 ---
 
@@ -118,13 +118,15 @@ docker compose --env-file .env.docker.example up --build
 ```
 
 | Servis | URL |
-|--------|-----|
+| --- | --- |
 | Uygulama | http://localhost:3000 |
 | API | http://localhost:8080 |
 | Health | http://localhost:8080/api/v1/health |
 | Swagger | http://localhost:8080/swagger-ui/index.html |
 
 **Demo ADMIN (dev seed):** `admin@kolaysoft.com.tr` / `Admin123!`
+
+Production ortamlarında varsayılan kullanıcı/parola kullanılmamalı; kimlik bilgileri secret/env yönetimi üzerinden sağlanmalıdır.
 
 ### Servis başlatma sırası (Compose)
 
@@ -189,8 +191,8 @@ Uygulama: http://localhost:5173
 
 Gerçek `.env` / `.env.docker` / `.env.e2e` **commit edilmez**.
 
-| Variable | Used by | Purpose | Example | Required |
-|----------|---------|---------|---------|----------|
+| Variable | Used By | Purpose | Example | Required |
+| --- | --- | --- | --- | --- |
 | `DB_URL` | Backend | JDBC URL | `jdbc:postgresql://localhost:5432/cto_dashboard` | Prod: evet; Dev: default var |
 | `DB_USERNAME` | Backend | DB user | `postgres` | Aynı |
 | `DB_PASSWORD` | Backend | DB password | *(local only)* | Aynı |
@@ -202,6 +204,8 @@ Gerçek `.env` / `.env.docker` / `.env.e2e` **commit edilmez**.
 | `E2E_ADMIN_EMAIL` | Playwright | Admin e-posta | `admin@kolaysoft.com.tr` | E2E |
 | `E2E_ADMIN_PASSWORD` | Playwright | Admin şifre | *(env)* | E2E |
 | `E2E_BASE_URL` | Playwright | FE URL | `http://localhost:5173` | Hayır |
+| `E2E_API_BASE_URL` | Playwright | API base (E2E helpers) | `http://localhost:8080/api/v1` | Hayır |
+| `E2E_CTO_EMAIL` / `E2E_CTO_PASSWORD` | Playwright | Opsiyonel sabit CTO | *(env)* | Hayır |
 
 Örnek dosyalar:
 
@@ -240,11 +244,13 @@ Legacy DB (`ddl-auto=update` ile oluşmuş, history yok) için baseline: [`docs/
 
 ## Demo Kullanıcıları
 
-| Rol | Nasıl | Credential |
-|-----|--------|------------|
+| Rol | Nasıl Oluşur? | Credential |
+| --- | --- | --- |
 | **ADMIN** | `DevDataInitializer` (`dev`) | `admin@kolaysoft.com.tr` / `Admin123!` — **DEMO ONLY** |
 | **CTO** | Seed yok | ADMIN → Kullanıcılar veya API `POST /users` |
 | **PROJECT_MANAGER** | Seed yok | Aynı |
+
+Production ortamlarında varsayılan kullanıcı/parola kullanılmamalı; kimlik bilgileri secret/env yönetimi üzerinden sağlanmalıdır.
 
 ---
 
@@ -313,7 +319,7 @@ Adım adım (ADMIN → PM → CTO):
 
 ## Bilinen Eksikler / Sınırlamalar
 
-**Bug (MVP):** 0 (Day 16 kritik bug’lar kapatıldı; regression yeşil)
+**Bilinen açık MVP bug’ı:** 0 (Day 16 bug kayıtları kapatıldı; regression yeşil — teorik sıfır-bug garantisi değildir)
 
 **Known limitations**
 
@@ -332,21 +338,22 @@ Adım adım (ADMIN → PM → CTO):
 ## Troubleshooting
 
 | Sorun | Çözüm |
-|-------|--------|
-| `5432` dolu | Eski `cto-dashboard-postgres` veya Compose çakışması; birini durdurun |
-| Docker Desktop kapalı | Docker’ı başlatın |
-| Java sürümü | `java -version` → 21 |
-| Backend health fail | DB env, Flyway log, JWT |
-| CORS (Vite) | Origin `localhost:5173`; CI’da `127.0.0.1` kullanmayın |
-| Eski Docker volume | Bilinçli: `docker compose down -v` — **DB verisi silinir** |
-| Legacy DB + Flyway conflict | Baseline (yukarıdaki Flyway dokümanı) |
+| --- | --- |
+| `5432` port conflict | Host’ta çalışan eski `cto-dashboard-postgres` veya başka Compose stack’i durdurun; yalnız bir Postgres dinleyicisi kalsın |
+| Docker Desktop kapalı | Docker Desktop’ı başlatıp `docker info` ile daemon’un ayakta olduğunu doğrulayın |
+| Java version mismatch | `java -version` çıktısının **21** olduğundan emin olun; ardından `./mvnw.cmd -v` ile wrapper’ı çalıştırın |
+| Backend health fail | DB bağlantısını (`DB_URL` / user / password), environment değişkenlerini, Flyway startup loglarını ve JWT yapılandırmasını (`JWT_SECRET`) kontrol edin; ardından `/api/v1/health` çağırın |
+| PostgreSQL connection fail | Postgres’in ayakta ve `cto_dashboard` DB’sinin mevcut olduğunu doğrulayın; JDBC URL host/port değerlerini kontrol edin |
+| Frontend API / CORS (Vite) | FE origin’in `http://localhost:5173` olduğundan emin olun; `VITE_API_BASE_URL` → `http://localhost:8080/api/v1`. CI/local’de `127.0.0.1` kullanmayın |
+| Stale Docker volume | Bilinçli reset: `docker compose down -v` — **DİKKAT: DB volume verisini siler** |
+| Legacy DB + Flyway conflict | Mevcut dolu DB için baseline adımlarını [`Day14_Flyway_Migration_Setup.md`](docs/analysis/Day14_Flyway_Migration_Setup.md) üzerinden uygulayın |
 
 ---
 
 ## Teknik Dokümanlar
 
 | Konu | Doküman |
-|------|---------|
+| --- | --- |
 | Day 18 teslim | [`docs/analysis/Day18_README_and_Delivery_Documentation.md`](docs/analysis/Day18_README_and_Delivery_Documentation.md) |
 | Teknik kararlar | [`docs/architecture/Technical_Decisions.md`](docs/architecture/Technical_Decisions.md) |
 | Docker Compose | [`docs/deployment/Docker_Compose_Local_Setup.md`](docs/deployment/Docker_Compose_Local_Setup.md) |
