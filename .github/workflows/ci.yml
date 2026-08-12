@@ -1,0 +1,191 @@
+name: CI Quality Gate
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  backend-quality:
+    name: Backend Quality
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend/cto-dashboard-api
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Java 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+          cache-dependency-path: backend/cto-dashboard-api/pom.xml
+
+      - name: Ensure Maven wrapper is executable
+        run: chmod +x mvnw
+
+      - name: Unit / controller / service tests
+        run: ./mvnw -B test
+
+      - name: Package
+        run: ./mvnw -B clean package
+
+  frontend-quality:
+    name: Frontend Quality
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Production build
+        env:
+          VITE_API_BASE_URL: http://localhost:8080/api/v1
+        run: npm run build
+
+  full-stack-e2e:
+    name: Full Stack E2E
+    runs-on: ubuntu-latest
+    needs: [backend-quality, frontend-quality]
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: cto_dashboard_ci
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: ci_postgres_only_not_prod
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d cto_dashboard_ci"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      # Backend — clean CI database (Flyway V1 from empty schema)
+      SPRING_PROFILES_ACTIVE: dev
+      DB_URL: jdbc:postgresql://localhost:5432/cto_dashboard_ci
+      DB_USERNAME: postgres
+      DB_PASSWORD: ci_postgres_only_not_prod
+      JWT_SECRET: KolaysoftCtoDashboardCiOnlyJwtSecretKeyMustBeLongEnough2026
+      JWT_EXPIRATION_MS: '3600000'
+      SERVER_PORT: '8080'
+      JPA_SHOW_SQL: 'false'
+      # E2E — DevDataInitializer ADMIN seed; CTO suite içinde üretilir
+      E2E_BASE_URL: http://127.0.0.1:5173
+      E2E_API_BASE_URL: http://127.0.0.1:8080/api/v1
+      E2E_ADMIN_EMAIL: admin@kolaysoft.com.tr
+      E2E_ADMIN_PASSWORD: Admin123!
+      VITE_API_BASE_URL: http://127.0.0.1:8080/api/v1
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Java 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+          cache-dependency-path: backend/cto-dashboard-api/pom.xml
+
+      - name: Set up Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Ensure Maven wrapper is executable
+        working-directory: backend/cto-dashboard-api
+        run: chmod +x mvnw
+
+      - name: Package backend (tests already covered by Backend Quality)
+        working-directory: backend/cto-dashboard-api
+        run: ./mvnw -B clean package -DskipTests
+
+      - name: Start backend
+        working-directory: backend/cto-dashboard-api
+        run: |
+          nohup java -jar target/cto-dashboard-api-0.0.1-SNAPSHOT.jar \
+            > backend-ci.log 2>&1 &
+          echo $! > backend-ci.pid
+
+      - name: Wait for backend health
+        run: |
+          set -e
+          for i in $(seq 1 90); do
+            if curl -sf http://127.0.0.1:8080/api/v1/health >/dev/null; then
+              echo "Backend healthy after ${i} attempt(s)"
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "Backend failed to become healthy"
+          if [ -f backend/cto-dashboard-api/backend-ci.log ]; then
+            tail -n 200 backend/cto-dashboard-api/backend-ci.log || true
+          fi
+          exit 1
+
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Build frontend for preview
+        working-directory: frontend
+        run: npm run build
+
+      - name: Install Playwright Chromium
+        working-directory: frontend
+        run: npx playwright install --with-deps chromium
+
+      - name: Run Playwright E2E
+        working-directory: frontend
+        run: npm run test:e2e
+
+      - name: Upload E2E failure artifacts
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-failure-artifacts-${{ github.run_id }}
+          path: |
+            frontend/playwright-report/
+            frontend/test-results/
+            backend/cto-dashboard-api/backend-ci.log
+          if-no-files-found: ignore
+          retention-days: 7
+
+      - name: Stop backend
+        if: always()
+        working-directory: backend/cto-dashboard-api
+        run: |
+          if [ -f backend-ci.pid ]; then
+            kill "$(cat backend-ci.pid)" || true
+          fi

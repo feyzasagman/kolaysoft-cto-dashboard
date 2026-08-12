@@ -155,6 +155,21 @@ npm run test:e2e:headed
 
 Ayrıntılar: [`docs/testing/Automated_E2E_Test_Strategy.md`](docs/testing/Automated_E2E_Test_Strategy.md)
 
+### Continuous Integration
+
+Workflow: [`.github/workflows/ci.yml`](.github/workflows/ci.yml) — **CI Quality Gate**
+
+`push` / `pull_request` (`main`) ve `workflow_dispatch` ile çalışır:
+
+1. **Backend Quality** — `./mvnw test` + `clean package`
+2. **Frontend Quality** — `npm ci` + lint + production build
+3. **Full Stack E2E** — PostgreSQL service + Flyway clean DB + backend + Playwright (önceki job’lar PASS olmalı)
+
+Başarısız E2E’de Playwright report/trace/screenshot ve backend log artifact olarak yüklenir.
+
+Ayrıntılar: [`docs/testing/CI_Quality_Gate.md`](docs/testing/CI_Quality_Gate.md)  
+Branch protection için required check önerisi aynı dokümandadır.
+
 ### Demo kullanıcıları (yalnızca geliştirme)
 
 | Rol | E-posta | Şifre |

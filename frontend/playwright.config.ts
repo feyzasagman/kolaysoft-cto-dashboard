@@ -11,16 +11,18 @@ if (fs.existsSync(envE2ePath)) {
 }
 
 const baseURL = process.env.E2E_BASE_URL || 'http://localhost:5173'
+const isCi = Boolean(process.env.CI)
 
 /**
  * Full-stack E2E — frontend UI + canlı backend.
- * Backend’in ayakta olması gerekir (webServer yalnızca Vite başlatır).
+ * Lokal: Vite dev. CI: production build + preview (dist önceden üretilmiş olmalı).
+ * Backend’in ayakta olması gerekir.
  */
 export default defineConfig({
   testDir: './e2e',
   fullyParallel: false,
-  forbidOnly: Boolean(process.env.CI),
-  retries: process.env.CI ? 1 : 0,
+  forbidOnly: isCi,
+  retries: isCi ? 1 : 0,
   workers: 1,
   reporter: [['list'], ['html', { open: 'never', outputFolder: 'playwright-report' }]],
   timeout: 90_000,
@@ -59,9 +61,11 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: 'npm run dev',
+    command: isCi
+      ? 'npm run preview -- --host 127.0.0.1 --port 5173'
+      : 'npm run dev',
     url: baseURL,
-    reuseExistingServer: !process.env.CI,
+    reuseExistingServer: !isCi,
     timeout: 120_000,
   },
 })
