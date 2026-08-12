@@ -54,7 +54,12 @@ test.describe('ADMIN workflow', () => {
 
     await page.getByLabel('Ana menü').getByRole('link', { name: 'Projeler' }).click()
     await expect(page.getByRole('heading', { name: 'Projeler' })).toBeVisible()
-    await page.getByRole('button', { name: 'Yeni proje' }).click()
+    // Header + (boş portföyde) EmptyState aynı anda "Yeni Proje" sunabilir; semantik <header> ile scope.
+    await page
+      .locator('header')
+      .filter({ has: page.getByRole('heading', { name: 'Projeler', level: 1 }) })
+      .getByRole('button', { name: 'Yeni proje' })
+      .click()
     await expect(page.getByRole('dialog', { name: 'Yeni Proje' })).toBeVisible()
 
     await page.getByLabel('Kod *').fill(fixture.project.code)
