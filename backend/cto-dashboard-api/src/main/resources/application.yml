@@ -39,3 +39,25 @@ springdoc:
     path: /swagger-ui.html
     operations-sorter: method
     tags-sorter: alpha
+
+# Minimal safe Actuator exposure — do not widen without security review.
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: never
+      probes:
+        enabled: true
+  info:
+    # Only contributes Environment keys under the `info.*` prefix (not secrets).
+    env:
+      enabled: true
+
+info:
+  app:
+    name: ${spring.application.name}
+    description: Kolaysoft CTO Dashboard REST API
+    version: 0.0.1-SNAPSHOT

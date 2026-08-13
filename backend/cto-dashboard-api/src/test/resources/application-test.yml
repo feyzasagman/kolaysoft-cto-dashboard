@@ -1,0 +1,45 @@
+# Slice-independent SpringBootTest profile (Actuator security tests).
+# H2 + Hibernate create-drop; Flyway off (V1 uses PostgreSQL BIGSERIAL).
+spring:
+  datasource:
+    url: jdbc:h2:mem:cto_actuator;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1
+    username: sa
+    password:
+    driver-class-name: org.h2.Driver
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    database-platform: org.hibernate.dialect.H2Dialect
+    show-sql: false
+  flyway:
+    enabled: false
+
+security:
+  jwt:
+    secret: TestOnlyJwtSecretKeyForActuatorSecurityTestsMustBeLongEnough
+    expiration-ms: 3600000
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: never
+      probes:
+        enabled: true
+  info:
+    env:
+      enabled: true
+
+info:
+  app:
+    name: cto-dashboard-api
+    description: Kolaysoft CTO Dashboard REST API
+    version: 0.0.1-SNAPSHOT
+
+logging:
+  level:
+    root: WARN
+    com.kolaysoft.ctodashboard: INFO
