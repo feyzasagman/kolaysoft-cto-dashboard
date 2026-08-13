@@ -15,6 +15,9 @@ dist-ssr
 .env.local
 .env.e2e
 
+# Vitest
+/coverage/
+
 # Playwright
 /test-results/
 /playwright-report/
