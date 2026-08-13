@@ -5,6 +5,12 @@ Kaynak özet: staj süreci + güncel mimari. Erken PDF notları (`docs/analysis/
 
 Her madde: **Decision** · **Reason** · **Trade-off**
 
+## Detailed Architecture Decision Records
+
+Bu dosya high-level özettir. Bağlam, alternatifler ve trade-off’ların ayrıntılı kayıtları:
+
+→ [`adr/README.md`](adr/README.md) (ADR-001 … ADR-007)
+
 ---
 
 ## Spring Boot + React
@@ -114,3 +120,5 @@ Her madde: **Decision** · **Reason** · **Trade-off**
 | **Decision** | Executive Insight / Attention Center: mevcut alanlardan kural tabanlı UI hesapları; AI/LLM yok. |
 | **Reason** | MVP’de deterministik, test edilebilir, ek maliyet/API yok. |
 | **Trade-off** | “Zeki” anlatım sınırlı; portföy sayfası/filtre bağlamına bağımlı. |
+
+Ayrıntı: [`adr/ADR-004-deterministic-executive-insights.md`](adr/ADR-004-deterministic-executive-insights.md)
