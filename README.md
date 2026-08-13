@@ -1,7 +1,67 @@
 # Kolaysoft CTO Dashboard
 
+Role-based weekly project reporting and CTO portfolio monitoring platform.
+
 Haftalık proje durum raporlama ve CTO portföy izleme sistemi  
-Kolaysoft Yaz Stajı 2026 — Full Stack MVP
+Kolaysoft Yaz Stajı 2026 — **Verified Full Stack MVP**
+
+[![CI Quality Gate](https://github.com/feyzasagman/kolaysoft-cto-dashboard/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/feyzasagman/kolaysoft-cto-dashboard/actions/workflows/ci.yml)
+
+---
+
+## Bu Proje Neyi Gösteriyor?
+
+- Role-based Full Stack architecture
+- ADMIN → PROJECT_MANAGER → CTO workflow
+- Automated backend regression tests
+- Playwright end-to-end testing
+- GitHub Actions quality gate
+- Dockerized reproducible local environment
+
+## Quality Snapshot
+
+| Metrik | Sonuç |
+| --- | --- |
+| Backend tests | **79/79 PASS** |
+| Playwright E2E | **7/7 PASS** |
+| CI Quality Gate | **PASS** |
+| Docker Demo | **VERIFIED** |
+| Known open MVP bugs | **0** |
+| Functional gaps (MVP kritik) | **0** |
+
+> Verified Local Docker Demo — cloud production deployment değildir.
+
+## Demo Flow
+
+```text
+ADMIN
+  → Kullanıcı
+  → Proje
+  → Assignment
+
+PROJECT_MANAGER
+  → Weekly Report
+  → Work Item
+  → Risk
+
+CTO
+  → Dashboard
+  → Attention Center
+  → Executive Insight
+```
+
+Adım adım senaryo: [`docs/demo/Day18_End_to_End_Demo_Scenario.md`](docs/demo/Day18_End_to_End_Demo_Scenario.md)
+
+## İçindekiler
+
+- [Proje Özeti](#proje-özeti)
+- [Sistem Mimarisi](#sistem-mimarisi)
+- [Temel Özellikler](#temel-özellikler)
+- [Hızlı Başlangıç — Docker Compose](#hızlı-başlangıç--docker-compose)
+- [Testler](#testler)
+- [Uçtan Uca Demo Senaryosu](#uçtan-uca-demo-senaryosu)
+- [Bilinen Eksikler / Sınırlamalar](#bilinen-eksikler--sınırlamalar)
+- [Teknik Dokümanlar](#teknik-dokümanlar)
 
 ---
 
@@ -84,7 +144,7 @@ Yan bileşenler: Flyway, JWT, Playwright, GitHub Actions, Docker Compose.
 
 ## Teknolojiler
 
-Kaynak: `pom.xml`, `package.json`
+Kaynak: `pom.xml`, `package-lock.json`
 
 | Katman | Teknoloji |
 | --- | --- |
@@ -98,14 +158,26 @@ Kaynak: `pom.xml`, `package.json`
 
 ```text
 Kolaysoft-CTO-Dashboard/
-├── backend/cto-dashboard-api/     # Spring Boot API
-├── frontend/                      # React (Vite)
-├── docs/                          # Analiz, test, deployment
+├── backend/cto-dashboard-api/     # Spring Boot REST API
+├── frontend/                      # React UI + Playwright E2E
+├── docs/                          # Analysis, testing, deployment, demo
 ├── database/                      # Referans SQL (şema Flyway’de)
-├── docker-compose.yml
-├── .env.docker.example
-└── .github/workflows/ci.yml
+├── docker-compose.yml             # Local Full Stack
+├── .env.docker.example            # DEMO/LOCAL env örneği
+└── .github/workflows/ci.yml       # CI Quality Gate
 ```
+
+## Repository Guide
+
+| Path | İçerik |
+| --- | --- |
+| `backend/` | Spring Boot API |
+| `frontend/` | React UI + Playwright |
+| `docs/analysis/` | Day/task analysis |
+| `docs/testing/` | Regression / E2E / CI |
+| `docs/deployment/` | Docker & local demo |
+| `docs/architecture/` | Technical decisions |
+| `docs/demo/` | Demo scenarios |
 
 ---
 
@@ -316,11 +388,14 @@ Failure artifact: Playwright report/trace + `backend-ci.log`
 Adım adım (ADMIN → PM → CTO):  
 [`docs/demo/Day18_End_to_End_Demo_Scenario.md`](docs/demo/Day18_End_to_End_Demo_Scenario.md)
 
+Day 19 verified local Docker demo:  
+[`docs/deployment/Day19_Verified_Local_Docker_Demo.md`](docs/deployment/Day19_Verified_Local_Docker_Demo.md)
+
 ---
 
 ## Bilinen Eksikler / Sınırlamalar
 
-**Bilinen açık MVP bug’ı:** 0 (Day 16 bug kayıtları kapatıldı; regression yeşil — teorik sıfır-bug garantisi değildir)
+**Known open MVP bugs:** 0 (Day 16 bug kayıtları kapatıldı; regression yeşil — teorik sıfır-bug garantisi değildir)
 
 **Known limitations**
 
@@ -353,22 +428,46 @@ Adım adım (ADMIN → PM → CTO):
 
 ## Teknik Dokümanlar
 
+### Architecture
+
 | Konu | Doküman |
 | --- | --- |
-| Day 18 teslim | [`docs/analysis/Day18_README_and_Delivery_Documentation.md`](docs/analysis/Day18_README_and_Delivery_Documentation.md) |
-| Day 19 Docker demo | [`docs/deployment/Day19_Verified_Local_Docker_Demo.md`](docs/deployment/Day19_Verified_Local_Docker_Demo.md) |
-| Day 19 smoke | [`docs/testing/Day19_Docker_Smoke_Test_Report.md`](docs/testing/Day19_Docker_Smoke_Test_Report.md) |
 | Teknik kararlar | [`docs/architecture/Technical_Decisions.md`](docs/architecture/Technical_Decisions.md) |
-| Docker Compose | [`docs/deployment/Docker_Compose_Local_Setup.md`](docs/deployment/Docker_Compose_Local_Setup.md) |
 | Flyway | [`docs/analysis/Day14_Flyway_Migration_Setup.md`](docs/analysis/Day14_Flyway_Migration_Setup.md) |
-| E2E | [`docs/testing/Automated_E2E_Test_Strategy.md`](docs/testing/Automated_E2E_Test_Strategy.md) |
-| CI | [`docs/testing/CI_Quality_Gate.md`](docs/testing/CI_Quality_Gate.md) |
+
+### Testing & Quality
+
+| Konu | Doküman |
+| --- | --- |
 | Day 15 MVP test | [`docs/testing/Day15_MVP_Test_Report.md`](docs/testing/Day15_MVP_Test_Report.md) |
 | Day 16 bug fix | [`docs/testing/Day16_Bug_Fix_and_Retest_Report.md`](docs/testing/Day16_Bug_Fix_and_Retest_Report.md) |
 | Day 17 regression | [`docs/testing/Day17_Full_Stack_MVP_Regression_Report.md`](docs/testing/Day17_Full_Stack_MVP_Regression_Report.md) |
+| Automated E2E | [`docs/testing/Automated_E2E_Test_Strategy.md`](docs/testing/Automated_E2E_Test_Strategy.md) |
+| CI Quality Gate | [`docs/testing/CI_Quality_Gate.md`](docs/testing/CI_Quality_Gate.md) |
+| Day 19 smoke | [`docs/testing/Day19_Docker_Smoke_Test_Report.md`](docs/testing/Day19_Docker_Smoke_Test_Report.md) |
+
+### Deployment
+
+| Konu | Doküman |
+| --- | --- |
+| Docker Compose | [`docs/deployment/Docker_Compose_Local_Setup.md`](docs/deployment/Docker_Compose_Local_Setup.md) |
+| Day 19 verified local demo | [`docs/deployment/Day19_Verified_Local_Docker_Demo.md`](docs/deployment/Day19_Verified_Local_Docker_Demo.md) |
+
+### Demo
+
+| Konu | Doküman |
+| --- | --- |
+| Day 18 end-to-end demo | [`docs/demo/Day18_End_to_End_Demo_Scenario.md`](docs/demo/Day18_End_to_End_Demo_Scenario.md) |
+
+### Daily Analysis
+
+| Konu | Doküman |
+| --- | --- |
+| Day 18 teslim | [`docs/analysis/Day18_README_and_Delivery_Documentation.md`](docs/analysis/Day18_README_and_Delivery_Documentation.md) |
+| Day 19 deployment analysis | [`docs/analysis/Day19_Deployment_and_Verified_Local_Demo.md`](docs/analysis/Day19_Deployment_and_Verified_Local_Demo.md) |
+| Day 19 final audit | [`docs/analysis/Day19_Final_Pre_Demo_Audit.md`](docs/analysis/Day19_Final_Pre_Demo_Audit.md) |
 | Day 17 assignment | [`docs/analysis/Day17_Admin_Project_Assignment_Gaps_Completion.md`](docs/analysis/Day17_Admin_Project_Assignment_Gaps_Completion.md) |
-| Demo senaryosu | [`docs/demo/Day18_End_to_End_Demo_Scenario.md`](docs/demo/Day18_End_to_End_Demo_Scenario.md) |
-| Analiz (Day 6–15) | [`docs/analysis/`](docs/analysis/) |
+| Analiz (Day 6–15+) | [`docs/analysis/`](docs/analysis/) |
 
 ---
 
