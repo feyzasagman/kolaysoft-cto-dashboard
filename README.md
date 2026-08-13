@@ -1,11 +1,28 @@
 # Kolaysoft CTO Dashboard
 
-Role-based weekly project reporting and CTO portfolio monitoring platform.
-
-Haftalık proje durum raporlama ve CTO portföy izleme sistemi  
-Kolaysoft Yaz Stajı 2026 — **Verified Full Stack MVP**
+> Role-based project reporting and executive portfolio monitoring platform  
+> built with Spring Boot, React, PostgreSQL, Docker and Playwright.
 
 [![CI Quality Gate](https://github.com/feyzasagman/kolaysoft-cto-dashboard/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/feyzasagman/kolaysoft-cto-dashboard/actions/workflows/ci.yml)
+![Java 21](https://img.shields.io/badge/Java-21-informational?style=flat&logo=openjdk&logoColor=white&color=437291)
+![React 18](https://img.shields.io/badge/React-18-informational?style=flat&logo=react&logoColor=white&color=20232a)
+![PostgreSQL 16](https://img.shields.io/badge/PostgreSQL-16-informational?style=flat&logo=postgresql&logoColor=white&color=336791)
+![Docker](https://img.shields.io/badge/Docker-Compose-informational?style=flat&logo=docker&logoColor=white&color=2496ED)
+
+Verified Full Stack MVP · JWT/RBAC · Weekly Reports · Risk & Work Items · CTO Insights · Automated E2E
+
+Kolaysoft Yaz Stajı 2026 kapsamında geliştirilen; proje yöneticilerinin haftalık ilerlemeyi raporladığı, CTO’nun ise tüm portföyü sağlık, risk ve hedef/gerçekleşen ilerleme açısından izleyebildiği Full Stack sistem.
+
+```text
+ADMIN
+Users · Projects · Assignments
+         ↓
+PROJECT MANAGER
+Weekly Reports · Work Items · Risks
+         ↓
+CTO
+Portfolio · Attention Center · Executive Insight
+```
 
 ---
 
