@@ -1,28 +1,67 @@
 # Kolaysoft CTO Dashboard
 
-> Role-based project reporting and executive portfolio monitoring platform  
-> built with Spring Boot, React, PostgreSQL, Docker and Playwright.
+**Proje yöneticilerinin haftalık ilerlemeyi raporladığı, CTO'nun tüm proje portföyünü sağlık, risk ve hedef/gerçekleşen ilerleme açısından izlediği rol bazlı Full Stack yönetim sistemi.**
+
+Role-based weekly project reporting and executive portfolio monitoring platform.
+
+Dağınık haftalık raporlamayı merkezi, izlenebilir ve karşılaştırılabilir bir proje yönetim akışına dönüştürür.
+
+[Özellikler](#temel-özellikler) · [Mimari](#sistem-mimarisi) · [Kurulum](#hızlı-başlangıç--docker-compose) · [API](#api--swagger) · [Testler](#testler) · [Demo](#uçtan-uca-demo-senaryosu) · [Dokümantasyon](#teknik-dokümanlar)
 
 [![CI Quality Gate](https://github.com/feyzasagman/kolaysoft-cto-dashboard/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/feyzasagman/kolaysoft-cto-dashboard/actions/workflows/ci.yml)
-![Java 21](https://img.shields.io/badge/Java-21-informational?style=flat&logo=openjdk&logoColor=white&color=437291)
-![React 18](https://img.shields.io/badge/React-18-informational?style=flat&logo=react&logoColor=white&color=20232a)
-![PostgreSQL 16](https://img.shields.io/badge/PostgreSQL-16-informational?style=flat&logo=postgresql&logoColor=white&color=336791)
-![Docker](https://img.shields.io/badge/Docker-Compose-informational?style=flat&logo=docker&logoColor=white&color=2496ED)
+![Java 21](https://img.shields.io/badge/Java-21-informational?style=flat&color=437291)
+![Spring Boot 3.5](https://img.shields.io/badge/Spring%20Boot-3.5-informational?style=flat&color=6DB33F)
+![React 18](https://img.shields.io/badge/React-18-informational?style=flat&color=20232a)
+![TypeScript](https://img.shields.io/badge/TypeScript-5.8-informational?style=flat&color=3178C6)
+![PostgreSQL 16](https://img.shields.io/badge/PostgreSQL-16-informational?style=flat&color=336791)
+![Docker](https://img.shields.io/badge/Docker-Compose-informational?style=flat&color=2496ED)
+![Playwright](https://img.shields.io/badge/Playwright-E2E-informational?style=flat&color=2EAD33)
 
-Verified Full Stack MVP · JWT/RBAC · Weekly Reports · Risk & Work Items · CTO Insights · Automated E2E
+Kolaysoft CTO Dashboard; ADMIN, PROJECT_MANAGER ve CTO rollerini tek akışta birleştirir. Proje yöneticileri haftalık rapor, work item ve risk verilerini yönetirken CTO, dashboard ve Project Detail üzerinden portföy sağlığını izler. Sistem; JWT/RBAC, Flyway, Playwright E2E, GitHub Actions CI ve Docker Compose ile doğrulanmış bir Full Stack MVP’dir.
 
-Kolaysoft Yaz Stajı 2026 kapsamında geliştirilen; proje yöneticilerinin haftalık ilerlemeyi raporladığı, CTO’nun ise tüm portföyü sağlık, risk ve hedef/gerçekleşen ilerleme açısından izleyebildiği Full Stack sistem.
+---
 
-```text
-ADMIN
-Users · Projects · Assignments
-         ↓
-PROJECT MANAGER
-Weekly Reports · Work Items · Risks
-         ↓
-CTO
-Portfolio · Attention Center · Executive Insight
-```
+## İçindekiler Tablosu
+
+### Ürün
+
+- [Bu Proje Neyi Gösteriyor?](#bu-proje-neyi-gösteriyor)
+- [Quality Snapshot](#quality-snapshot)
+- [Demo Flow](#demo-flow)
+- [Proje Özeti](#proje-özeti)
+- [Problem ve Amaç](#problem-ve-amaç)
+- [Hedef Kullanıcılar ve Roller](#hedef-kullanıcılar-ve-roller)
+- [Temel Özellikler](#temel-özellikler)
+
+### Teknik
+
+- [Sistem Mimarisi](#sistem-mimarisi)
+- [Teknolojiler](#teknolojiler)
+- [Proje Yapısı](#proje-yapısı)
+- [Repository Guide](#repository-guide)
+- [Environment Variables](#environment-variables)
+- [Database & Flyway](#database--flyway)
+- [CORS / API URL](#cors--api-url)
+
+### Kurulum ve Çalıştırma
+
+- [Hızlı Başlangıç — Docker Compose](#hızlı-başlangıç--docker-compose)
+- [Manuel Kurulum](#manuel-kurulum)
+- [Demo Kullanıcıları](#demo-kullanıcıları)
+- [API / Swagger](#api--swagger)
+
+### Kalite ve Test
+
+- [Testler](#testler)
+- [CI Quality Gate](#ci-quality-gate)
+- [Uçtan Uca Demo Senaryosu](#uçtan-uca-demo-senaryosu)
+- [Bilinen Eksikler / Sınırlamalar](#bilinen-eksikler--sınırlamalar)
+- [Troubleshooting](#troubleshooting)
+
+### Dokümantasyon
+
+- [Teknik Dokümanlar](#teknik-dokümanlar)
+- [Git / Commit Yaklaşımı](#git--commit-yaklaşımı)
 
 ---
 
@@ -68,17 +107,6 @@ CTO
 ```
 
 Adım adım senaryo: [`docs/demo/Day18_End_to_End_Demo_Scenario.md`](docs/demo/Day18_End_to_End_Demo_Scenario.md)
-
-## İçindekiler
-
-- [Proje Özeti](#proje-özeti)
-- [Sistem Mimarisi](#sistem-mimarisi)
-- [Temel Özellikler](#temel-özellikler)
-- [Hızlı Başlangıç — Docker Compose](#hızlı-başlangıç--docker-compose)
-- [Testler](#testler)
-- [Uçtan Uca Demo Senaryosu](#uçtan-uca-demo-senaryosu)
-- [Bilinen Eksikler / Sınırlamalar](#bilinen-eksikler--sınırlamalar)
-- [Teknik Dokümanlar](#teknik-dokümanlar)
 
 ---
 
