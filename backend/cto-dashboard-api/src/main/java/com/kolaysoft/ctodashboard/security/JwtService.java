@@ -89,6 +89,9 @@ public class JwtService {
     }
 
     private SecretKey buildSecretKey(String secret) {
+        if (secret == null || secret.isBlank()) {
+            throw new IllegalStateException("security.jwt.secret / JWT_SECRET must be set");
+        }
         byte[] keyBytes;
         try {
             keyBytes = Decoders.BASE64.decode(secret);

@@ -79,7 +79,7 @@ Kolaysoft CTO Dashboard; ADMIN, PROJECT_MANAGER ve CTO rollerini tek akışta bi
 
 | Metrik | Sonuç |
 | --- | --- |
-| Backend tests | **86/86 PASS** |
+| Backend tests | **89/89 PASS** |
 | Frontend Unit / Component Tests | **42/42 PASS** |
 | Playwright E2E | **7/7 PASS** |
 | Backend Line Coverage | **33.9%** (JaCoCo, verified locally) |
@@ -371,8 +371,12 @@ Gerçek `.env` / `.env.docker` / `.env.e2e` **commit edilmez**.
 | `SPRING_PROFILES_ACTIVE` | Backend | Profil | `dev` / `prod` | Hayır (default `dev`) |
 | `JWT_SECRET` | Backend | JWT imza | uzun rastgele string | Prod: evet; Dev: fallback |
 | `JWT_EXPIRATION_MS` | Backend | Token süresi | `3600000` | Hayır |
-| `SERVER_PORT` | Backend | HTTP port | `8080` | Hayır |
-| `VITE_API_BASE_URL` | Frontend build | API base | `http://localhost:8080/api/v1` veya `/api/v1` | Hayır (default localhost) |
+| `SERVER_PORT` | Backend | HTTP port (local/Docker) | `8080` | Hayır |
+| `PORT` | Backend | Platform port (Render) | *(platform)* | Render injects |
+| `CORS_ALLOWED_ORIGINS` | Backend | Comma-separated CORS origins | `http://localhost:5173,http://localhost:3000` | Cloud: frontend HTTPS origin |
+| `APP_DEMO_BOOTSTRAP_ENABLED` | Backend | One-time demo ADMIN bootstrap | `false` | Cloud first admin only |
+| `DEMO_ADMIN_EMAIL` / `DEMO_ADMIN_PASSWORD` | Backend | Bootstrap admin | *(env)* | Only if bootstrap enabled |
+| `VITE_API_BASE_URL` | Frontend build | API base | `http://localhost:8080/api/v1` veya `/api/v1` | Cloud: `https://<api>/api/v1` |
 | `E2E_ADMIN_EMAIL` | Playwright | Admin e-posta | `admin@kolaysoft.com.tr` | E2E |
 | `E2E_ADMIN_PASSWORD` | Playwright | Admin şifre | *(env)* | E2E |
 | `E2E_BASE_URL` | Playwright | FE URL | `http://localhost:5173` | Hayır |
@@ -384,6 +388,7 @@ Gerçek `.env` / `.env.docker` / `.env.e2e` **commit edilmez**.
 - [`.env.docker.example`](.env.docker.example)
 - [`frontend/.env.example`](frontend/.env.example)
 - [`frontend/.env.e2e.example`](frontend/.env.e2e.example)
+- [`frontend/.env.cloud.example`](frontend/.env.cloud.example) (Render Static build)
 
 ---
 
@@ -401,9 +406,12 @@ Legacy DB (`ddl-auto=update` ile oluşmuş, history yok) için baseline: [`docs/
 
 ## CORS / API URL
 
+Default allowlist (`CORS_ALLOWED_ORIGINS` yoksa): `http://localhost:5173`, `http://localhost:3000`.  
+Cloud frontend origin’i env ile eklenir — ayrıntı: [`docs/deployment/Render_Cloud_Deployment_Guide.md`](docs/deployment/Render_Cloud_Deployment_Guide.md).
+
 ### Local Vite (`:5173`)
 
-- Origin allowlist: `http://localhost:5173` (`CorsConfig`)
+- Origin allowlist: `http://localhost:5173` (`CorsConfig` / env)
 - `VITE_API_BASE_URL=http://localhost:8080/api/v1`
 
 ### Docker (`:3000`)
@@ -411,7 +419,7 @@ Legacy DB (`ddl-auto=update` ile oluşmuş, history yok) için baseline: [`docs/
 - Browser **container hostname `backend` kullanmaz** (yalnız Docker network içi).
 - SPA `VITE_API_BASE_URL=/api/v1` (same-origin) → nginx `/api` → `backend:8080`
 - Browser yine `Origin: http://localhost:3000` gönderir; nginx bunu Spring’e iletir.
-- Bu yüzden `CorsConfig` allowlist: `http://localhost:5173` **ve** `http://localhost:3000`
+- Bu yüzden default allowlist: `http://localhost:5173` **ve** `http://localhost:3000`
 
 ---
 
@@ -516,7 +524,7 @@ Day 19 verified local Docker demo:
 
 **Known limitations**
 
-- Production deployment / centralized monitoring / audit log yok
+- Cloud production-grade hosting yok; Render portfolio demo hazırlığı belgelendi (`render.yaml` + guide) — verified local Docker asıl kanıt
 - Basic health/readiness observability via Actuator exists; Prometheus/Grafana, alerting ve distributed tracing yok
 - Server-side JWT `exp` bekleme E2E’si yok (client `expiresAt` + invalid token test edilir)
 - Attention Center mevcut dashboard portföy sayfası/filtre bağlamıyla sınırlı
@@ -587,6 +595,7 @@ Day 19 verified local Docker demo:
 | --- | --- |
 | Docker Compose | [`docs/deployment/Docker_Compose_Local_Setup.md`](docs/deployment/Docker_Compose_Local_Setup.md) |
 | Day 19 verified local demo | [`docs/deployment/Day19_Verified_Local_Docker_Demo.md`](docs/deployment/Day19_Verified_Local_Docker_Demo.md) |
+| Render cloud demo (portfolio) | [`docs/deployment/Render_Cloud_Deployment_Guide.md`](docs/deployment/Render_Cloud_Deployment_Guide.md) |
 
 ### Demo
 

@@ -24,13 +24,27 @@ spring:
     validate-on-migrate: true
 
 server:
-  port: ${SERVER_PORT:8080}
+  # Render injects PORT; local Docker / Maven keep SERVER_PORT or default 8080.
+  port: ${PORT:${SERVER_PORT:8080}}
 
 security:
   jwt:
     # Gerçek secret kaynak koda yazılmaz; JWT_SECRET ortam değişkeninden okunur.
+    # Dev profile may supply a local fallback; prod must set JWT_SECRET explicitly.
     secret: ${JWT_SECRET}
     expiration-ms: ${JWT_EXPIRATION_MS:3600000}
+
+app:
+  cors:
+    # Comma-separated exact origins. Never use "*".
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:5173,http://localhost:3000}
+  demo:
+    # Opt-in one-time portfolio ADMIN bootstrap (see DemoBootstrapInitializer). Default off.
+    bootstrap-enabled: ${APP_DEMO_BOOTSTRAP_ENABLED:false}
+    admin-email: ${DEMO_ADMIN_EMAIL:}
+    admin-password: ${DEMO_ADMIN_PASSWORD:}
+    admin-first-name: ${DEMO_ADMIN_FIRST_NAME:Demo}
+    admin-last-name: ${DEMO_ADMIN_LAST_NAME:Admin}
 
 springdoc:
   api-docs:
