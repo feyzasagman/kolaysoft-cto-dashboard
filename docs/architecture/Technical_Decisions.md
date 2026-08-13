@@ -81,9 +81,9 @@ Her madde: **Decision** · **Reason** · **Trade-off**
 
 | Alan | Açıklama |
 | --- | --- |
-| **Decision** | Docker FE: nginx SPA + `/api` → `backend:8080`; build `VITE_API_BASE_URL=/api/v1`. |
-| **Reason** | Browser same-origin; Docker hostname’i istemciye sızmaz; CORS yolu basitleşir. |
-| **Trade-off** | Local Vite hâlâ cross-origin + CORS allowlist (`localhost:5173`) ister. |
+| **Decision** | Docker FE: nginx SPA + `/api` → `backend:8080`; build `VITE_API_BASE_URL=/api/v1`; CORS allowlist `localhost:5173` + `localhost:3000`. |
+| **Reason** | Browser `backend` hostname kullanmaz; API path same-origin. Origin yine Spring’e iletilir → Docker SPA origin allowlist gerekir (Day 19). |
+| **Trade-off** | Vite ve Docker origin’leri ayrı ayrı allowlist’te tutulmalı; `*` açılmaz. |
 
 ---
 

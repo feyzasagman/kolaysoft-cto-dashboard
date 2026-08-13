@@ -238,7 +238,8 @@ Legacy DB (`ddl-auto=update` ile oluşmuş, history yok) için baseline: [`docs/
 
 - Browser **container hostname `backend` kullanmaz** (yalnız Docker network içi).
 - SPA `VITE_API_BASE_URL=/api/v1` (same-origin) → nginx `/api` → `backend:8080`
-- Bu yolda ekstra CORS gerekmez.
+- Browser yine `Origin: http://localhost:3000` gönderir; nginx bunu Spring’e iletir.
+- Bu yüzden `CorsConfig` allowlist: `http://localhost:5173` **ve** `http://localhost:3000`
 
 ---
 
@@ -355,6 +356,8 @@ Adım adım (ADMIN → PM → CTO):
 | Konu | Doküman |
 | --- | --- |
 | Day 18 teslim | [`docs/analysis/Day18_README_and_Delivery_Documentation.md`](docs/analysis/Day18_README_and_Delivery_Documentation.md) |
+| Day 19 Docker demo | [`docs/deployment/Day19_Verified_Local_Docker_Demo.md`](docs/deployment/Day19_Verified_Local_Docker_Demo.md) |
+| Day 19 smoke | [`docs/testing/Day19_Docker_Smoke_Test_Report.md`](docs/testing/Day19_Docker_Smoke_Test_Report.md) |
 | Teknik kararlar | [`docs/architecture/Technical_Decisions.md`](docs/architecture/Technical_Decisions.md) |
 | Docker Compose | [`docs/deployment/Docker_Compose_Local_Setup.md`](docs/deployment/Docker_Compose_Local_Setup.md) |
 | Flyway | [`docs/analysis/Day14_Flyway_Migration_Setup.md`](docs/analysis/Day14_Flyway_Migration_Setup.md) |

@@ -30,7 +30,8 @@ Not: Makinede zaten `cto-dashboard-postgres` veya `:8080` dinleyen bir süreç v
 Browser → `http://localhost:3000` → nginx static  
 Browser → `http://localhost:3000/api/...` → nginx → `backend:8080/api/...`
 
-Aynı origin olduğu için Docker UI yolunda ekstra CORS gerekmez.
+SPA `/api/v1` same-origin çağırır; yine de browser `Origin: http://localhost:3000` gönderir ve nginx bunu Spring’e iletir.  
+`CorsConfig` allowlist: `http://localhost:5173` ve `http://localhost:3000` (Day 19 doğrulaması).
 
 ## 4. Portlar
 
