@@ -6,7 +6,7 @@ Role-based weekly project reporting and executive portfolio monitoring platform.
 
 Dağınık haftalık raporlamayı merkezi, izlenebilir ve karşılaştırılabilir bir proje yönetim akışına dönüştürür.
 
-[Özellikler](#temel-özellikler) · [Mimari](#sistem-mimarisi) · [Kurulum](#hızlı-başlangıç--docker-compose) · [API](#api--swagger) · [Testler](#testler) · [Demo](#uçtan-uca-demo-senaryosu) · [Dokümantasyon](#teknik-dokümanlar)
+[Ürün Turu](#ürün-turu) · [Özellikler](#temel-özellikler) · [Mimari](#sistem-mimarisi) · [Kurulum](#hızlı-başlangıç--docker-compose) · [API](#api--swagger) · [Testler](#testler) · [Demo](#uçtan-uca-demo-senaryosu) · [Dokümantasyon](#teknik-dokümanlar)
 
 [![CI Quality Gate](https://github.com/feyzasagman/kolaysoft-cto-dashboard/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/feyzasagman/kolaysoft-cto-dashboard/actions/workflows/ci.yml)
 ![Java 21](https://img.shields.io/badge/Java-21-informational?style=flat&color=437291)
@@ -28,6 +28,7 @@ Kolaysoft CTO Dashboard; ADMIN, PROJECT_MANAGER ve CTO rollerini tek akışta bi
 - [Bu Proje Neyi Gösteriyor?](#bu-proje-neyi-gösteriyor)
 - [Quality Snapshot](#quality-snapshot)
 - [Demo Flow](#demo-flow)
+- [Ürün Turu](#ürün-turu)
 - [Proje Özeti](#proje-özeti)
 - [Problem ve Amaç](#problem-ve-amaç)
 - [Hedef Kullanıcılar ve Roller](#hedef-kullanıcılar-ve-roller)
@@ -107,6 +108,50 @@ CTO
 ```
 
 Adım adım senaryo: [`docs/demo/Day18_End_to_End_Demo_Scenario.md`](docs/demo/Day18_End_to_End_Demo_Scenario.md)
+
+---
+
+## Ürün Turu
+
+Gerçek Docker demo ortamından (`http://localhost:3000`) yakalanmış uygulama ekranları. Yeniden üretmek için: `frontend` içinde `npm run capture:screenshots` — ayrıntılar: [`docs/demo/Product_Tour_Screenshot_Guide.md`](docs/demo/Product_Tour_Screenshot_Guide.md).
+
+### CTO Dashboard
+
+![CTO Dashboard](docs/assets/screenshots/01-dashboard.png)
+
+Portföy KPI’ları, proje sağlığı, dikkat gerektiren projeler ve özet görünüm.
+
+### Project Portfolio
+
+![Project Portfolio](docs/assets/screenshots/02-project-portfolio.png)
+
+Filtreler, sağlık/durum, yönetici, ilerleme ve son rapor bilgisiyle proje listesi.
+
+### Project Command Center
+
+![Project Command Center](docs/assets/screenshots/03-project-detail.png)
+
+YELLOW proje detayı: hero, metrikler, sekmeler ve genel bakış.
+
+![Executive Project Insight](docs/assets/screenshots/04-executive-insight.png)
+
+Yönetici Özeti — hedef/gerçekleşen fark, sağlık, risk ve rapor durumu.
+
+### Weekly Reporting
+
+![Weekly Report](docs/assets/screenshots/05-weekly-report.png)
+
+PROJECT_MANAGER görünümü: hafta, ilerleme, takvim/risk durumu ve rapor içeriği.
+
+### Team & User Management
+
+![Team Management](docs/assets/screenshots/06-team-management.png)
+
+Proje detayında ekip sekmesi — proje yöneticisi, atamalar ve yetkilendirme.
+
+![Admin Users](docs/assets/screenshots/07-admin-users.png)
+
+ADMIN kullanıcı listesi — roller, aktiflik ve yeni kullanıcı oluşturma.
 
 ---
 
@@ -503,6 +548,7 @@ Day 19 verified local Docker demo:
 | Konu | Doküman |
 | --- | --- |
 | Day 18 end-to-end demo | [`docs/demo/Day18_End_to_End_Demo_Scenario.md`](docs/demo/Day18_End_to_End_Demo_Scenario.md) |
+| Product Tour screenshot guide | [`docs/demo/Product_Tour_Screenshot_Guide.md`](docs/demo/Product_Tour_Screenshot_Guide.md) |
 
 ### Daily Analysis
 
