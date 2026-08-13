@@ -36,11 +36,18 @@ jobs:
       - name: Ensure Maven wrapper is executable
         run: chmod +x mvnw
 
-      - name: Unit / controller / service tests
-        run: ./mvnw -B test
+      # test + package + JaCoCo HTML report (verify phase)
+      - name: Test, package, and JaCoCo coverage
+        run: ./mvnw -B clean verify
 
-      - name: Package
-        run: ./mvnw -B clean package
+      - name: Upload JaCoCo report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-jacoco-report
+          path: backend/cto-dashboard-api/target/site/jacoco/
+          retention-days: 7
+          if-no-files-found: warn
 
   frontend-quality:
     name: Frontend Quality
@@ -64,6 +71,19 @@ jobs:
 
       - name: Lint
         run: npm run lint
+
+      # Unit/component tests + Vitest V8 coverage (single run)
+      - name: Unit / component tests with coverage
+        run: npm run test:coverage
+
+      - name: Upload frontend coverage report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-coverage-report
+          path: frontend/coverage/
+          retention-days: 7
+          if-no-files-found: warn
 
       - name: Production build
         env:
@@ -142,8 +162,8 @@ jobs:
         run: |
           set -e
           for i in $(seq 1 90); do
-            if curl -sf http://localhost:8080/api/v1/health >/dev/null; then
-              echo "Backend healthy after ${i} attempt(s)"
+            if curl -sf http://localhost:8080/actuator/health/readiness >/dev/null; then
+              echo "Backend ready after ${i} attempt(s)"
               exit 0
             fi
             sleep 2

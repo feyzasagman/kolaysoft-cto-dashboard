@@ -79,14 +79,20 @@ Kolaysoft CTO Dashboard; ADMIN, PROJECT_MANAGER ve CTO rollerini tek akışta bi
 
 | Metrik | Sonuç |
 | --- | --- |
-| Backend tests | **79/79 PASS** |
+| Backend tests | **86/86 PASS** |
+| Frontend Unit / Component Tests | **42/42 PASS** |
 | Playwright E2E | **7/7 PASS** |
+| Backend Line Coverage | **33.9%** (JaCoCo, verified locally) |
+| Backend Branch Coverage | **19.9%** (JaCoCo, verified locally) |
+| Frontend Line Coverage | **9.9%** (Vitest V8, verified locally) |
+| Frontend Branch Coverage | **7.6%** (Vitest V8, verified locally) |
 | CI Quality Gate | **PASS** |
 | Docker Demo | **VERIFIED** |
 | Known open MVP bugs | **0** |
 | Functional gaps (MVP kritik) | **0** |
 
-> Verified Local Docker Demo — cloud production deployment değildir.
+> Verified Local Docker Demo — cloud production deployment değildir.  
+> Coverage yüzdeleri lokal ölçüm snapshot’ıdır (badge/servis yok); ayrıntı: [`docs/testing/Test_Coverage_Strategy.md`](docs/testing/Test_Coverage_Strategy.md).
 
 ## Demo Flow
 
@@ -198,6 +204,7 @@ Kolaysoft’ta farklı proje yöneticileri tarafından yürütülen projelerin *
 - Deterministik **Executive Project Insight** ve **Portfolio Attention Center** (UI-only; AI yok)
 - Loading / empty / error state’ler, responsive enterprise UI
 - Flyway migration (`ddl-auto=validate`)
+- Spring Boot Actuator health, readiness and liveness probes (restricted exposure)
 - Backend automated tests, Playwright E2E, GitHub Actions CI
 - Docker Compose yerel Full Stack ortamı
 
@@ -238,7 +245,7 @@ Kaynak: `pom.xml`, `package-lock.json`
 
 | Katman | Teknoloji |
 | --- | --- |
-| Backend | Java **21**, Spring Boot **3.5.16**, Spring Security, Spring Data JPA, Flyway, PostgreSQL, Maven Wrapper, springdoc OpenAPI **2.8.17**, JJWT **0.12.6** |
+| Backend | Java **21**, Spring Boot **3.5.16**, Spring Security, Spring Boot Actuator (health/info), Spring Data JPA, Flyway, PostgreSQL, Maven Wrapper, springdoc OpenAPI **2.8.17**, JJWT **0.12.6** |
 | Frontend | React **18.3.1**, TypeScript **5.8.3**, Vite **6.4.3**, MUI **7.3.11**, TanStack Query **5.101.4**, Axios, React Router **6**, React Hook Form, Zod |
 | Quality | JUnit / Spring Boot Test, Playwright **1.55.0**, ESLint, GitHub Actions, Docker / Compose |
 
@@ -266,8 +273,10 @@ Kolaysoft-CTO-Dashboard/
 | `docs/analysis/` | Day/task analysis |
 | `docs/testing/` | Regression / E2E / CI |
 | `docs/deployment/` | Docker & local demo |
-| `docs/architecture/` | Technical decisions |
+| `docs/architecture/` | Technical decisions + ADRs |
 | `docs/demo/` | Demo scenarios |
+| [`CONTRIBUTING.md`](CONTRIBUTING.md) | Branch / PR / local quality / Flyway & security notes |
+| `.github/` | PR template, Issue forms, CI workflow |
 
 ---
 
@@ -283,7 +292,8 @@ docker compose --env-file .env.docker.example up --build
 | --- | --- |
 | Uygulama | http://localhost:3000 |
 | API | http://localhost:8080 |
-| Health | http://localhost:8080/api/v1/health |
+| Application health | http://localhost:8080/api/v1/health |
+| Actuator health | http://localhost:8080/actuator/health |
 | Swagger | http://localhost:8080/swagger-ui/index.html |
 
 **Demo ADMIN (dev seed):** `admin@kolaysoft.com.tr` / `Admin123!`
@@ -433,18 +443,35 @@ Kaynak grupları (katalog Swagger’da): auth, users, projects, project assignme
 ```powershell
 cd backend/cto-dashboard-api
 ./mvnw.cmd test
-./mvnw.cmd clean package
+./mvnw.cmd clean verify   # test + package + JaCoCo HTML
 ```
 
-Doğrulanmış suite: **79/79 PASS** (Day 17+ regression).
+Doğrulanmış suite: **79/79 PASS** (Day 17+ regression).  
+JaCoCo rapor: `backend/cto-dashboard-api/target/site/jacoco/index.html` (Git’e commit edilmez).
 
 ### Frontend Quality
 
 ```powershell
 cd frontend
 npm run lint
+npm run test:coverage
 npm run build
 ```
+
+### Frontend Unit / Component Tests
+
+Vitest + React Testing Library (jsdom). Playwright E2E’den ayrıdır.
+
+```powershell
+cd frontend
+npm run test:run
+npm run test:coverage   # aynı suite + V8 HTML/json-summary
+```
+
+Doğrulanmış suite: **42/42 PASS** (Vitest + RTL).  
+Coverage rapor: `frontend/coverage/index.html` (Git’e commit edilmez).
+
+[`docs/testing/Frontend_Unit_Test_Strategy.md`](docs/testing/Frontend_Unit_Test_Strategy.md) · [`docs/testing/Test_Coverage_Strategy.md`](docs/testing/Test_Coverage_Strategy.md)
 
 ### Playwright E2E
 
@@ -464,8 +491,8 @@ Kapsam (**7** senaryo): Auth · ADMIN (kullanıcı/proje/ekip) · PM (rapor) · 
 
 [`.github/workflows/ci.yml`](.github/workflows/ci.yml) — `push` / `PR` → `main`:
 
-1. Backend Quality  
-2. Frontend Quality  
+1. Backend Quality (`clean verify` + JaCoCo artifact)  
+2. Frontend Quality (`lint` → `test:coverage` → `build` + coverage artifact)  
 3. Full Stack E2E (temiz Postgres + Flyway + Playwright)
 
 Failure artifact: Playwright report/trace + `backend-ci.log`  
@@ -489,15 +516,16 @@ Day 19 verified local Docker demo:
 
 **Known limitations**
 
-- Production deployment / monitoring / audit log yok
+- Production deployment / centralized monitoring / audit log yok
+- Basic health/readiness observability via Actuator exists; Prometheus/Grafana, alerting ve distributed tracing yok
 - Server-side JWT `exp` bekleme E2E’si yok (client `expiresAt` + invalid token test edilir)
 - Attention Center mevcut dashboard portföy sayfası/filtre bağlamıyla sınırlı
 - PM proje listesi backend’de ayrı endpoint yok; FE rapor + id cache kullanır
 - E2E destructive cleanup yok (unique timestamp veri)
-- Frontend unit test (Vitest/RTL) yok
 - Refresh token endpointi yok
+- Coverage threshold henüz CI fail kapısı değil (ölçüm var; genel oranlar düşük — bkz. coverage strategy)
 
-**Future improvements:** production secrets yönetimi, gözlemlenebilirlik, PM list API, E2E cleanup, FE unit testleri.
+**Future improvements:** production secrets yönetimi, merkezi metrics/alerting, PM list API, E2E cleanup, kritik paketlere unit test + makul coverage gate.
 
 ---
 
@@ -523,7 +551,22 @@ Day 19 verified local Docker demo:
 | Konu | Doküman |
 | --- | --- |
 | Teknik kararlar | [`docs/architecture/Technical_Decisions.md`](docs/architecture/Technical_Decisions.md) |
+| Architecture Decision Records | [`docs/architecture/adr/README.md`](docs/architecture/adr/README.md) |
 | Flyway | [`docs/analysis/Day14_Flyway_Migration_Setup.md`](docs/analysis/Day14_Flyway_Migration_Setup.md) |
+
+### Operations
+
+| Konu | Doküman |
+| --- | --- |
+| Observability & health (Actuator) | [`docs/operations/Observability_and_Health_Strategy.md`](docs/operations/Observability_and_Health_Strategy.md) |
+
+### Repository process
+
+| Konu | Doküman |
+| --- | --- |
+| Contributing | [`CONTRIBUTING.md`](CONTRIBUTING.md) |
+| Pull request template | [`.github/pull_request_template.md`](.github/pull_request_template.md) |
+| Issue templates | [`.github/ISSUE_TEMPLATE/`](.github/ISSUE_TEMPLATE/) |
 
 ### Testing & Quality
 
@@ -532,6 +575,8 @@ Day 19 verified local Docker demo:
 | Day 15 MVP test | [`docs/testing/Day15_MVP_Test_Report.md`](docs/testing/Day15_MVP_Test_Report.md) |
 | Day 16 bug fix | [`docs/testing/Day16_Bug_Fix_and_Retest_Report.md`](docs/testing/Day16_Bug_Fix_and_Retest_Report.md) |
 | Day 17 regression | [`docs/testing/Day17_Full_Stack_MVP_Regression_Report.md`](docs/testing/Day17_Full_Stack_MVP_Regression_Report.md) |
+| Frontend unit / component | [`docs/testing/Frontend_Unit_Test_Strategy.md`](docs/testing/Frontend_Unit_Test_Strategy.md) |
+| Test coverage (JaCoCo + Vitest V8) | [`docs/testing/Test_Coverage_Strategy.md`](docs/testing/Test_Coverage_Strategy.md) |
 | Automated E2E | [`docs/testing/Automated_E2E_Test_Strategy.md`](docs/testing/Automated_E2E_Test_Strategy.md) |
 | CI Quality Gate | [`docs/testing/CI_Quality_Gate.md`](docs/testing/CI_Quality_Gate.md) |
 | Day 19 smoke | [`docs/testing/Day19_Docker_Smoke_Test_Report.md`](docs/testing/Day19_Docker_Smoke_Test_Report.md) |

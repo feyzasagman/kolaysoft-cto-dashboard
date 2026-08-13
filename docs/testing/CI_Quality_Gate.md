@@ -31,10 +31,12 @@ Runner: `ubuntu-latest`
 1. checkout  
 2. Java 21 (Temurin) + Maven cache  
 3. `chmod +x mvnw`  
-4. `./mvnw -B test`  
-5. `./mvnw -B clean package`
+4. `./mvnw -B clean verify` — tests + package + **JaCoCo** HTML  
+5. Upload artifact `backend-jacoco-report` (`target/site/jacoco/`, retention 7 gün)
 
-Beklenen: güncel test seti (ör. 79) PASS, package SUCCESS.
+Beklenen: güncel test seti (ör. 79) PASS, verify SUCCESS. Coverage threshold zorunlu değildir.
+
+Ayrıntı: [`Test_Coverage_Strategy.md`](Test_Coverage_Strategy.md)
 
 ## 4. Frontend Quality job
 
@@ -42,9 +44,14 @@ Beklenen: güncel test seti (ör. 79) PASS, package SUCCESS.
 2. Node 20 + npm cache  
 3. `npm ci` (`package-lock.json`)  
 4. `npm run lint`  
-5. `npm run build`
+5. `npm run test:coverage` (Vitest + RTL + V8; `test:run` ile çift koşu yok)  
+6. Upload artifact `frontend-coverage-report` (`coverage/`, retention 7 gün)  
+7. `npm run build`
 
-Lint error fail eder; yalnızca warning ile fail etmez (ESLint exit code).
+Lint error fail eder; yalnızca warning ile fail etmez (ESLint exit code).  
+Unit test fail → Frontend Quality fail. Coverage threshold bu adımda zorunlu değildir.
+
+Ayrıntı: [`Frontend_Unit_Test_Strategy.md`](Frontend_Unit_Test_Strategy.md) · [`Test_Coverage_Strategy.md`](Test_Coverage_Strategy.md)
 
 ## 5. PostgreSQL service
 
