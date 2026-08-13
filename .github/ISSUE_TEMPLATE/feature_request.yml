@@ -1,0 +1,83 @@
+name: Feature Request
+description: Suggest an improvement with a clear problem and acceptance criteria.
+title: "[Feature]: "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Describe the **problem** first, then a proposed solution.
+        Focus on user value for ADMIN / PROJECT_MANAGER / CTO workflows.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem / motivation
+      description: What user or operational pain does this address?
+      placeholder: Example — CTO cannot filter Attention Center by manager.
+    validations:
+      required: true
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: Proposed solution
+      description: How should the product behave after the change?
+    validations:
+      required: true
+
+  - type: dropdown
+    id: target_role
+    attributes:
+      label: Target role
+      options:
+        - ADMIN
+        - PROJECT_MANAGER
+        - CTO
+        - All roles
+    validations:
+      required: true
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Affected area
+      options:
+        - Frontend
+        - Backend
+        - API
+        - Database / Flyway
+        - Authentication / Authorization
+        - Docker / Deployment
+        - CI / Testing
+        - Documentation
+        - Other
+    validations:
+      required: false
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Optional. Other approaches you considered and why they were not preferred.
+    validations:
+      required: false
+
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      description: How will we know this is done? Use a short checklist.
+      placeholder: |
+        - [ ] Criterion 1
+        - [ ] Criterion 2
+        - [ ] Tests / docs updated if behavior changes
+    validations:
+      required: true
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional context
+      description: Optional links, mockups, or related issues.
+    validations:
+      required: false

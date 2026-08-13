@@ -1,0 +1,121 @@
+name: Bug Report
+description: Report a reproducible problem in the CTO Dashboard.
+title: "[Bug]: "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting a bug.
+
+        **Do not include** passwords, JWT tokens, API keys, database credentials,
+        or personal/confidential information in this issue.
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Bug description
+      description: What went wrong? Keep it short and clear.
+      placeholder: Example — ADMIN cannot open project team tab after login.
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps to reproduce
+      description: Numbered steps another person can follow.
+      placeholder: |
+        1. Login as ADMIN
+        2. Open Projects
+        3. Click …
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+      description: What should happen?
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+      description: What actually happened? Include error text if safe to share.
+    validations:
+      required: true
+
+  - type: dropdown
+    id: role
+    attributes:
+      label: Affected role
+      options:
+        - ADMIN
+        - PROJECT_MANAGER
+        - CTO
+        - Not role-specific
+    validations:
+      required: true
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Affected area
+      options:
+        - Frontend
+        - Backend
+        - API
+        - Database / Flyway
+        - Authentication / Authorization
+        - Docker / Deployment
+        - CI / Testing
+        - Documentation
+        - Other
+    validations:
+      required: true
+
+  - type: dropdown
+    id: environment
+    attributes:
+      label: Environment
+      options:
+        - Local Vite
+        - Local Docker Compose
+        - GitHub Actions
+        - Other
+    validations:
+      required: true
+
+  - type: input
+    id: browser
+    attributes:
+      label: Browser / runtime
+      description: Optional. Example — Chrome 127, Java 21, Node 20.
+    validations:
+      required: false
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs / screenshots
+      description: Paste safe logs or attach screenshots. Redact secrets.
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: regression
+    attributes:
+      label: Regression
+      options:
+        - label: This worked previously
+          required: false
+
+  - type: checkboxes
+    id: security_ack
+    attributes:
+      label: Security acknowledgment
+      options:
+        - label: I did not paste passwords, JWT tokens, API keys, or personal data into this issue
+          required: true
