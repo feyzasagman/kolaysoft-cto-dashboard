@@ -2,14 +2,13 @@ package com.kolaysoft.ctodashboard.security;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.io.Decoders;
-import io.jsonwebtoken.security.Keys;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
 import javax.crypto.SecretKey;
-import java.nio.charset.StandardCharsets;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -21,15 +20,25 @@ import java.util.function.Function;
 @Service
 public class JwtService {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(JwtService.class);
+
     private final SecretKey secretKey;
     private final long expirationMs;
 
     public JwtService(
             @Value("${security.jwt.secret}") String secret,
-            @Value("${security.jwt.expiration-ms}") long expirationMs
+            @Value("${security.jwt.expiration-ms:3600000}") long expirationMs
     ) {
-        this.secretKey = buildSecretKey(secret);
+        JwtSecretKeyFactory.ResolvedKey resolved = JwtSecretKeyFactory.fromSecret(secret);
+        this.secretKey = resolved.secretKey();
         this.expirationMs = expirationMs;
+        LOGGER.info(
+                "JWT HMAC key configured: present=true, inputChars={}, source={}, byteLength={}, bits={}",
+                secret.length(),
+                resolved.source(),
+                resolved.byteLength(),
+                resolved.byteLength() * 8
+        );
     }
 
     public String generateToken(UserDetails userDetails) {
@@ -86,18 +95,5 @@ public class JwtService {
                 .build()
                 .parseSignedClaims(token)
                 .getPayload();
-    }
-
-    private SecretKey buildSecretKey(String secret) {
-        if (secret == null || secret.isBlank()) {
-            throw new IllegalStateException("security.jwt.secret / JWT_SECRET must be set");
-        }
-        byte[] keyBytes;
-        try {
-            keyBytes = Decoders.BASE64.decode(secret);
-        } catch (Exception exception) {
-            keyBytes = secret.getBytes(StandardCharsets.UTF_8);
-        }
-        return Keys.hmacShaKeyFor(keyBytes);
     }
 }

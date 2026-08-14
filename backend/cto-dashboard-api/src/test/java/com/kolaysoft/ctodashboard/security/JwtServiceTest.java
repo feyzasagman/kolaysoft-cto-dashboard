@@ -53,4 +53,11 @@ class JwtServiceTest {
     void shouldRejectInvalidToken() {
         assertThat(jwtService.isTokenValid("invalid.token.value", userDetails)).isFalse();
     }
+
+    @Test
+    void shouldStartWithAccidentalBase64Passphrase() {
+        JwtService service = new JwtService("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdef", 3_600_000L);
+        String token = service.generateToken(userDetails);
+        assertThat(service.isTokenValid(token, userDetails)).isTrue();
+    }
 }

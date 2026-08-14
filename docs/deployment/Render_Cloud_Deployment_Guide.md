@@ -112,18 +112,27 @@ After you know the Static Site URL, set CORS and **redeploy backend**.
 
 ## 7. JWT
 
-Generate a strong secret (example; run locally, do not commit output):
+`application-prod.yml` has **no** development fallback. Missing/blank `JWT_SECRET` → startup failure.
+
+Generate a strong secret (run locally; do not commit or paste into chat logs):
 
 ```bash
-# OpenSSL
-openssl rand -base64 48
+# OpenSSL (64 random bytes → Base64; keep as a SINGLE line)
+openssl rand -base64 64 | tr -d '\n'
 
 # PowerShell
-[Convert]::ToBase64String((1..48 | ForEach-Object { Get-Random -Maximum 256 }) -as [byte[]])
+[Convert]::ToBase64String((1..64 | ForEach-Object { Get-Random -Maximum 256 }) -as [byte[]])
 ```
 
-Set as Render secret `JWT_SECRET`.  
-`application-prod.yml` has **no** development fallback. Missing secret → startup failure.
+Set as Render secret `JWT_SECRET`.
+
+Startup logs **must not** print the secret. You should see only:
+
+`JWT HMAC key configured: present=true, source=base64|utf8, byteLength=N, bits=...`
+
+JJWT HMAC requires >= 256 bits. The API no longer blindly Base64-decodes a secret that would become a weak key (that used to crash `JwtService` construction).
+
+You do **not** need to rotate `JWT_SECRET` after this fix unless the value is shorter than 32 characters.
 
 ---
 
@@ -238,6 +247,7 @@ Configured in `render.yaml` `routes`. Prevents React Router refresh 404s.
 | Symptom | Check |
 | --- | --- |
 | Backend won’t start | `JWT_SECRET`, `DB_*`, `SPRING_PROFILES_ACTIVE=prod`, Flyway logs |
+| JwtService constructor / WeakKeyException | Redeploy this fix; confirm startup log `JWT HMAC key configured` (never log the secret). Secret must be >= 32 characters |
 | JDBC errors | URL must be `jdbc:postgresql://…` not `postgres://…` |
 | CORS / login blocked | `CORS_ALLOWED_ORIGINS` exact match to Static Site origin (https, no trailing slash mismatch) |
 | FE calls localhost | Rebuild Static Site after setting `VITE_API_BASE_URL` |
