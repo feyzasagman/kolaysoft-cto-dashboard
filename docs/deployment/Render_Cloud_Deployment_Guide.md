@@ -272,3 +272,26 @@ cd frontend && npm run lint && npm run test:run && npm run build
 # Compose
 docker compose config
 ```
+
+---
+
+## Deployment Attempt Status
+
+**Status:** public cloud deployment **deferred**. This is not a product bug and not a failed internship delivery.
+
+What completed:
+
+- Infrastructure preparation (`render.yaml`, `prod` profile, CORS env, platform `PORT`, JDBC-only `DB_URL`, safe Actuator, JWT key factory)
+- Render PostgreSQL was provisioned (operator-side)
+- Backend Docker deploy was **attempted**
+- JWT / DB URL / env issues were debugged (including weak accidental-Base64 HMAC keys and non-JDBC `postgres://` URLs)
+
+What is **not** claimed:
+
+- Live public URL
+- Production deployed
+- Render verified as the official demo
+
+**Final verified demo environment remains Docker Compose** (`docker compose --env-file .env.docker.example up --build`).
+
+Do not commit or paste Render hostnames, JWT secrets, or database passwords in this document.

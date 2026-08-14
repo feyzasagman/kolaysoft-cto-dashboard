@@ -79,11 +79,11 @@ Kolaysoft CTO Dashboard; ADMIN, PROJECT_MANAGER ve CTO rollerini tek akışta bi
 
 | Metrik | Sonuç |
 | --- | --- |
-| Backend tests | **89/89 PASS** |
+| Backend tests | **100/100 PASS** |
 | Frontend Unit / Component Tests | **42/42 PASS** |
 | Playwright E2E | **7/7 PASS** |
-| Backend Line Coverage | **33.9%** (JaCoCo, verified locally) |
-| Backend Branch Coverage | **19.9%** (JaCoCo, verified locally) |
+| Backend Line Coverage | **39.6%** (JaCoCo, verified locally) |
+| Backend Branch Coverage | **23.9%** (JaCoCo, verified locally) |
 | Frontend Line Coverage | **9.9%** (Vitest V8, verified locally) |
 | Frontend Branch Coverage | **7.6%** (Vitest V8, verified locally) |
 | CI Quality Gate | **PASS** |
@@ -91,7 +91,7 @@ Kolaysoft CTO Dashboard; ADMIN, PROJECT_MANAGER ve CTO rollerini tek akışta bi
 | Known open MVP bugs | **0** |
 | Functional gaps (MVP kritik) | **0** |
 
-> Verified Local Docker Demo — cloud production deployment değildir.  
+> Verified Local Docker Demo — official reproducible environment. Public cloud deployment was explored but deferred.  
 > Coverage yüzdeleri lokal ölçüm snapshot’ıdır (badge/servis yok); ayrıntı: [`docs/testing/Test_Coverage_Strategy.md`](docs/testing/Test_Coverage_Strategy.md).
 
 ## Demo Flow
@@ -113,7 +113,8 @@ CTO
   → Executive Insight
 ```
 
-Adım adım senaryo: [`docs/demo/Day18_End_to_End_Demo_Scenario.md`](docs/demo/Day18_End_to_End_Demo_Scenario.md)
+Adım adım senaryo: [`docs/demo/Day18_End_to_End_Demo_Scenario.md`](docs/demo/Day18_End_to_End_Demo_Scenario.md)  
+Sunum akışı (~8–10 dk): [`docs/demo/Day20_Final_Demo_Guide.md`](docs/demo/Day20_Final_Demo_Guide.md)
 
 ---
 
@@ -275,6 +276,7 @@ Kolaysoft-CTO-Dashboard/
 | `docs/deployment/` | Docker & local demo |
 | `docs/architecture/` | Technical decisions + ADRs |
 | `docs/demo/` | Demo scenarios |
+| `docs/handoff/` | Day 20 final handoff & delivery checklist |
 | [`CONTRIBUTING.md`](CONTRIBUTING.md) | Branch / PR / local quality / Flyway & security notes |
 | `.github/` | PR template, Issue forms, CI workflow |
 
@@ -454,7 +456,7 @@ cd backend/cto-dashboard-api
 ./mvnw.cmd clean verify   # test + package + JaCoCo HTML
 ```
 
-Doğrulanmış suite: **79/79 PASS** (Day 17+ regression).  
+Doğrulanmış suite: **100/100 PASS** (Day 20 final).  
 JaCoCo rapor: `backend/cto-dashboard-api/target/site/jacoco/index.html` (Git’e commit edilmez).
 
 ### Frontend Quality
@@ -513,8 +515,19 @@ Failure artifact: Playwright report/trace + `backend-ci.log`
 Adım adım (ADMIN → PM → CTO):  
 [`docs/demo/Day18_End_to_End_Demo_Scenario.md`](docs/demo/Day18_End_to_End_Demo_Scenario.md)
 
+Day 20 sunum rehberi:  
+[`docs/demo/Day20_Final_Demo_Guide.md`](docs/demo/Day20_Final_Demo_Guide.md)
+
 Day 19 verified local Docker demo:  
 [`docs/deployment/Day19_Verified_Local_Docker_Demo.md`](docs/deployment/Day19_Verified_Local_Docker_Demo.md)
+
+---
+
+## Deployment Status
+
+**Verified environment:** Docker Compose local full-stack (`localhost:3000` + `:8080`).
+
+**Cloud:** Render deployment preparation is in the repo; public cloud deployment was explored but is **not** part of the final verified delivery.
 
 ---
 
@@ -524,8 +537,9 @@ Day 19 verified local Docker demo:
 
 **Known limitations**
 
-- Cloud production-grade hosting yok; Render portfolio demo hazırlığı belgelendi (`render.yaml` + guide) — verified local Docker asıl kanıt
+- Public cloud deployment was explored but deferred; official reproducible demo is the verified Docker Compose stack
 - Basic health/readiness observability via Actuator exists; Prometheus/Grafana, alerting ve distributed tracing yok
+- Production-grade secrets manager yok
 - Server-side JWT `exp` bekleme E2E’si yok (client `expiresAt` + invalid token test edilir)
 - Attention Center mevcut dashboard portföy sayfası/filtre bağlamıyla sınırlı
 - PM proje listesi backend’de ayrı endpoint yok; FE rapor + id cache kullanır
@@ -533,7 +547,7 @@ Day 19 verified local Docker demo:
 - Refresh token endpointi yok
 - Coverage threshold henüz CI fail kapısı değil (ölçüm var; genel oranlar düşük — bkz. coverage strategy)
 
-**Future improvements:** production secrets yönetimi, merkezi metrics/alerting, PM list API, E2E cleanup, kritik paketlere unit test + makul coverage gate.
+**Future improvements:** managed cloud deployment, centralized observability, refresh token / auth lifecycle, E2E cleanup, broader unit coverage, production secrets manager, audit logging.
 
 ---
 
@@ -589,19 +603,29 @@ Day 19 verified local Docker demo:
 | CI Quality Gate | [`docs/testing/CI_Quality_Gate.md`](docs/testing/CI_Quality_Gate.md) |
 | Day 19 smoke | [`docs/testing/Day19_Docker_Smoke_Test_Report.md`](docs/testing/Day19_Docker_Smoke_Test_Report.md) |
 
+### Handoff (Day 20)
+
+| Konu | Doküman |
+| --- | --- |
+| Final project handoff | [`docs/handoff/Day20_Final_Project_Handoff.md`](docs/handoff/Day20_Final_Project_Handoff.md) |
+| Technical summary | [`docs/handoff/Day20_Technical_Summary.md`](docs/handoff/Day20_Technical_Summary.md) |
+| Final delivery checklist | [`docs/handoff/Final_Delivery_Checklist.md`](docs/handoff/Final_Delivery_Checklist.md) |
+| Day 20 demo guide | [`docs/demo/Day20_Final_Demo_Guide.md`](docs/demo/Day20_Final_Demo_Guide.md) |
+
 ### Deployment
 
 | Konu | Doküman |
 | --- | --- |
 | Docker Compose | [`docs/deployment/Docker_Compose_Local_Setup.md`](docs/deployment/Docker_Compose_Local_Setup.md) |
 | Day 19 verified local demo | [`docs/deployment/Day19_Verified_Local_Docker_Demo.md`](docs/deployment/Day19_Verified_Local_Docker_Demo.md) |
-| Render cloud demo (portfolio) | [`docs/deployment/Render_Cloud_Deployment_Guide.md`](docs/deployment/Render_Cloud_Deployment_Guide.md) |
+| Render cloud **preparation** (not a live demo) | [`docs/deployment/Render_Cloud_Deployment_Guide.md`](docs/deployment/Render_Cloud_Deployment_Guide.md) |
 
 ### Demo
 
 | Konu | Doküman |
 | --- | --- |
 | Day 18 end-to-end demo | [`docs/demo/Day18_End_to_End_Demo_Scenario.md`](docs/demo/Day18_End_to_End_Demo_Scenario.md) |
+| Day 20 final demo guide | [`docs/demo/Day20_Final_Demo_Guide.md`](docs/demo/Day20_Final_Demo_Guide.md) |
 | Product Tour screenshot guide | [`docs/demo/Product_Tour_Screenshot_Guide.md`](docs/demo/Product_Tour_Screenshot_Guide.md) |
 
 ### Daily Analysis

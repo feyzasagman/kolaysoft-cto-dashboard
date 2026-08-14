@@ -25,7 +25,7 @@ Garanti etmez:
 - `prepare-agent` → test execution
 - `report` → `verify` phase
 - Rapor: `backend/cto-dashboard-api/target/site/jacoco/index.html`
-- Threshold: **yok** (ilk ölçüm; line ~%34 — erken zorunlu kapı yanıltıcı olur)
+- Threshold: **yok** (ölçüm; line ~%40 — erken zorunlu kapı yanıltıcı olur)
 
 ## 4. Frontend Vitest V8 yaklaşımı
 
@@ -91,26 +91,23 @@ Artifact (7 gün):
 
 ## 9. Gerçek coverage sonuçları (lokal, doğrulanmış)
 
-Tarih bağlamı: Day 19 excellence 4/8 — lokal ölçüm.
+Tarih bağlamı: Day 20 final handoff — lokal ölçüm.
 
-### Backend (JaCoCo, 79 tests PASS)
+### Backend (JaCoCo, 100 tests PASS)
 
 | Metrik | Değer |
 | --- | --- |
-| Instructions | **37.2%** (2602/7004) |
-| Branches | **19.9%** (84/422) |
-| Lines | **33.9%** (486/1434) |
-| Methods | **42.6%** (152/357) |
-| Classes | **67.0%** (65/97) |
+| Branches | **23.9%** (114/476) |
+| Lines | **39.6%** (606/1531) |
 
 ### Frontend (Vitest V8, 42 tests PASS)
 
 | Metrik | Değer |
 | --- | --- |
-| Statements | **10.1%** |
-| Branches | **7.6%** |
-| Functions | **5.2%** |
-| Lines | **9.9%** |
+| Statements | **10.1%** (227/2254) |
+| Branches | **7.6%** (183/2397) |
+| Functions | **5.2%** (39/755) |
+| Lines | **9.9%** (203/2048) |
 
 Kritik FE logic (aynı koşu):
 
